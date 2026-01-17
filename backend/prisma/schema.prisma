@@ -1,0 +1,336 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  BARBER
+  ADMIN
+  REP
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIALLY_PAID
+  REFUNDED
+  FAILED
+}
+
+enum BarberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_APPROVAL
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  avatarUrl     String?   @map("avatar_url")
+  role          UserRole
+  emailVerified Boolean   @default(false) @map("email_verified")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  barber        Barber?
+  customer      Customer?
+  notifications Notification[]
+  barberApplication BarberApplication?
+
+  @@map("users")
+  @@index([email])
+  @@index([role])
+}
+
+model Barber {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  barberId         String   @unique @map("barber_id")
+  bio              String?  @db.Text
+  experienceYears  Int?     @map("experience_years")
+  specialties      String[]
+  certifications   Json?
+  ratingAvg        Decimal  @default(0) @db.Decimal(3, 2) @map("rating_avg")
+  totalReviews     Int      @default(0) @map("total_reviews")
+  totalBookings    Int      @default(0) @map("total_bookings")
+  status           BarberStatus @default(PENDING_APPROVAL)
+  commissionRate   Decimal  @default(0.70) @db.Decimal(3, 2) @map("commission_rate")
+  location         String?
+  languagesSpoken  String[] @map("languages_spoken")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services         Service[]
+  bookings         Booking[]
+  timeSlots        TimeSlot[]
+  availability     BarberAvailability[]
+  reviews          Review[]
+  preferredBy      Customer[]
+
+  @@map("barbers")
+  @@index([status])
+  @@index([ratingAvg])
+}
+
+model Customer {
+  id               String    @id @default(uuid())
+  userId           String    @unique @map("user_id")
+  customerId       String    @unique @map("customer_id")
+  preferredBarberId String?  @map("preferred_barber_id")
+  loyaltyPoints    Int       @default(0) @map("loyalty_points")
+  membershipType   String    @default("BASIC") @map("membership_type")
+  dateOfBirth      DateTime? @map("date_of_birth")
+  gender           String?
+  address          String?   @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredBarber  Barber?   @relation(fields: [preferredBarberId], references: [id])
+  bookings         Booking[]
+  reviews          Review[]
+  payments         Payment[]
+  tickets          SupportTicket[]
+
+  @@map("customers")
+  @@index([preferredBarberId])
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  barberId        String   @map("barber_id")
+  name            String
+  description     String?  @db.Text
+  price           Decimal  @db.Decimal(10, 2)
+  durationMinutes Int      @map("duration_minutes")
+  category        String
+  isActive        Boolean  @default(true) @map("is_active")
+  imageUrl        String?  @map("image_url")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  barber          Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  bookings        Booking[]
+
+  @@map("services")
+  @@index([barberId])
+  @@index([category])
+}
+
+model Booking {
+  id                String        @id @default(uuid())
+  bookingNumber     String        @unique @map("booking_number")
+  customerId        String        @map("customer_id")
+  barberId          String        @map("barber_id")
+  serviceId         String        @map("service_id")
+  bookingDate       DateTime      @db.Date @map("booking_date")
+  bookingTime       DateTime      @db.Time(6) @map("booking_time")
+  durationMinutes   Int           @map("duration_minutes")
+  status            BookingStatus @default(PENDING)
+  totalPrice        Decimal       @db.Decimal(10, 2) @map("total_price")
+  paymentStatus     PaymentStatus @default(PENDING) @map("payment_status")
+  paymentMethod     String?       @map("payment_method")
+  notes             String?       @db.Text
+  barberNotes       String?       @db.Text @map("barber_notes")
+  cancellationReason String?      @db.Text @map("cancellation_reason")
+  cancelledBy       String?       @map("cancelled_by")
+  cancelledAt       DateTime?     @map("cancelled_at")
+  completedAt       DateTime?     @map("completed_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  customer          Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  barber            Barber        @relation(fields: [barberId], references: [id])
+  service           Service       @relation(fields: [serviceId], references: [id])
+  payment           Payment?
+  review            Review?
+  timeSlot          TimeSlot?
+
+  @@map("bookings")
+  @@index([customerId])
+  @@index([barberId])
+  @@index([bookingDate])
+  @@index([status])
+  @@index([barberId, bookingDate, bookingTime])
+}
+
+model TimeSlot {
+  id          String    @id @default(uuid())
+  barberId    String    @map("barber_id")
+  date        DateTime  @db.Date
+  startTime   DateTime  @db.Time(6) @map("start_time")
+  endTime     DateTime  @db.Time(6) @map("end_time")
+  isAvailable Boolean   @default(true) @map("is_available")
+  bookingId   String?   @unique @map("booking_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  barber      Barber    @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  booking     Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@map("time_slots")
+  @@index([barberId])
+  @@index([date])
+  @@index([barberId, date, startTime])
+}
+
+model BarberAvailability {
+  id         String    @id @default(uuid())
+  barberId   String    @map("barber_id")
+  dayOfWeek  Int       @map("day_of_week") // 0 = Sunday, 6 = Saturday
+  startTime  DateTime  @db.Time(6) @map("start_time")
+  endTime    DateTime  @db.Time(6) @map("end_time")
+  isAvailable Boolean  @default(true) @map("is_available")
+  breakStart DateTime? @db.Time(6) @map("break_start")
+  breakEnd   DateTime? @db.Time(6) @map("break_end")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  barber     Barber    @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@map("barber_availability")
+  @@index([barberId])
+  @@index([barberId, dayOfWeek])
+}
+
+model Review {
+  id              String    @id @default(uuid())
+  bookingId       String    @unique @map("booking_id")
+  customerId      String    @map("customer_id")
+  barberId        String    @map("barber_id")
+  rating          Int       // 1-5
+  comment         String?   @db.Text
+  barberResponse  String?   @db.Text @map("barber_response")
+  barberResponseAt DateTime? @map("barber_response_at")
+  isVerified      Boolean   @default(true) @map("is_verified")
+  isVisible       Boolean   @default(true) @map("is_visible")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  booking         Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer        Customer  @relation(fields: [customerId], references: [id])
+  barber          Barber    @relation(fields: [barberId], references: [id])
+
+  @@map("reviews")
+  @@index([customerId])
+  @@index([barberId])
+  @@index([rating])
+  @@index([isVisible])
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  bookingId       String        @unique @map("booking_id")
+  customerId      String        @map("customer_id")
+  amount          Decimal       @db.Decimal(10, 2)
+  paymentMethod   String        @map("payment_method")
+  paymentGateway  String?       @map("payment_gateway")
+  transactionId   String?       @unique @map("transaction_id")
+  gatewayResponse Json?         @map("gateway_response")
+  status          PaymentStatus @default(PENDING)
+  refundAmount    Decimal       @default(0) @db.Decimal(10, 2) @map("refund_amount")
+  refundReason    String?       @db.Text @map("refund_reason")
+  processedAt     DateTime?     @map("processed_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer        Customer      @relation(fields: [customerId], references: [id])
+
+  @@map("payments")
+  @@index([bookingId])
+  @@index([customerId])
+  @@index([transactionId])
+  @@index([status])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  message   String   @db.Text
+  actionUrl String?  @map("action_url")
+  isRead    Boolean  @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([userId, isRead])
+}
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  ticketNumber String  @unique @map("ticket_number")
+  customerId  String   @map("customer_id")
+  assignedTo  String?  @map("assigned_to") // User ID (rep/admin)
+  subject     String
+  description String   @db.Text
+  category    String   // BOOKING_ISSUE, PAYMENT_ISSUE, TECHNICAL, GENERAL
+  priority    String   // LOW, MEDIUM, HIGH, URGENT
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  resolution  String?  @db.Text
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("support_tickets")
+  @@index([customerId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([priority])
+}
+
+model BarberApplication {
+  id              String    @id @default(uuid())
+  userId          String?   @unique @map("user_id") // If user account created
+  email           String
+  name            String
+  phone           String
+  experienceYears Int?      @map("experience_years")
+  specialties     String[]
+  certifications  Json?
+  portfolioUrl    String?   @map("portfolio_url")
+  resumeUrl       String?   @map("resume_url")
+  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED, UNDER_REVIEW
+  adminNotes      String?   @db.Text @map("admin_notes")
+  reviewedBy      String?   @map("reviewed_by") // Admin user ID
+  reviewedAt      DateTime? @map("reviewed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("barber_applications")
+  @@index([email])
+  @@index([status])
+}
