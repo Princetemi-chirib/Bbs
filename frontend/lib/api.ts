@@ -37,3 +37,32 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+
+// Email API functions
+export const emailApi = {
+  sendOrderConfirmation: async (orderData: {
+    customerName: string;
+    customerEmail: string;
+    orderReference: string;
+    items: Array<{
+      title: string;
+      quantity: number;
+      price: number;
+      displayAge?: string;
+    }>;
+    total: number;
+    city: string;
+    location: string;
+    address?: string;
+    phone: string;
+    paymentReference?: string;
+  }) => {
+    const response = await apiClient.post('/emails/order-confirmation', orderData);
+    return response.data;
+  },
+
+  sendTestEmail: async (to: string) => {
+    const response = await apiClient.post('/emails/test', { to });
+    return response.data;
+  },
+};

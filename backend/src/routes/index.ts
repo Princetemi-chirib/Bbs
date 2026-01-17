@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { emailController } from '../controllers/emailController';
 
 const router = Router();
 
@@ -11,6 +12,10 @@ router.get('/health', (req, res) => {
   });
 });
 
+// Email routes
+router.post('/emails/order-confirmation', emailController.sendOrderConfirmation);
+router.post('/emails/test', emailController.testEmail);
+
 // Placeholder routes - to be implemented
 router.get('/', (req, res) => {
   res.json({
@@ -19,6 +24,10 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
+      emails: {
+        orderConfirmation: 'POST /emails/order-confirmation',
+        test: 'POST /emails/test',
+      },
       auth: '/auth/*',
       barbers: '/barbers/*',
       bookings: '/bookings/*',

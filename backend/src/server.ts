@@ -87,10 +87,18 @@ app.use((req, res) => {
 });
 
 // Start server
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📡 Socket.io server ready`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Verify email service connection
+  try {
+    const { emailService } = await import('./services/emailService');
+    await emailService.verifyConnection();
+  } catch (error) {
+    console.warn('⚠️  Email service initialization skipped');
+  }
 });
 
 // Export io for use in other modules
