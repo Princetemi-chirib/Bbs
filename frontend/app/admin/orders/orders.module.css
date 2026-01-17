@@ -1,0 +1,159 @@
+.page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.header {
+  background: #39413f;
+  color: #ffffff;
+  padding: 20px 40px;
+}
+
+.header a {
+  color: #dcd2cc;
+  text-decoration: none;
+  margin-bottom: 10px;
+  display: inline-block;
+}
+
+.header h1 {
+  margin: 10px 0 0 0;
+  font-size: 1.5rem;
+}
+
+.main {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section h2 {
+  margin: 0 0 20px 0;
+  color: #39413f;
+  font-size: 1.3rem;
+}
+
+.ordersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.ordersList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.orderCard {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.orderHeader strong {
+  color: #39413f;
+  font-size: 1.1rem;
+}
+
+.orderHeader span {
+  color: #39413f;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.orderDetails {
+  margin-bottom: 16px;
+}
+
+.orderDetails p {
+  margin: 8px 0;
+  color: #5a625f;
+  font-size: 0.9rem;
+}
+
+.assignForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.select {
+  padding: 10px;
+  border: 1px solid #b8aea8;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: #ffffff;
+  color: #39413f;
+}
+
+.formActions {
+  display: flex;
+  gap: 10px;
+}
+
+.assignButton,
+.cancelButton {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.assignButton {
+  background: #39413f;
+  color: #ffffff;
+}
+
+.assignButton:hover:not(:disabled) {
+  background: #2a312f;
+}
+
+.assignButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background: #e0e0e0;
+  color: #39413f;
+}
+
+.cancelButton:hover {
+  background: #d0d0d0;
+}
+
+.empty {
+  text-align: center;
+  color: #5a625f;
+  padding: 40px;
+  font-style: italic;
+}
+
+.loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #39413f;
+}

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 
 export interface OrderItem {
-  id: number;
+  id: number | string;
+  productId?: string; // Product ID from database
   title: string;
   description: string;
   adultPrice: number;

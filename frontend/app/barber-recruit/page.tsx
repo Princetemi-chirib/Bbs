@@ -138,21 +138,147 @@ export default function BarberRecruitPage() {
 // Barber Application Form Component
 function BarberApplicationForm() {
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
+    otherName: '',
+    dateOfBirth: '',
     email: '',
+    maritalStatus: '',
     phone: '',
-    experience: '',
-    portfolio: '',
-    message: '',
+    address: '',
+    ninNumber: '',
+    gender: '',
+    applicationLetter: null as File | null,
+    cv: null as File | null,
   });
+  const [applicationLetterUrl, setApplicationLetterUrl] = useState('');
+  const [cvUrl, setCvUrl] = useState('');
+  const [uploadingLetter, setUploadingLetter] = useState(false);
+  const [uploadingCv, setUploadingCv] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleFileUpload = async (file: File, type: 'letter' | 'cv'): Promise<string | null> => {
+    const uploadType = type === 'letter' ? setUploadingLetter : setUploadingCv;
+    uploadType(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/v1/admin/barber-applications/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        uploadType(false);
+        return data.data.url;
+      } else {
+        throw new Error(data.error?.message || 'File upload failed');
+      }
+    } catch (err: any) {
+      uploadType(false);
+      setError(err.message || 'Failed to upload file');
+      return null;
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'letter' | 'cv') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Only PDF and JPG files are allowed');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB');
+      return;
+    }
+
+    const url = await handleFileUpload(file, type);
+    if (url) {
+      if (type === 'letter') {
+        setApplicationLetterUrl(url);
+        setFormData({ ...formData, applicationLetter: file });
+      } else {
+        setCvUrl(url);
+        setFormData({ ...formData, cv: file });
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Integrate with backend API
-    console.log('Form submitted:', formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    
+    if (!applicationLetterUrl || !cvUrl) {
+      setError('Please upload both application letter and CV');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+    
+    try {
+      const response = await fetch('/api/v1/admin/barber-applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          otherName: formData.otherName || undefined,
+          dateOfBirth: formData.dateOfBirth || undefined,
+          email: formData.email,
+          maritalStatus: formData.maritalStatus || undefined,
+          phone: formData.phone,
+          address: formData.address,
+          ninNumber: formData.ninNumber || undefined,
+          gender: formData.gender || undefined,
+          applicationLetterUrl,
+          cvUrl,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setSubmitted(true);
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          otherName: '',
+          dateOfBirth: '',
+          email: '',
+          maritalStatus: '',
+          phone: '',
+          address: '',
+          ninNumber: '',
+          gender: '',
+          applicationLetter: null,
+          cv: null,
+        });
+        setApplicationLetterUrl('');
+        setCvUrl('');
+        setTimeout(() => setSubmitted(false), 5000);
+      } else {
+        setError(data.error?.message || 'Failed to submit application. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -164,13 +290,50 @@ function BarberApplicationForm() {
 
   return (
     <form onSubmit={handleSubmit} className={styles.barberForm}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div className={styles.formGroup}>
+          <label htmlFor="firstName">First Name *</label>
+          <input
+            type="text"
+            id="firstName"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label htmlFor="lastName">Last Name *</label>
+          <input
+            type="text"
+            id="lastName"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            required
+          />
+        </div>
+      </div>
+
       <div className={styles.formGroup}>
-        <label htmlFor="name">Full Name *</label>
+        <label htmlFor="otherName">Other Name (Optional)</label>
         <input
           type="text"
-          id="name"
-          name="name"
-          value={formData.name}
+          id="otherName"
+          name="otherName"
+          value={formData.otherName}
+          onChange={handleChange}
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="dateOfBirth">Date of Birth *</label>
+        <input
+          type="date"
+          id="dateOfBirth"
+          name="dateOfBirth"
+          value={formData.dateOfBirth}
           onChange={handleChange}
           required
         />
@@ -189,6 +352,23 @@ function BarberApplicationForm() {
       </div>
 
       <div className={styles.formGroup}>
+        <label htmlFor="maritalStatus">Marital Status *</label>
+        <select
+          id="maritalStatus"
+          name="maritalStatus"
+          value={formData.maritalStatus}
+          onChange={handleChange}
+          required
+        >
+          <option value="">Select marital status</option>
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+          <option value="Divorced">Divorced</option>
+          <option value="Widowed">Widowed</option>
+        </select>
+      </div>
+
+      <div className={styles.formGroup}>
         <label htmlFor="phone">Phone Number *</label>
         <input
           type="tel"
@@ -201,54 +381,88 @@ function BarberApplicationForm() {
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="experience">Years of Experience *</label>
+        <label htmlFor="address">Location/Address *</label>
+        <input
+          type="text"
+          id="address"
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          placeholder="Enter your location or address"
+          required
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="ninNumber">NIN Number *</label>
+        <input
+          type="text"
+          id="ninNumber"
+          name="ninNumber"
+          value={formData.ninNumber}
+          onChange={handleChange}
+          placeholder="National Identification Number"
+          required
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="gender">Gender *</label>
         <select
-          id="experience"
-          name="experience"
-          value={formData.experience}
+          id="gender"
+          name="gender"
+          value={formData.gender}
           onChange={handleChange}
           required
         >
-          <option value="">Select experience</option>
-          <option value="0-1">0-1 years</option>
-          <option value="2-5">2-5 years</option>
-          <option value="6-10">6-10 years</option>
-          <option value="10+">10+ years</option>
+          <option value="">Select gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
         </select>
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="portfolio">Portfolio URL (Optional)</label>
+        <label htmlFor="applicationLetter">Application Letter * (PDF or JPG)</label>
         <input
-          type="url"
-          id="portfolio"
-          name="portfolio"
-          value={formData.portfolio}
-          onChange={handleChange}
-          placeholder="https://yourportfolio.com"
+          type="file"
+          id="applicationLetter"
+          name="applicationLetter"
+          accept=".pdf,.jpg,.jpeg"
+          onChange={(e) => handleFileChange(e, 'letter')}
+          required
         />
+        {uploadingLetter && <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>Uploading...</p>}
+        {applicationLetterUrl && <p style={{ color: '#46b450', fontSize: '0.9rem', marginTop: '4px' }}>✓ File uploaded</p>}
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="message">Tell us about yourself *</label>
-        <textarea
-          id="message"
-          name="message"
-          value={formData.message}
-          onChange={handleChange}
-          rows={6}
+        <label htmlFor="cv">CV/Resume * (PDF or JPG)</label>
+        <input
+          type="file"
+          id="cv"
+          name="cv"
+          accept=".pdf,.jpg,.jpeg"
+          onChange={(e) => handleFileChange(e, 'cv')}
           required
-          placeholder="Share your experience, specialties, and why you want to join our team..."
         />
+        {uploadingCv && <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>Uploading...</p>}
+        {cvUrl && <p style={{ color: '#46b450', fontSize: '0.9rem', marginTop: '4px' }}>✓ File uploaded</p>}
       </div>
 
-      <button type="submit" className={styles.btnSubmit}>
-        Submit Application
+      <button type="submit" className={styles.btnSubmit} disabled={submitting || uploadingLetter || uploadingCv}>
+        {submitting ? 'Submitting...' : 'Submit Application'}
       </button>
+
+      {error && (
+        <div className={styles.formError} style={{ color: '#dc3232', marginTop: '12px', padding: '12px', background: '#ffe5e5', borderRadius: '8px' }}>
+          {error}
+        </div>
+      )}
 
       {submitted && (
         <div className={styles.formSuccess}>
-          Thank you! Your application has been submitted successfully.
+          Thank you! Your application has been submitted successfully. We'll review it and get back to you soon.
         </div>
       )}
     </form>

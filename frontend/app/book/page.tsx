@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCartStore, OrderItem } from '@/lib/store/cartStore';
+import { productApi } from '@/lib/api';
 import styles from './page.module.css';
 
 interface Service {
-  id: number;
+  id: string;
   title: string;
   description: string;
   adultPrice: number;
@@ -18,9 +19,6 @@ interface Service {
 }
 
 // OrderItem is imported from cartStore
-
-// Services data - using available images
-const services: Service[] = [
   {
     id: 1,
     title: 'Classic Haircut / Beardcut Services',
@@ -171,7 +169,7 @@ const services: Service[] = [
     beforeImage: '/images/unnamed.png',
     afterImage: '/images/Gemini_Generated_Image_gua5xogua5xogua5.png',
   },
-];
+];*/
 
 function BeforeAfterSlider({ beforeImage, afterImage }: { beforeImage: string; afterImage: string }) {
   const [splitPosition, setSplitPosition] = useState(50);
@@ -275,7 +273,10 @@ export default function BookPage() {
   const router = useRouter();
   const { items: order, addItem, loadFromStorage } = useCartStore();
   const [currentFilter, setCurrentFilter] = useState<'all' | 'general' | 'recovery'>('all');
-  const [selectedAges, setSelectedAges] = useState<Record<number, 'adult' | 'kids'>>({});
+  const [selectedAges, setSelectedAges] = useState<Record<string, 'adult' | 'kids'>>({});
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ show: boolean; message: string; serviceName?: string }>({
     show: false,
     message: '',
@@ -285,9 +286,30 @@ export default function BookPage() {
     loadFromStorage();
   }, [loadFromStorage]);
 
-  const filteredServices = currentFilter === 'all'
-    ? services
-    : services.filter(service => service.category === currentFilter);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const category = currentFilter === 'all' ? undefined : currentFilter;
+        const response = await productApi.getAll(category);
+        if (response.success) {
+          setServices(response.data || []);
+        } else {
+          setError('Failed to load products');
+        }
+      } catch (err: any) {
+        console.error('Error fetching products:', err);
+        setError(err.message || 'Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [currentFilter]);
+
+  const filteredServices = services;
 
   const showNotification = (message: string, serviceName?: string) => {
     setNotification({ show: true, message, serviceName });
@@ -305,21 +327,24 @@ export default function BookPage() {
     const price = finalAgeGroup === 'kids' && service.kidsPrice ? service.kidsPrice : service.adultPrice;
     const displayAge = finalAgeGroup === 'fixed' ? 'Fixed' : finalAgeGroup === 'adult' ? 'Adult' : 'Kids';
     const key = `${service.id}-${finalAgeGroup}`;
+    
+    // Convert service id to string for cart store compatibility
+    const serviceForCart = { ...service, id: String(service.id) } as any;
 
     const existingItem = order.find(item => item.key === key);
     if (existingItem) {
       showNotification(`${service.title} quantity updated!`, service.title);
       // Update quantity by adding a new item (store will handle merging)
-      addItem({ ...service, key, ageGroup: finalAgeGroup, displayAge, price, quantity: 1 } as OrderItem);
+      addItem({ ...serviceForCart, key, ageGroup: finalAgeGroup, displayAge, price, quantity: 1, productId: service.id } as OrderItem);
     } else {
       showNotification(`${service.title} added to your order!`, service.title);
-      addItem({ ...service, key, ageGroup: finalAgeGroup, displayAge, price, quantity: 1 } as OrderItem);
+      addItem({ ...serviceForCart, key, ageGroup: finalAgeGroup, displayAge, price, quantity: 1, productId: service.id } as OrderItem);
     }
   };
 
   const total = order.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const selectAge = (serviceId: number, ageGroup: 'adult' | 'kids') => {
+  const selectAge = (serviceId: string, ageGroup: 'adult' | 'kids') => {
     setSelectedAges(prev => ({ ...prev, [serviceId]: ageGroup }));
   };
 
@@ -397,6 +422,21 @@ export default function BookPage() {
 
           <div className={styles.orderContainer}>
             {/* Services Grid */}
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-primary)' }}>
+                <p>Loading products...</p>
+              </div>
+            ) : error ? (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#b00020' }}>
+                <p>Error: {error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  style={{ marginTop: '16px', padding: '10px 20px', cursor: 'pointer' }}
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
             <div className={styles.servicesGrid}>
               {filteredServices.map(service => {
                 const hasDifferentPrices = service.kidsPrice !== null && service.adultPrice !== service.kidsPrice;
@@ -476,6 +516,7 @@ export default function BookPage() {
                 );
               })}
             </div>
+            )}
 
             {/* Order Summary */}
             <div className={styles.orderSummary}>

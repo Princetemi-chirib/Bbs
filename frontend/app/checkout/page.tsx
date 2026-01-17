@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store/cartStore';
-import { emailApi } from '@/lib/api';
+import { emailApi, orderApi } from '@/lib/api';
 import styles from './page.module.css';
 
 // Dynamically import Paystack to avoid SSR issues with window object
@@ -19,6 +19,7 @@ interface CustomerInfo {
   email: string;
   phone: string;
   address: string;
+  state: string;
   city: string;
   location: string;
   additionalNotes: string;
@@ -33,14 +34,37 @@ export default function CheckoutPage() {
     email: '',
     phone: '',
     address: '',
+    state: '',
     city: '',
     location: '',
     additionalNotes: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [availableLocations, setAvailableLocations] = useState<Record<string, string[]>>({});
+  const [availableStates, setAvailableStates] = useState<string[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(true);
 
   const total = getTotal();
+
+  // Fetch available locations on mount
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch('/api/v1/locations');
+        const data = await response.json();
+        if (data.success) {
+          setAvailableLocations(data.data.locations || {});
+          setAvailableStates(data.data.states || []);
+        }
+      } catch (err) {
+        console.error('Failed to load locations:', err);
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+    fetchLocations();
+  }, []);
 
   useEffect(() => {
     loadFromStorage();
@@ -77,6 +101,9 @@ export default function CheckoutPage() {
       newErrors.phone = 'Phone number is required';
     } else if (!/^[0-9]{10,15}$/.test(customerInfo.phone.replace(/[-\s]/g, ''))) {
       newErrors.phone = 'Please enter a valid phone number';
+    }
+    if (!customerInfo.state.trim()) {
+      newErrors.state = 'State is required';
     }
     if (!customerInfo.city.trim()) {
       newErrors.city = 'City is required';
@@ -143,35 +170,69 @@ export default function CheckoutPage() {
         console.log('Payment successful:', response);
         setIsProcessing(false);
         
-        // Send order confirmation email
         try {
-          const orderReference = `ORD-${Date.now()}`;
-          await emailApi.sendOrderConfirmation({
+          // Save order to database
+          const orderData = {
             customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
             customerEmail: customerInfo.email,
-            orderReference,
-            items: items.map(item => ({
-              title: item.title,
-              quantity: item.quantity,
-              price: item.price,
-              displayAge: item.displayAge !== 'Fixed' ? item.displayAge : undefined,
-            })),
-            total,
+            customerPhone: customerInfo.phone,
+            state: customerInfo.state,
             city: customerInfo.city,
             location: customerInfo.location,
             address: customerInfo.address || undefined,
-            phone: customerInfo.phone,
+            additionalNotes: customerInfo.additionalNotes || undefined,
+            items: items.map(item => ({
+              productId: item.productId || item.id?.toString() || '',
+              title: item.title,
+              quantity: item.quantity,
+              ageGroup: item.ageGroup || 'fixed',
+              unitPrice: item.price,
+              totalPrice: item.price * item.quantity,
+            })),
+            totalAmount: total,
             paymentReference: response.reference,
-          });
-          console.log('Order confirmation email sent');
-        } catch (error) {
-          console.error('Failed to send order confirmation email:', error);
-          // Don't block the user if email fails
+            paymentMethod: 'paystack',
+          };
+
+          const orderResponse = await orderApi.create(orderData);
+          const orderNumber = orderResponse.data?.orderNumber || `ORD-${Date.now()}`;
+          
+          console.log('Order saved to database:', orderResponse);
+          
+          // Send order confirmation email
+          try {
+            await emailApi.sendOrderConfirmation({
+              customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
+              customerEmail: customerInfo.email,
+              orderReference: orderNumber,
+              items: items.map(item => ({
+                title: item.title,
+                quantity: item.quantity,
+                price: item.price,
+                displayAge: item.displayAge !== 'Fixed' ? item.displayAge : undefined,
+              })),
+              total,
+              city: customerInfo.city,
+              location: customerInfo.location,
+              address: customerInfo.address || undefined,
+              phone: customerInfo.phone,
+              paymentReference: response.reference,
+            });
+            console.log('Order confirmation email sent');
+          } catch (error) {
+            console.error('Failed to send order confirmation email:', error);
+            // Don't block the user if email fails
+          }
+          
+          // Clear cart and redirect to success page
+          clearCart();
+          router.push(`/checkout/success?reference=${response.reference}&order=${orderNumber}`);
+        } catch (error: any) {
+          console.error('Failed to save order:', error);
+          // Still redirect even if order save fails (payment was successful)
+          clearCart();
+          router.push(`/checkout/success?reference=${response.reference}`);
         }
-        
-        // Clear cart and redirect to success page
-        clearCart();
-        router.push(`/checkout/success?reference=${response.reference}`);
       },
       onClose: () => {
         setIsProcessing(false);
@@ -183,12 +244,20 @@ export default function CheckoutPage() {
   };
 
   const handleInputChange = (field: keyof CustomerInfo, value: string) => {
-    setCustomerInfo((prev) => ({ ...prev, [field]: value }));
+    // If state changes, reset city and location
+    if (field === 'state') {
+      setCustomerInfo((prev) => ({ ...prev, [field]: value, city: '', location: '' }));
+    } else {
+      setCustomerInfo((prev) => ({ ...prev, [field]: value }));
+    }
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
+
+  // Get cities for selected state
+  const availableCities = customerInfo.state ? (availableLocations[customerInfo.state] || []) : [];
 
   if (items.length === 0) {
     return null; // Will redirect in useEffect
@@ -271,21 +340,57 @@ export default function CheckoutPage() {
               </div>
 
               <div className={styles.formGroup}>
+                <label htmlFor="state">State *</label>
+                <select
+                  id="state"
+                  value={customerInfo.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  className={errors.state ? styles.inputError : ''}
+                  disabled={loadingLocations || availableStates.length === 0}
+                >
+                  <option value="">Select a state</option>
+                  {availableStates.map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
+                {errors.state && (
+                  <span className={styles.errorMessage}>{errors.state}</span>
+                )}
+                {loadingLocations && (
+                  <span className={styles.helpText}>Loading available locations...</span>
+                )}
+                {!loadingLocations && availableStates.length === 0 && (
+                  <span className={styles.helpText} style={{ color: '#dc3232' }}>
+                    No barbers available in any location. Please contact support.
+                  </span>
+                )}
+              </div>
+
+              <div className={styles.formGroup}>
                 <label htmlFor="city">City *</label>
                 <select
                   id="city"
                   value={customerInfo.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
                   className={errors.city ? styles.inputError : ''}
+                  disabled={!customerInfo.state || availableCities.length === 0}
                 >
                   <option value="">Select a city</option>
-                  <option value="lagos">Lagos</option>
-                  <option value="abuja">Abuja</option>
-                  <option value="warri">Warri</option>
-                  <option value="other">Other</option>
+                  {availableCities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
                 </select>
                 {errors.city && (
                   <span className={styles.errorMessage}>{errors.city}</span>
+                )}
+                {customerInfo.state && availableCities.length === 0 && (
+                  <span className={styles.helpText} style={{ color: '#dc3232' }}>
+                    No cities available in this state. Please select another state.
+                  </span>
                 )}
               </div>
 

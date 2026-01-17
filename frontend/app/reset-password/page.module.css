@@ -1,0 +1,165 @@
+.page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.card,
+.successCard,
+.errorCard,
+.loadingCard {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card h1,
+.successCard h1,
+.errorCard h1 {
+  color: #39413f;
+  font-size: 1.8rem;
+  margin: 0 0 12px 0;
+  text-align: center;
+}
+
+.card p,
+.successCard p,
+.errorCard p,
+.loadingCard p {
+  color: #5a625f;
+  text-align: center;
+  margin: 0 0 30px 0;
+}
+
+.form {
+  margin-top: 30px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  color: #39413f;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #b8aea8;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: #39413f;
+  box-shadow: 0 0 0 3px rgba(57, 65, 63, 0.1);
+}
+
+.inputError {
+  border-color: #dc3232 !important;
+}
+
+.fieldError {
+  display: block;
+  color: #dc3232;
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+.errorMessage {
+  background: #ffe5e5;
+  color: #dc3232;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.submitButton {
+  width: 100%;
+  background: #39413f;
+  color: #ffffff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 10px;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #2a312f;
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.successIcon {
+  width: 60px;
+  height: 60px;
+  background: #46b450;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0 auto 20px;
+}
+
+.loginLink,
+.homeLink {
+  display: inline-block;
+  background: #39413f;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: 20px;
+  transition: background 0.2s;
+}
+
+.loginLink:hover,
+.homeLink:hover {
+  background: #2a312f;
+}
+
+.errorCard {
+  text-align: center;
+}
+
+.errorCard h1 {
+  color: #dc3232;
+}
+
+.loadingCard {
+  text-align: center;
+}
+
+.loadingCard p {
+  color: #5a625f;
+  font-size: 1.1rem;
+}
