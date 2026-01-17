@@ -49,7 +49,9 @@ export default function CheckoutPage() {
     }
   }, [items.length, router, loadFromStorage]);
 
-  // Paystack public key - should be in environment variable
+  // Paystack public key - get from Paystack Dashboard → Settings → API Keys
+  // Test key format: pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  // Live key format: pk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
   const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_your_public_key_here';
 
   // Only initialize Paystack on client side
