@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, password } = body;
+    let { token, password } = body;
 
     if (!token || !password) {
       return NextResponse.json(
@@ -13,6 +13,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Decode token if it's URL encoded
+    token = decodeURIComponent(token);
 
     if (password.length < 8) {
       return NextResponse.json(

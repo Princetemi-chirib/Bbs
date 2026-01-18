@@ -1,0 +1,284 @@
+.page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.header {
+  background: #39413f;
+  color: #ffffff;
+  padding: 20px 40px;
+}
+
+.backLink {
+  color: #dcd2cc;
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.subtext {
+  margin: 10px 0 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.main {
+  padding: 32px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+}
+
+.card,
+.formCard {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.formHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.toolbarLeft {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search {
+  min-width: 240px;
+  padding: 10px 12px;
+  border: 1px solid #b8aea8;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.select {
+  padding: 10px 12px;
+  border: 1px solid #b8aea8;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #ffffff;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroupInline {
+  display: flex;
+  align-items: center;
+}
+
+.formGroup label,
+.formGroupInline label {
+  font-weight: 600;
+  color: #39413f;
+  font-size: 0.9rem;
+}
+
+.formGroup input,
+.formGroup textarea,
+.formGroup select {
+  padding: 10px 12px;
+  border: 1px solid #b8aea8;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.formActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.primaryBtn {
+  background: #dcd2cc;
+  color: #39413f;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primaryBtn:hover {
+  background: #c8beb8;
+}
+
+.ghostBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ghostBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.formCard .ghostBtn {
+  border-color: #b8aea8;
+  color: #39413f;
+}
+
+.formCard .ghostBtn:hover {
+  background: rgba(57, 65, 63, 0.06);
+}
+
+.linkBtn {
+  background: transparent;
+  border: none;
+  color: #39413f;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.dangerLink {
+  background: transparent;
+  border: none;
+  color: #dc3232;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.rowActions {
+  display: inline-flex;
+  gap: 12px;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  font-size: 0.85rem;
+  color: #5a625f;
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
+}
+
+.titleCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.muted {
+  color: #5a625f;
+  font-size: 0.85rem;
+  max-width: 520px;
+}
+
+.activePill,
+.inactivePill {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.activePill {
+  background: rgba(70, 180, 80, 0.15);
+  color: #2f7a35;
+}
+
+.inactivePill {
+  background: rgba(220, 50, 50, 0.12);
+  color: #a21d1d;
+}
+
+.center {
+  padding: 24px;
+  text-align: center;
+  color: #5a625f;
+}
+
+.centerError {
+  padding: 24px;
+  text-align: center;
+  color: #b00020;
+}
+
+@media (max-width: 900px) {
+  .main {
+    padding: 24px 16px;
+  }
+  .header {
+    padding: 18px 16px;
+  }
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+  .search {
+    min-width: 180px;
+  }
+}
+

@@ -1,16 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
+
+async function verifyAdmin(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+
+  const token = authHeader.substring(7);
+  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+
+    if (!user || user.role !== 'ADMIN' || !user.isActive) return null;
+    return user;
+  } catch {
+    return null;
+  }
+}
 
 // GET /api/v1/products - Get all products
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
-    const isActive = searchParams.get('active') !== 'false';
+    const activeParam = searchParams.get('active'); // "true" | "false" | "all" | null
 
-    const where: any = {
-      isActive: isActive !== false,
-    };
+    const where: any = {};
+    if (activeParam !== 'all') {
+      // default: only active
+      where.isActive = activeParam === 'false' ? false : true;
+    }
 
     if (category && (category === 'general' || category === 'recovery')) {
       where.category = category.toUpperCase();
@@ -34,6 +55,8 @@ export async function GET(request: NextRequest) {
       category: product.category.toLowerCase() as 'general' | 'recovery',
       beforeImage: product.beforeImage,
       afterImage: product.afterImage,
+      isActive: product.isActive,
+      displayOrder: product.displayOrder,
     }));
 
     return NextResponse.json({
@@ -57,6 +80,14 @@ export async function GET(request: NextRequest) {
 // POST /api/v1/products - Create a new product (Admin only)
 export async function POST(request: NextRequest) {
   try {
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. Admin access required.' } },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
       title,

@@ -8,7 +8,7 @@ import styles from './page.module.css';
 function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const reference = searchParams.get('reference');
+  const reference = searchParams?.get('reference') || null;
 
   useEffect(() => {
     // Redirect if no reference

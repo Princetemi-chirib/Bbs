@@ -8,7 +8,7 @@ import styles from './page.module.css';
 export default function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams?.get('token') || null;
 
   const [formData, setFormData] = useState({
     password: '',
@@ -34,8 +34,12 @@ export default function ResetPasswordPage() {
   }, [token]);
 
   const verifyToken = async () => {
+    if (!token) return;
+    
     try {
-      const response = await fetch(`/api/v1/auth/verify-reset-token?token=${token}`);
+      // URL encode the token for the API call
+      const encodedToken = encodeURIComponent(token);
+      const response = await fetch(`/api/v1/auth/verify-reset-token?token=${encodedToken}`);
       const data = await response.json();
       
       if (data.success) {

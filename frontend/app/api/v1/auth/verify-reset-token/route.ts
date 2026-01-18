@@ -4,14 +4,17 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const token = searchParams.get('token');
+    const tokenParam = searchParams.get('token');
 
-    if (!token) {
+    if (!tokenParam) {
       return NextResponse.json(
         { success: false, error: { message: 'Reset token is required' } },
         { status: 400 }
       );
     }
+
+    // Decode the token (searchParams.get already decodes, but we'll be explicit)
+    const token = decodeURIComponent(tokenParam);
 
     // Find user with this reset token
     const user = await prisma.user.findUnique({

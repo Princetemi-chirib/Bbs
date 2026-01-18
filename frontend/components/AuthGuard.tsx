@@ -23,7 +23,8 @@ export default function AuthGuard({
   useEffect(() => {
     const checkAuth = () => {
       if (!isAuthenticated()) {
-        router.push(`${redirectTo}?redirect=${encodeURIComponent(pathname)}`);
+        const safePath = pathname ?? '/';
+        router.push(`${redirectTo}?redirect=${encodeURIComponent(safePath)}`);
         return;
       }
 

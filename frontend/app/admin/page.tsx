@@ -60,7 +60,7 @@ export default function AdminDashboard() {
           <Link href="/admin">Overview</Link>
           <Link href="/admin/orders">Orders</Link>
           <Link href="/admin/barbers">Barbers</Link>
-          <Link href="/admin/products">Products</Link>
+          <Link href="/admin/services">Services</Link>
           <button onClick={() => {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('user_data');

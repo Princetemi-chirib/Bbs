@@ -72,10 +72,13 @@ export async function POST(
       const resetToken = crypto.randomBytes(32).toString('hex');
       const resetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
+      // Construct full name from firstName and lastName
+      const fullName = `${application.firstName} ${application.lastName}${application.otherName ? ' ' + application.otherName : ''}`;
+
       user = await prisma.user.create({
         data: {
           email: application.email.toLowerCase(),
-          name: application.name,
+          name: fullName,
           phone: application.phone,
           password: null, // No password set - must reset
           role: 'BARBER',
@@ -87,7 +90,13 @@ export async function POST(
 
       // Send welcome email with password reset link
       try {
-        const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${resetToken}`;
+        // Ensure base URL has proper format
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const cleanBaseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
+        // URL encode the token to ensure it works properly in email links
+        const encodedToken = encodeURIComponent(resetToken);
+        const resetUrl = `${cleanBaseUrl}/reset-password?token=${encodedToken}`;
+        
         const welcomeEmailHtml = `
           <!DOCTYPE html>
           <html>
@@ -101,7 +110,7 @@ export async function POST(
                 <h2>Welcome to BBS Limited!</h2>
               </div>
               <div style="background: #f9f9f9; padding: 20px; border: 1px solid #ddd;">
-                <p>Congratulations, ${application.name}!</p>
+                <p>Congratulations, ${fullName}!</p>
                 <p>Your application has been approved. You now have access to your barber dashboard!</p>
                 <p><strong>Next Steps:</strong></p>
                 <p>To get started, you need to set up your password. Click the button below to create your password and access your dashboard.</p>
@@ -127,7 +136,7 @@ export async function POST(
           to: application.email,
           subject: 'Welcome to BBS Limited - Set Up Your Password',
           html: welcomeEmailHtml,
-          text: `Congratulations ${application.name}! Your application has been approved. Set up your password: ${resetUrl}. This link expires in 24 hours.`,
+          text: `Congratulations ${fullName}! Your application has been approved. Set up your password: ${resetUrl}. This link expires in 24 hours.`,
         });
       } catch (emailError) {
         console.error('Failed to send welcome email:', emailError);
@@ -137,14 +146,19 @@ export async function POST(
 
     // Create barber profile
     const barberId = `BAR-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    // Extract state from address if not explicitly provided (address format: "City, State" or just "Address")
+    const addressParts = application.address.split(',').map(s => s.trim());
+    const extractedState = addressParts.length > 1 ? addressParts[addressParts.length - 1] : (application.state || addressParts[0]);
+    const extractedCity = addressParts.length > 1 ? addressParts[0] : addressParts[0];
+    
     const barber = await prisma.barber.create({
       data: {
         userId: user.id,
         barberId,
-        state: application.state,
-        city: application.state, // Use state as city if city not provided
+        state: application.state || extractedState,
+        city: extractedCity,
         address: application.address,
-        location: application.state, // Keep for backward compatibility
+        location: extractedCity, // Keep for backward compatibility
         bio: null,
         experienceYears: application.experienceYears,
         specialties: application.specialties || [],
