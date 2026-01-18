@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     });
 
     const averageRating = barbersWithRatings.length > 0
-      ? barbersWithRatings.reduce((sum, b) => sum + Number(b.ratingAvg), 0) / barbersWithRatings.length
+      ? barbersWithRatings.reduce((sum: number, b: typeof barbersWithRatings[0]) => sum + Number(b.ratingAvg), 0) / barbersWithRatings.length
       : 0;
 
     // Orders by status
