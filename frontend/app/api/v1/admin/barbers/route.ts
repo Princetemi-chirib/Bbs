@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: barbers.map((barber) => ({
+      data: barbers.map((barber: typeof barbers[0]) => ({
         id: barber.id,
         userId: barber.userId,
         status: barber.status,
