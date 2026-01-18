@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 
+export const dynamic = 'force-dynamic';
+
 // Helper function to verify admin token
 async function verifyAdmin(request: NextRequest) {
   const authHeader = request.headers.get('authorization');

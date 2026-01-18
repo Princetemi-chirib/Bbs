@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { emailService } from '@/lib/server/emailService';
 import { emailTemplates } from '@/lib/server/emailTemplates';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

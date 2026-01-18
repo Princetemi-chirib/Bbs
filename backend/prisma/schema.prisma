@@ -89,6 +89,7 @@ model Barber {
   availability     BarberAvailability[]
   reviews          Review[]
   preferredBy      Customer[]
+  assignedOrders   Order[]  @relation("AssignedOrders")
 
   @@map("barbers")
   @@index([status])
@@ -333,4 +334,102 @@ model BarberApplication {
   @@map("barber_applications")
   @@index([email])
   @@index([status])
+}
+
+enum ProductCategory {
+  GENERAL
+  RECOVERY
+}
+
+model Product {
+  id              String          @id @default(uuid())
+  title           String
+  description     String?         @db.Text
+  adultPrice      Decimal         @db.Decimal(10, 2) @map("adult_price")
+  kidsPrice       Decimal?        @db.Decimal(10, 2) @map("kids_price") // null means same as adult
+  category        ProductCategory
+  beforeImage     String          @map("before_image")
+  afterImage      String          @map("after_image")
+  isActive        Boolean         @default(true) @map("is_active")
+  displayOrder    Int             @default(0) @map("display_order")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  orderItems      OrderItem[]
+
+  @@map("products")
+  @@index([category])
+  @@index([isActive])
+  @@index([displayOrder])
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum JobStatus {
+  PENDING_ACCEPTANCE
+  ACCEPTED
+  ON_THE_WAY
+  ARRIVED
+  COMPLETED
+  DECLINED
+}
+
+model Order {
+  id                String        @id @default(uuid())
+  orderNumber       String        @unique @map("order_number")
+  customerName      String        @map("customer_name")
+  customerEmail     String        @map("customer_email")
+  customerPhone     String        @map("customer_phone")
+  city              String
+  location          String
+  address           String?       @db.Text
+  additionalNotes   String?       @db.Text @map("additional_notes")
+  totalAmount       Decimal       @db.Decimal(10, 2) @map("total_amount")
+  paymentReference  String?       @unique @map("payment_reference")
+  paymentMethod     String?       @map("payment_method")
+  paymentStatus     PaymentStatus @default(PENDING) @map("payment_status")
+  status            OrderStatus   @default(PENDING)
+  jobStatus         JobStatus?    @map("job_status") // Job assignment status
+  assignedBarberId  String?       @map("assigned_barber_id") // Link to Barber when assigned
+  declineReason     String?       @db.Text @map("decline_reason") // Reason when declined
+  emailSent         Boolean       @default(false) @map("email_sent")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  items             OrderItem[]
+  assignedBarber    Barber?       @relation("AssignedOrders", fields: [assignedBarberId], references: [id])
+
+  @@map("orders")
+  @@index([orderNumber])
+  @@index([customerEmail])
+  @@index([paymentReference])
+  @@index([status])
+  @@index([jobStatus])
+  @@index([assignedBarberId])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String   @map("order_id")
+  productId       String   @map("product_id")
+  title           String   // Store product title at time of order
+  quantity        Int      @default(1)
+  ageGroup        String   // 'adult', 'kids', or 'fixed'
+  unitPrice       Decimal  @db.Decimal(10, 2) @map("unit_price")
+  totalPrice      Decimal  @db.Decimal(10, 2) @map("total_price")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product  @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+  @@index([orderId])
+  @@index([productId])
 }

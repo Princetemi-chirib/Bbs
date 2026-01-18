@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { emailService } from '@/lib/server/emailService';
 
+export const dynamic = 'force-dynamic';
+
 async function verifyAdmin(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

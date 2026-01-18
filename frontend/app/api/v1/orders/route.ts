@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/server/emailService';
 
+export const dynamic = 'force-dynamic';
+
 // POST /api/v1/orders - Create a new order
 export async function POST(request: NextRequest) {
   try {

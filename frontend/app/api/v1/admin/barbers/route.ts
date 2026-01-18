@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+
+export const dynamic = 'force-dynamic';
 
 async function verifyAdmin(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -51,9 +54,23 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
+    type BarberWithUser = Prisma.BarberGetPayload<{
+      include: {
+        user: {
+          select: {
+            id: true;
+            name: true;
+            email: true;
+            phone: true;
+            avatarUrl: true;
+          };
+        };
+      };
+    }>;
+
     return NextResponse.json({
       success: true,
-      data: barbers.map((barber) => ({
+      data: barbers.map((barber: BarberWithUser) => ({
         id: barber.id,
         userId: barber.userId,
         status: barber.status,
