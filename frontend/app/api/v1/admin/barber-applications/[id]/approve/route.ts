@@ -147,7 +147,7 @@ export async function POST(
     // Create barber profile
     const barberId = `BAR-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
     // Extract state from address if not explicitly provided (address format: "City, State" or just "Address")
-    const addressParts = application.address.split(',').map(s => s.trim());
+    const addressParts = application.address.split(',').map((s: string) => s.trim());
     const extractedState = addressParts.length > 1 ? addressParts[addressParts.length - 1] : (application.state || addressParts[0]);
     const extractedCity = addressParts.length > 1 ? addressParts[0] : addressParts[0];
     
