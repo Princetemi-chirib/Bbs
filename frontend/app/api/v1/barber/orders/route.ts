@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         jobStatus: order.jobStatus,
         paymentStatus: order.paymentStatus,
         declineReason: order.declineReason,
-        items: order.items.map((item) => ({
+        items: order.items.map((item: typeof order.items[0]) => ({
           id: item.id,
           title: item.title,
           quantity: item.quantity,

@@ -199,7 +199,7 @@ View order in dashboard: ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:
         paymentReference: order.paymentReference,
         status: order.status,
         paymentStatus: order.paymentStatus,
-        items: order.items.map(item => ({
+        items: order.items.map((item: typeof order.items[0]) => ({
           id: item.id,
           title: item.title,
           quantity: item.quantity,
