@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "postinstall": "prisma generate",
     "create-admin": "node scripts/create-admin.js",
     "wake-db": "node scripts/wake-db.js",
     "db:push": "npx dotenv-cli -e .env.local -- npx prisma db push",
