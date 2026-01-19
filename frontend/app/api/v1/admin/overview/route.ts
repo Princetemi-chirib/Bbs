@@ -115,17 +115,17 @@ export async function GET(request: NextRequest) {
           totalRevenue: Number(totalRevenue._sum.totalAmount || 0),
           averageRating: Number(averageRating.toFixed(2)),
         },
-        ordersByStatus: ordersByStatus.map((item) => ({
+        ordersByStatus: ordersByStatus.map((item: typeof ordersByStatus[0]) => ({
           status: item.status,
           count: item._count.id,
         })),
         ordersByJobStatus: ordersByJobStatus
-          .filter((item) => item.jobStatus !== null)
-          .map((item) => ({
+          .filter((item: typeof ordersByJobStatus[0]) => item.jobStatus !== null)
+          .map((item: typeof ordersByJobStatus[0]) => ({
             status: item.jobStatus,
             count: item._count.id,
           })),
-        recentOrders: recentOrders.map((order) => ({
+        recentOrders: recentOrders.map((order: typeof recentOrders[0]) => ({
           id: order.id,
           orderNumber: order.orderNumber,
           customerName: order.customerName,
