@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform to match frontend format
-    const formattedProducts = products.map(product => ({
+    const formattedProducts = products.map((product: typeof products[0]) => ({
       id: product.id,
       title: product.title,
       description: product.description || '',

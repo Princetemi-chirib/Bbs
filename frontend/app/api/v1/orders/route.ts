@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     (async () => {
       try {
         const adminEmail = 'admin@bbslimited.online';
-        const itemsList = order.items.map(item => `- ${item.title} (${item.quantity}x) - ₦${Number(item.totalPrice).toLocaleString()}`).join('\n');
+        const itemsList = order.items.map((item: typeof order.items[0]) => `- ${item.title} (${item.quantity}x) - ₦${Number(item.totalPrice).toLocaleString()}`).join('\n');
         
         const adminEmailHtml = `
           <!DOCTYPE html>
@@ -258,7 +258,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: orders.map(order => ({
+      data: orders.map((order: typeof orders[0]) => ({
         id: order.id,
         orderNumber: order.orderNumber,
         customerName: order.customerName,
@@ -270,7 +270,7 @@ export async function GET(request: NextRequest) {
         paymentReference: order.paymentReference,
         status: order.status,
         paymentStatus: order.paymentStatus,
-        items: order.items.map(item => ({
+        items: order.items.map((item: typeof order.items[0]) => ({
           id: item.id,
           title: item.title,
           quantity: item.quantity,

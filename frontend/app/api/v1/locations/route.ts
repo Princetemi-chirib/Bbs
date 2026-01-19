@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     // Extract unique states and cities
     const statesMap = new Map<string, Set<string>>();
 
-    barbers.forEach((barber) => {
+    barbers.forEach((barber: typeof barbers[0]) => {
       // Prefer state field, fallback to location field
       const state = barber.state || (barber.location ? barber.location.split(',')[0].trim() : null);
       const city = barber.city || barber.location || null;
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Convert Map to object format
     const locations: Record<string, string[]> = {};
-    statesMap.forEach((cities, state) => {
+    statesMap.forEach((cities: Set<string>, state: string) => {
       locations[state] = Array.from(cities).sort();
     });
 

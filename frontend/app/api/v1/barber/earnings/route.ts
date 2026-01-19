@@ -101,13 +101,13 @@ export async function GET(request: NextRequest) {
     let totalEarnings = 0;
     const earningsByService: Record<string, { count: number; earnings: number }> = {};
 
-    completedOrders.forEach((order) => {
+    completedOrders.forEach((order: typeof completedOrders[0]) => {
       const orderTotal = Number(order.totalAmount);
       const orderEarnings = orderTotal * commissionRate;
       totalEarnings += orderEarnings;
 
       // Group by service/product
-      order.items.forEach((item) => {
+      order.items.forEach((item: typeof order.items[0]) => {
         const serviceTitle = item.product.title;
         if (!earningsByService[serviceTitle]) {
           earningsByService[serviceTitle] = { count: 0, earnings: 0 };
