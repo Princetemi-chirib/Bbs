@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     });
 
     const pendingEarnings = pendingOrders.reduce(
-      (sum, order) => sum + Number(order.totalAmount) * commissionRate,
+      (sum: number, order: typeof pendingOrders[0]) => sum + Number(order.totalAmount) * commissionRate,
       0
     );
 
