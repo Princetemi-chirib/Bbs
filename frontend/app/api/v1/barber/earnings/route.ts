@@ -144,12 +144,12 @@ export async function GET(request: NextRequest) {
         orderCount: completedOrders.length,
         pendingEarnings: Number(pendingEarnings.toFixed(2)),
         pendingOrderCount: pendingOrders.length,
-        earningsByService: Object.entries(earningsByService).map(([service, data]) => ({
+        earningsByService: Object.entries(earningsByService).map(([service, data]: [string, { count: number; earnings: number }]) => ({
           service,
           orderCount: data.count,
           earnings: Number(data.earnings.toFixed(2)),
         })),
-        orders: completedOrders.map((order) => ({
+        orders: completedOrders.map((order: typeof completedOrders[0]) => ({
           id: order.id,
           orderNumber: order.orderNumber,
           totalAmount: Number(order.totalAmount),
