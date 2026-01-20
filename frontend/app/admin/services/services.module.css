@@ -76,6 +76,7 @@
   padding: 32px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border: 1px solid #e5e5e5;
+  overflow: visible;
 }
 
 .formCard {
@@ -302,31 +303,20 @@
 .tableWrap {
   width: 100%;
   overflow-x: auto;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   position: relative;
+  display: block;
+  max-width: 100%;
 }
 
-/* Scroll indicator hint for mobile */
-@media (max-width: 768px) {
-  .tableWrap::after {
-    content: '→';
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    background: linear-gradient(to left, rgba(248, 249, 250, 0.9), transparent);
-    padding: 20px 10px;
-    color: #39413f;
-    font-size: 1.5rem;
-    pointer-events: none;
-    opacity: 0.6;
-    z-index: 1;
-  }
-}
+/* Scroll indicator hint for mobile - removed as it can interfere */
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  display: table;
+  table-layout: auto;
 }
 
 .table th {
@@ -338,10 +328,6 @@
   letter-spacing: 0.5px;
   padding: 16px 12px;
   border-bottom: 2px solid #e5e5e5;
-  position: sticky;
-  left: 0;
-  background: #ffffff;
-  z-index: 10;
 }
 
 .table td {
@@ -350,22 +336,7 @@
   vertical-align: top;
 }
 
-/* Make first column sticky on mobile for better navigation */
-@media (max-width: 768px) {
-  .table th:first-child,
-  .table td:first-child {
-    position: sticky;
-    left: 0;
-    background: #ffffff;
-    z-index: 5;
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
-    padding-left: 20px;
-  }
-
-  .table tbody tr:hover td:first-child {
-    background: #f8f9fa;
-  }
-}
+/* Remove sticky positioning - let all columns scroll together on mobile */
 
 .table tbody tr:hover {
   background: #f8f9fa;
@@ -524,19 +495,60 @@
   }
 
   /* Horizontal scrollable table for mobile */
+  .card {
+    overflow: visible;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 24px;
+  }
+
   .tableWrap {
-    overflow-x: auto;
-    overflow-y: visible;
-    -webkit-overflow-scrolling: touch;
-    margin: 0 -20px;
+    display: block !important;
+    overflow-x: scroll !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 20px !important;
+    position: relative;
+    /* Force scrollbar to show */
+    scrollbar-width: thin;
+    scrollbar-color: #39413f #f1f1f1;
+  }
+
+  /* Add padding back to section for content above table */
+  .sectionHeader {
     padding: 0 20px;
-    width: calc(100% + 40px);
+    margin-bottom: 16px;
+  }
+
+  /* Force horizontal scroll on mobile */
+  .tableWrap::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .tableWrap::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  .tableWrap::-webkit-scrollbar-thumb {
+    background: #39413f;
+    border-radius: 4px;
+  }
+
+  .tableWrap::-webkit-scrollbar-thumb:hover {
+    background: #2a312f;
   }
 
   .table {
     min-width: 900px;
-    width: 100%;
+    width: 900px;
+    table-layout: auto;
     font-size: 0.875rem;
+    margin: 0;
+    display: table;
   }
 
   .table th {
