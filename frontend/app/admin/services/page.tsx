@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { fetchAuth } from '@/lib/auth';
 import styles from './services.module.css';
 
@@ -46,7 +44,6 @@ const emptyForm: ServiceFormState = {
 };
 
 export default function AdminServicesPage() {
-  const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -57,6 +54,43 @@ export default function AdminServicesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ServiceFormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null); // 'before' | 'after' | null
+
+  const uploadServiceImage = async (file: File, imageType: 'before' | 'after') => {
+    setUploading(imageType);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'service');
+      formData.append('imageType', imageType);
+      formData.append('serviceId', editingId || 'new');
+
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/v1/upload/image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error?.message || 'Failed to upload image');
+      }
+
+      // Update the form with the uploaded image URL
+      if (imageType === 'before') {
+        setForm({ ...form, beforeImage: data.data.url });
+      } else {
+        setForm({ ...form, afterImage: data.data.url });
+      }
+    } catch (error: any) {
+      alert(error.message || 'Failed to upload image');
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -192,29 +226,16 @@ export default function AdminServicesPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <Link href="/admin" className={styles.backLink}>← Back to Dashboard</Link>
-        <div className={styles.headerRow}>
-          <h1>Services</h1>
-          <div className={styles.headerActions}>
-            <button className={styles.primaryBtn} onClick={openCreate}>
-              + Add Service
-            </button>
-            <button
-              className={styles.ghostBtn}
-              onClick={() => {
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_data');
-                router.push('/login');
-              }}
-            >
-              Logout
-            </button>
+      <header className={styles.pageHeader}>
+        <div className={styles.pageHeaderContent}>
+          <div>
+            <h1 className={styles.pageTitle}>Services Management</h1>
+            <p className={styles.pageSubtitle}>Manage services that appear on the ordering page</p>
           </div>
+          <button className={styles.addButton} onClick={openCreate}>
+            + Add Service
+          </button>
         </div>
-        <p className={styles.subtext}>
-          These services control what shows on the ordering page. Set <strong>Active</strong> to hide/show and use <strong>Display Order</strong> to sort.
-        </p>
       </header>
 
       <main className={styles.main}>
@@ -273,12 +294,66 @@ export default function AdminServicesPage() {
 
               <div className={styles.grid2}>
                 <div className={styles.formGroup}>
-                  <label>Before Image URL *</label>
-                  <input value={form.beforeImage} onChange={(e) => setForm({ ...form, beforeImage: e.target.value })} />
+                  <label>Before Image *</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      disabled={uploading === 'before'}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          uploadServiceImage(file, 'before');
+                        }
+                      }}
+                      style={{ marginBottom: '8px' }}
+                    />
+                    {uploading === 'before' && <small style={{ color: '#666' }}>Uploading...</small>}
+                    <input 
+                      type="text" 
+                      placeholder="Or paste image URL"
+                      value={form.beforeImage} 
+                      onChange={(e) => setForm({ ...form, beforeImage: e.target.value })} 
+                    />
+                    {form.beforeImage && (
+                      <img 
+                        src={form.beforeImage} 
+                        alt="Before preview" 
+                        style={{ maxWidth: '200px', maxHeight: '150px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px', border: '1px solid #ddd' }}
+                      />
+                    )}
+                  </div>
                 </div>
                 <div className={styles.formGroup}>
-                  <label>After Image URL *</label>
-                  <input value={form.afterImage} onChange={(e) => setForm({ ...form, afterImage: e.target.value })} />
+                  <label>After Image *</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      disabled={uploading === 'after'}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          uploadServiceImage(file, 'after');
+                        }
+                      }}
+                      style={{ marginBottom: '8px' }}
+                    />
+                    {uploading === 'after' && <small style={{ color: '#666' }}>Uploading...</small>}
+                    <input 
+                      type="text" 
+                      placeholder="Or paste image URL"
+                      value={form.afterImage} 
+                      onChange={(e) => setForm({ ...form, afterImage: e.target.value })} 
+                    />
+                    {form.afterImage && (
+                      <img 
+                        src={form.afterImage} 
+                        alt="After preview" 
+                        style={{ maxWidth: '200px', maxHeight: '150px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px', border: '1px solid #ddd' }}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -316,7 +391,9 @@ export default function AdminServicesPage() {
         )}
 
         <section className={styles.card}>
-          <div className={styles.toolbar}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>All Services</h2>
+            <div className={styles.toolbar}>
             <div className={styles.toolbarLeft}>
               <input
                 className={styles.search}
@@ -334,9 +411,10 @@ export default function AdminServicesPage() {
                 <option value="recovery">Recovery</option>
               </select>
             </div>
-            <button className={styles.ghostBtn} onClick={loadServices} disabled={loading}>
-              Refresh
-            </button>
+              <button className={styles.refreshBtn} onClick={loadServices} disabled={loading}>
+                Refresh
+              </button>
+            </div>
           </div>
 
           {loading ? (

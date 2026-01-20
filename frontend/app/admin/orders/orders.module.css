@@ -1,62 +1,105 @@
+/* Page Container */
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #f8f9fa;
 }
 
-.header {
-  background: #39413f;
-  color: #ffffff;
-  padding: 20px 40px;
+/* Page Header */
+.pageHeader {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 32px 40px;
+  margin-bottom: 32px;
 }
 
-.header a {
-  color: #dcd2cc;
-  text-decoration: none;
-  margin-bottom: 10px;
-  display: inline-block;
+@media (max-width: 768px) {
+  .pageHeader {
+    padding-top: 72px;
+  }
 }
 
-.header h1 {
-  margin: 10px 0 0 0;
-  font-size: 1.5rem;
+.pageTitle {
+  margin: 0 0 8px 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #39413f;
+  letter-spacing: -0.5px;
 }
 
+.pageSubtitle {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+/* Main Content */
 .main {
-  padding: 40px;
-  max-width: 1400px;
+  padding: 0 40px 40px 40px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
+/* Section */
 .section {
   background: #ffffff;
   border-radius: 12px;
-  padding: 30px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e5e5;
 }
 
-.section h2 {
-  margin: 0 0 20px 0;
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  margin: 0;
   color: #39413f;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
 }
 
+.sectionBadge {
+  background: #39413f;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Orders Grid */
 .ordersGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 20px;
 }
 
+/* Orders List */
 .ordersList {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+/* Order Card */
 .orderCard {
-  border: 1px solid #e0e0e0;
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
-  padding: 20px;
+  padding: 24px;
+  background: #f8f9fa;
+  transition: all 0.2s ease;
+}
+
+.orderCard:hover {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: #39413f;
 }
 
 .orderHeader {
@@ -64,13 +107,14 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e5e5;
 }
 
 .orderHeader strong {
   color: #39413f;
   font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .orderHeader span {
@@ -84,40 +128,60 @@
 }
 
 .orderDetails p {
-  margin: 8px 0;
+  margin: 10px 0;
   color: #5a625f;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
+.orderDetails strong {
+  color: #39413f;
+  margin-right: 8px;
+  font-weight: 600;
+}
+
+/* Assign Form */
 .assignForm {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e5e5;
 }
 
 .select {
-  padding: 10px;
-  border: 1px solid #b8aea8;
-  border-radius: 6px;
+  padding: 12px 16px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
   font-size: 0.95rem;
   background: #ffffff;
   color: #39413f;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #39413f;
+  box-shadow: 0 0 0 3px rgba(57, 65, 63, 0.1);
 }
 
 .formActions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .assignButton,
 .cancelButton {
   flex: 1;
-  padding: 10px;
+  padding: 12px 24px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .assignButton {
@@ -127,15 +191,18 @@
 
 .assignButton:hover:not(:disabled) {
   background: #2a312f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(57, 65, 63, 0.2);
 }
 
 .assignButton:disabled {
-  background: #ccc;
+  background: #c0c0c0;
   cursor: not-allowed;
+  transform: none;
 }
 
 .cancelButton {
-  background: #e0e0e0;
+  background: #e5e5e5;
   color: #39413f;
 }
 
@@ -143,17 +210,75 @@
   background: #d0d0d0;
 }
 
+/* Empty State */
 .empty {
   text-align: center;
-  color: #5a625f;
-  padding: 40px;
+  color: #6c757d;
+  padding: 60px 20px;
+  font-size: 1rem;
   font-style: italic;
 }
 
+/* Loading */
 .loading {
-  min-height: 100vh;
+  min-height: calc(100vh - 80px);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #39413f;
+  font-size: 1rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .pageHeader {
+    padding: 24px 20px;
+  }
+
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+
+  .main {
+    padding: 0 20px 20px 20px;
+  }
+
+  .section {
+    padding: 24px 20px;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .ordersGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .orderCard {
+    padding: 20px;
+  }
+
+  .orderHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageTitle {
+    font-size: 1.25rem;
+  }
+
+  .formActions {
+    flex-direction: column;
+  }
+
+  .assignButton,
+  .cancelButton {
+    width: 100%;
+  }
 }

@@ -91,14 +91,19 @@ export default function AdminOrdersPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <Link href="/admin">← Back to Dashboard</Link>
-        <h1>Order Management</h1>
+      <header className={styles.pageHeader}>
+        <div>
+          <h1 className={styles.pageTitle}>Order Management</h1>
+          <p className={styles.pageSubtitle}>Manage and assign orders to barbers</p>
+        </div>
       </header>
 
       <main className={styles.main}>
         <section className={styles.section}>
-          <h2>Unassigned Orders ({unassignedOrders.length})</h2>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Unassigned Orders</h2>
+            <span className={styles.sectionBadge}>{unassignedOrders.length} pending</span>
+          </div>
           <div className={styles.ordersGrid}>
             {unassignedOrders.map((order) => (
               <div key={order.id} className={styles.orderCard}>
@@ -173,7 +178,10 @@ export default function AdminOrdersPage() {
         </section>
 
         <section className={styles.section}>
-          <h2>Assigned Orders ({assignedOrders.length})</h2>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Assigned Orders</h2>
+            <span className={styles.sectionBadge}>{assignedOrders.length} total</span>
+          </div>
           <div className={styles.ordersList}>
             {assignedOrders.map((order) => (
               <div key={order.id} className={styles.orderCard}>

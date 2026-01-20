@@ -62,6 +62,7 @@ class EmailService {
     html: string;
     text?: string;
     from?: string;
+    replyTo?: string;
   }): Promise<{ success: boolean; messageId?: string; previewUrl?: string; error?: string }> {
     if (!this.transporter) {
       return {
@@ -79,6 +80,7 @@ class EmailService {
         subject: options.subject,
         text: options.text || options.subject,
         html: options.html,
+        replyTo: options.replyTo,
       };
 
       const info = await this.transporter.sendMail(mailOptions);

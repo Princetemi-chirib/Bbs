@@ -1,0 +1,25 @@
+.adminContainer {
+  display: flex;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: 280px;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding-top: 0;
+  }
+
+  /* Add padding to page headers on mobile to avoid hamburger overlap */
+  .mainContent :global(.pageHeader) {
+    padding-top: 72px;
+  }
+}

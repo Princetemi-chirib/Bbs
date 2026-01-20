@@ -10,6 +10,9 @@
     "postinstall": "prisma generate",
     "create-admin": "node scripts/create-admin.js",
     "wake-db": "node scripts/wake-db.js",
+    "seed-services": "node scripts/seed-services.js",
+    "clear-barbers": "node scripts/clear-barbers.js",
+    "test-emails": "node scripts/test-all-emails.js",
     "db:push": "npx dotenv-cli -e .env.local -- npx prisma db push",
     "db:generate": "npx dotenv-cli -e .env.local -- npx prisma generate"
   },
@@ -20,6 +23,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.6.2",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.9.0",
     "clsx": "^2.0.0",
     "date-fns": "^3.0.6",
     "dotenv": "^16.6.1",

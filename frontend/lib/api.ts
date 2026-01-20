@@ -40,6 +40,14 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 
+// Contact API functions
+export const contactApi = {
+  submit: async (data: { firstName: string; lastName: string; email: string; message: string }) => {
+    const response = await apiClient.post('/contact', data);
+    return response.data;
+  },
+};
+
 // Product API functions
 export const productApi = {
   getAll: async (category?: string) => {

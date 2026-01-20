@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { contactApi } from '@/lib/api';
 import styles from './page.module.css';
 
 export default function ContactPage() {
@@ -12,14 +13,30 @@ export default function ContactPage() {
     message: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement form submission logic
-    console.log('Form submitted:', formData);
-    setSubmitted(true);
-    setFormData({ firstName: '', lastName: '', email: '', message: '' });
-    setTimeout(() => setSubmitted(false), 5000);
+    setError(null);
+    setLoading(true);
+
+    try {
+      const response = await contactApi.submit(formData);
+
+      if (response.success) {
+        setSubmitted(true);
+        setFormData({ firstName: '', lastName: '', email: '', message: '' });
+        setTimeout(() => setSubmitted(false), 5000);
+      } else {
+        setError(response.error?.message || 'Failed to send message. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Contact form error:', err);
+      setError(err.response?.data?.error?.message || 'Failed to send message. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (
@@ -260,13 +277,30 @@ export default function ContactPage() {
                 />
               </div>
 
-              <button type="submit" className={styles.submitButton}>
-                Submit Form
+              <button 
+                type="submit" 
+                className={styles.submitButton}
+                disabled={loading}
+              >
+                {loading ? 'Sending...' : 'Submit Form'}
               </button>
 
               {submitted && (
                 <div className={styles.successMessage}>
-                  The form has been submitted successfully!
+                  The form has been submitted successfully! We will get back to you soon.
+                </div>
+              )}
+
+              {error && (
+                <div className={styles.errorMessage} style={{ 
+                  marginTop: '16px', 
+                  padding: '12px 16px', 
+                  backgroundColor: '#fee', 
+                  border: '1px solid #fcc', 
+                  borderRadius: '8px', 
+                  color: '#c00' 
+                }}>
+                  {error}
                 </div>
               )}
             </form>

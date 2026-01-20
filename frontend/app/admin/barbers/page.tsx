@@ -1,13 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { fetchAuth } from '@/lib/auth';
 import styles from './barbers.module.css';
 
 export default function AdminBarbersPage() {
-  const router = useRouter();
   const [barbers, setBarbers] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,10 +160,12 @@ export default function AdminBarbersPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <Link href="/admin">← Back to Dashboard</Link>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <h1>Barber Management</h1>
+      <header className={styles.pageHeader}>
+        <div className={styles.pageHeaderContent}>
+          <div>
+            <h1 className={styles.pageTitle}>Barber Management</h1>
+            <p className={styles.pageSubtitle}>Manage barbers and review applications</p>
+          </div>
           <button onClick={() => setShowAddForm(!showAddForm)} className={styles.addButton}>
             {showAddForm ? 'Cancel' : '+ Add Barber'}
           </button>
