@@ -44,10 +44,52 @@ export async function POST(
 
     const applicationId = params.id;
 
-    // Get application
-    const application = await prisma.barberApplication.findUnique({
-      where: { id: applicationId },
-    });
+    // Get application - handle missing city column gracefully
+    let application;
+    try {
+      application = await prisma.barberApplication.findUnique({
+        where: { id: applicationId },
+      });
+    } catch (dbError: any) {
+      // If city column doesn't exist, use explicit select without city
+      if (dbError.message?.includes('city')) {
+        application = await prisma.barberApplication.findUnique({
+          where: { id: applicationId },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            otherName: true,
+            email: true,
+            phone: true,
+            address: true,
+            state: true,
+            status: true,
+            experienceYears: true,
+            specialties: true,
+            dateOfBirth: true,
+            maritalStatus: true,
+            ninNumber: true,
+            gender: true,
+            portfolioUrl: true,
+            whyJoinNetwork: true,
+            applicationLetterUrl: true,
+            cvUrl: true,
+            barberLicenceUrl: true,
+            name: true,
+            userId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }) as any; // Type assertion needed since city might be missing
+        // Set city to null if column doesn't exist
+        if (application) {
+          (application as any).city = null;
+        }
+      } else {
+        throw dbError;
+      }
+    }
 
     if (!application) {
       return NextResponse.json(
@@ -148,19 +190,15 @@ export async function POST(
 
     // Create barber profile
     const barberId = `BAR-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-    // Extract state from address if not explicitly provided (address format: "City, State" or just "Address")
-    const addressParts = application.address.split(',').map((s: string) => s.trim());
-    const extractedState = addressParts.length > 1 ? addressParts[addressParts.length - 1] : (application.state || addressParts[0]);
-    const extractedCity = addressParts.length > 1 ? addressParts[0] : addressParts[0];
     
     const barber = await prisma.barber.create({
       data: {
         userId: user.id,
         barberId,
-        state: application.state || extractedState,
-        city: extractedCity,
+        state: application.state || null,
+        city: application.city || null,
         address: application.address,
-        location: extractedCity, // Keep for backward compatibility
+        location: application.city || null, // Keep for backward compatibility
         bio: null,
         experienceYears: application.experienceYears,
         specialties: application.specialties || [],

@@ -6,7 +6,7 @@ import { isAuthenticated, getUserData, hasRole } from '@/lib/auth';
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  requiredRole?: 'ADMIN' | 'BARBER' | 'CUSTOMER' | 'REP';
+  requiredRole?: 'ADMIN' | 'BARBER' | 'CUSTOMER' | 'REP' | 'ADMIN_OR_REP';
   redirectTo?: string;
 }
 
@@ -30,9 +30,17 @@ export default function AuthGuard({
 
       if (requiredRole) {
         const user = getUserData();
-        if (!hasRole(requiredRole)) {
+        let authorized = false;
+
+        if (requiredRole === 'ADMIN_OR_REP') {
+          authorized = user?.role === 'ADMIN' || user?.role === 'REP';
+        } else {
+          authorized = hasRole(requiredRole);
+        }
+
+        if (!authorized) {
           // Redirect based on user role
-          if (user?.role === 'ADMIN') {
+          if (user?.role === 'ADMIN' || user?.role === 'REP') {
             router.push('/admin');
           } else if (user?.role === 'BARBER') {
             router.push('/barber');

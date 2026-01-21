@@ -1,40 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { verifyAdminOrRep } from '../utils';
 
 export const dynamic = 'force-dynamic';
-
-// Helper function to verify admin token
-async function verifyAdmin(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
-    
-    if (!user || user.role !== 'ADMIN' || !user.isActive) {
-      return null;
-    }
-    
-    return user;
-  } catch {
-    return null;
-  }
-}
 
 // GET /api/v1/admin/customers - List all customers with optional filters
 export async function GET(request: NextRequest) {
   try {
-    const admin = await verifyAdmin(request);
-    if (!admin) {
+    const user = await verifyAdminOrRep(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: { message: 'Unauthorized. Admin access required.' } },
+        { success: false, error: { message: 'Unauthorized. Admin or Rep access required.' } },
         { status: 401 }
       );
     }
@@ -128,6 +104,45 @@ export async function GET(request: NextRequest) {
           },
         });
 
+        // Get order statistics
+        const orderStats = await prisma.order.aggregate({
+          where: {
+            customerId: customer.id,
+          },
+          _sum: {
+            totalAmount: true,
+          },
+          _count: {
+            id: true,
+          },
+        });
+
+        const completedOrders = await prisma.order.count({
+          where: {
+            customerId: customer.id,
+            status: 'COMPLETED',
+          },
+        });
+
+        const cancelledOrders = await prisma.order.count({
+          where: {
+            customerId: customer.id,
+            status: 'CANCELLED',
+          },
+        });
+
+        const lastOrder = await prisma.order.findFirst({
+          where: {
+            customerId: customer.id,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            createdAt: true,
+          },
+        });
+
         // Get completed bookings count
         const completedBookings = await prisma.booking.count({
           where: {
@@ -157,21 +172,13 @@ export async function GET(request: NextRequest) {
           },
         });
 
-        // Get orders total
-        const orderStats = await prisma.order.aggregate({
-          where: {
-            customerEmail: customer.user.email,
-            paymentStatus: 'PAID',
-          },
-          _sum: {
-            totalAmount: true,
-          },
-          _count: {
-            id: true,
-          },
-        });
-
+        // Calculate total spent (bookings + orders)
         const totalSpent = Number(bookingStats._sum.totalPrice || 0) + Number(orderStats._sum.totalAmount || 0);
+
+        // Determine last activity date (most recent booking or order)
+        const lastActivityDate = lastBooking?.bookingDate 
+          ? new Date(lastBooking.bookingDate)
+          : lastOrder?.createdAt || null;
 
         return {
           id: customer.id,
@@ -194,12 +201,15 @@ export async function GET(request: NextRequest) {
           gender: customer.gender,
           address: customer.address,
           totalBookings: customer._count.bookings,
-          totalOrders: orderStats._count.id,
+          totalOrders: orderStats._count.id || 0,
           totalReviews: customer._count.reviews,
           completedBookings,
           cancelledBookings,
+          completedOrders,
+          cancelledOrders,
           totalSpent,
           lastBookingDate: lastBooking?.bookingDate || null,
+          lastOrderDate: lastOrder?.createdAt || null,
           createdAt: customer.createdAt,
         };
       })

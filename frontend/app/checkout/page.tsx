@@ -9,8 +9,15 @@ import styles from './page.module.css';
 // Dynamically import Paystack to avoid SSR issues with window object
 let usePaystackPayment: any;
 if (typeof window !== 'undefined') {
-  const paystack = require('react-paystack');
-  usePaystackPayment = paystack.usePaystackPayment;
+  try {
+    const paystack = require('react-paystack');
+    usePaystackPayment = paystack.usePaystackPayment;
+    if (!usePaystackPayment) {
+      console.error('react-paystack module not loaded correctly');
+    }
+  } catch (error) {
+    console.error('Failed to load react-paystack:', error);
+  }
 }
 
 interface CustomerInfo {
@@ -44,6 +51,7 @@ export default function CheckoutPage() {
   const [availableLocations, setAvailableLocations] = useState<Record<string, string[]>>({});
   const [availableStates, setAvailableStates] = useState<string[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
+  const [cartLoaded, setCartLoaded] = useState(false);
 
   const total = getTotal();
 
@@ -67,21 +75,61 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
+    // Load cart from localStorage first
     loadFromStorage();
-    if (items.length === 0) {
+    setCartLoaded(true);
+  }, [loadFromStorage]);
+
+  // Check if cart is empty after it's loaded from storage
+  useEffect(() => {
+    if (cartLoaded && items.length === 0) {
       router.push('/book');
     }
-  }, [items.length, router, loadFromStorage]);
+  }, [cartLoaded, items.length, router]);
 
   // Paystack public key - get from Paystack Dashboard → Settings → API Keys
   // Test key format: pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
   // Live key format: pk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_your_public_key_here';
+  // Get key directly (env vars are available at build time)
+  const publicKeyEnv = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '';
+  const publicKey = publicKeyEnv.trim();
+  
+  // Validate the key
+  const isPaystackConfigured = publicKey && 
+                               publicKey !== 'pk_test_your_public_key_here' && 
+                               publicKey.startsWith('pk_') &&
+                               publicKey.length > 20; // Paystack keys are longer than 20 chars
 
-  // Only initialize Paystack on client side
-  const initializePayment = typeof window !== 'undefined' && usePaystackPayment
-    ? usePaystackPayment({ publicKey })
+  // Debug log on mount
+  useEffect(() => {
+    console.log('🔍 Paystack Public Key Check:', {
+      hasKey: !!publicKey,
+      keyLength: publicKey.length,
+      keyPrefix: publicKey ? publicKey.substring(0, 20) + '...' : 'N/A',
+      startsWithPk: publicKey.startsWith('pk_'),
+      isConfigured: isPaystackConfigured,
+      fullEnvCheck: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ? 'Found' : 'Missing',
+    });
+    
+    if (!isPaystackConfigured && typeof window !== 'undefined') {
+      console.error('❌ Paystack not configured. Please set NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY in .env.local');
+    }
+  }, [publicKey, isPaystackConfigured]);
+
+  // Initialize Paystack hook (must be called at top level, hooks can't be conditional)
+  // IMPORTANT: React hooks must be called unconditionally
+  // Component is 'use client' so this only runs on client side
+  // If usePaystackPayment is not loaded, we'll get null but hook will still be called if it exists
+  const initializePayment = usePaystackPayment 
+    ? usePaystackPayment({ 
+        publicKey: (publicKey && isPaystackConfigured) 
+          ? publicKey 
+          : 'pk_test_000000000000000000000000000000000000000000000000000000' // Fallback for hook initialization
+      })
     : null;
+  
+  // Only allow payment if everything is configured correctly
+  const canInitializePayment = isPaystackConfigured && publicKey && initializePayment && typeof initializePayment === 'function';
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof CustomerInfo, string>> = {};
@@ -126,47 +174,106 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     // Check if Paystack is available
-    if (!initializePayment) {
-      alert('Payment system is not available. Please refresh the page.');
+    if (!canInitializePayment || !initializePayment) {
+      console.error('Paystack initialization failed:', {
+        canInitializePayment,
+        initializePayment: !!initializePayment,
+        isPaystackConfigured,
+        publicKey: publicKey ? publicKey.substring(0, 20) + '...' : 'missing'
+      });
+      if (!isPaystackConfigured) {
+        alert('Payment is not configured. Please check your Paystack public key in the environment variables.');
+      } else {
+        alert('Payment system is not available. Please refresh the page.');
+      }
+      setIsProcessing(false);
+      return;
+    }
+
+    console.log('Initializing Paystack payment with key:', publicKey.substring(0, 20) + '...');
+
+    // Validate amount (minimum is 100 kobo = 1 NGN)
+    // Paystack requires amount as string in kobo (smallest currency unit)
+    const amountInKobo = Math.round(total * 100);
+    if (amountInKobo < 100) {
+      alert('Minimum payment amount is ₦1.00');
+      setIsProcessing(false);
+      return;
+    }
+    
+    console.log('Amount validation:', {
+      totalNGN: total,
+      amountInKobo,
+      amountAsString: amountInKobo.toString(),
+    });
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerInfo.email)) {
+      alert('Please enter a valid email address');
       setIsProcessing(false);
       return;
     }
 
     // Initialize Paystack payment
-    const config = {
-      reference: new Date().getTime().toString(),
-      email: customerInfo.email,
-      amount: total * 100, // Convert to kobo (Paystack uses kobo)
-      metadata: {
-        custom_fields: [
-          {
+    // Note: react-paystack v6 format - the initializePayment function expects:
+    // { onSuccess, onClose, config: { email, amount, reference, metadata, ... } }
+    const paymentConfig = {
+      reference: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      email: customerInfo.email.trim().toLowerCase(),
+      amount: Math.floor(amountInKobo), // Amount as number in kobo
+      // Simplify metadata - only include if values are valid
+      metadata: (() => {
+        const fields: any[] = [];
+        
+        const customerName = `${customerInfo.firstName} ${customerInfo.lastName}`.trim();
+        if (customerName) {
+          fields.push({
             display_name: 'Customer Name',
             variable_name: 'customer_name',
-            value: `${customerInfo.firstName} ${customerInfo.lastName}`,
-          },
-          {
+            value: customerName.substring(0, 100),
+          });
+        }
+        
+        if (customerInfo.phone.trim()) {
+          fields.push({
             display_name: 'Phone',
             variable_name: 'phone',
-            value: customerInfo.phone,
-          },
-          {
+            value: customerInfo.phone.trim().substring(0, 20),
+          });
+        }
+        
+        if (customerInfo.city.trim()) {
+          fields.push({
             display_name: 'City',
             variable_name: 'city',
-            value: customerInfo.city,
-          },
-          {
+            value: customerInfo.city.trim().substring(0, 100),
+          });
+        }
+        
+        if (customerInfo.location.trim()) {
+          fields.push({
             display_name: 'Location',
             variable_name: 'location',
-            value: customerInfo.location,
-          },
-          {
+            value: customerInfo.location.trim().substring(0, 100),
+          });
+        }
+        
+        const servicesStr = items.map(item => `${item.title} (${item.quantity}x)`).join(', ');
+        if (servicesStr) {
+          fields.push({
             display_name: 'Services',
             variable_name: 'services',
-            value: items.map(item => `${item.title} (${item.quantity}x)`).join(', '),
-          },
-        ],
-      },
-      onSuccess: async (response: any) => {
+            value: servicesStr.substring(0, 500),
+          });
+        }
+        
+        return fields.length > 0 ? { custom_fields: fields } : {};
+      })(),
+    };
+
+    // Prepare callbacks
+    const onSuccess = async (response: any) => {
         console.log('Payment successful:', response);
         setIsProcessing(false);
         
@@ -233,14 +340,112 @@ export default function CheckoutPage() {
           clearCart();
           router.push(`/checkout/success?reference=${response.reference}`);
         }
-      },
-      onClose: () => {
-        setIsProcessing(false);
-        console.log('Payment closed');
-      },
     };
 
-    initializePayment(config);
+    const onClose = () => {
+      setIsProcessing(false);
+      console.log('Payment closed');
+    };
+
+    // Validate config before calling Paystack
+    console.log('🔍 Paystack Payment Config Validation:', {
+      email: paymentConfig.email,
+      emailValid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentConfig.email),
+      amount: paymentConfig.amount,
+      amountInNGN: (paymentConfig.amount / 100).toFixed(2),
+      amountValid: paymentConfig.amount >= 100 && Number.isInteger(paymentConfig.amount),
+      reference: paymentConfig.reference,
+      referenceValid: !!paymentConfig.reference && paymentConfig.reference.length > 0,
+      publicKeyPrefix: publicKey.substring(0, 20) + '...',
+      hasMetadata: !!paymentConfig.metadata,
+      metadataFields: paymentConfig.metadata?.custom_fields?.length || 0,
+      hasOnSuccess: typeof onSuccess === 'function',
+      hasOnClose: typeof onClose === 'function',
+    });
+    console.log('📦 Payment Config Object:', JSON.stringify(paymentConfig, null, 2));
+
+    // Validate all required fields
+    if (!paymentConfig.email || !paymentConfig.amount || !paymentConfig.reference) {
+      alert('Missing required payment information. Please check your form.');
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+      console.log('🚀 About to call initializePayment:', {
+        type: typeof initializePayment,
+        isFunction: typeof initializePayment === 'function',
+        isNull: initializePayment === null,
+        isUndefined: initializePayment === undefined,
+        configKeys: Object.keys(paymentConfig),
+        publicKeyConfigured: isPaystackConfigured,
+        publicKeyLength: publicKey.length,
+      });
+      
+      if (!initializePayment || typeof initializePayment !== 'function') {
+        console.error('❌ Payment function unavailable:', {
+          initializePayment,
+          isPaystackConfigured,
+          publicKeyExists: !!publicKey,
+          usePaystackPaymentExists: !!usePaystackPayment,
+          windowExists: typeof window !== 'undefined',
+        });
+        throw new Error('Payment function not available. Please refresh the page.');
+      }
+      
+      // react-paystack v6 expects: initializePayment({ onSuccess, onClose, config })
+      console.log('✅ Calling initializePayment with correct structure...');
+      initializePayment({
+        onSuccess,
+        onClose,
+        config: paymentConfig,
+      });
+      console.log('✅ Payment initialization called successfully - Paystack modal should open');
+    } catch (error: any) {
+      console.error('Error initializing payment:', error);
+      console.error('❌ Error details:', {
+        message: error?.message,
+        issues: error?.issues, // Paystack validation issues array
+        stack: error?.stack,
+        name: error?.name,
+        toString: String(error),
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+      });
+      
+      // Try to extract and log all error properties
+      console.error('❌ Complete Error Object:', error);
+      console.error('❌ Error Keys:', Object.keys(error || {}));
+      if (error?.issues) {
+        console.error('❌ Issues Array:', JSON.stringify(error.issues, null, 2));
+      }
+      
+      // Log each validation issue if available
+      if (error?.issues && Array.isArray(error.issues)) {
+        console.error('❌ Paystack Validation Issues:');
+        error.issues.forEach((issue: any, index: number) => {
+          console.error(`❌ Issue ${index + 1}:`, JSON.stringify(issue, null, 2));
+          console.error(`   - Message: ${issue?.message || issue?.msg || 'Unknown'}`);
+          console.error(`   - Field: ${issue?.field || issue?.param || 'Unknown'}`);
+          console.error(`   - Full:`, issue);
+        });
+      }
+      setIsProcessing(false);
+      
+      // More specific error messages
+      let errorMessage = 'Failed to initialize payment. ';
+      const errorStr = error?.message || String(error) || 'Unknown error';
+      
+      if (errorStr.includes('Invalid transaction parameters')) {
+        errorMessage += 'Please check that all form fields are filled correctly and the amount is valid (minimum ₦1.00).';
+        console.error('Invalid parameters - Payment Config was:', paymentConfig);
+      } else if (errorStr) {
+        errorMessage += errorStr;
+      } else {
+        errorMessage += 'Please refresh the page and try again.';
+      }
+      
+      alert(errorMessage);
+    }
   };
 
   const handleInputChange = (field: keyof CustomerInfo, value: string) => {
@@ -259,6 +464,20 @@ export default function CheckoutPage() {
   // Get cities for selected state
   const availableCities = customerInfo.state ? (availableLocations[customerInfo.state] || []) : [];
 
+  // Show loading state while cart is being loaded
+  if (!cartLoaded) {
+    return (
+      <div className={styles.checkoutPage}>
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <p>Loading checkout...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if cart is empty after loading
   if (items.length === 0) {
     return null; // Will redirect in useEffect
   }
@@ -470,9 +689,14 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 className={styles.payButton}
-                disabled={isProcessing}
+                disabled={isProcessing || !isPaystackConfigured}
               >
-                {isProcessing ? 'Processing...' : `Pay ₦${total.toLocaleString()}`}
+                {isProcessing 
+                  ? 'Processing...' 
+                  : !isPaystackConfigured 
+                    ? 'Payment Not Configured' 
+                    : `Pay ₦${total.toLocaleString()}`
+                }
               </button>
 
               <p className={styles.securePaymentNote}>

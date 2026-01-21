@@ -89,18 +89,20 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className={styles.statCard}>
-            <div className={styles.statCardHeader}>
-              <div className={styles.statIcon} style={{ background: 'rgba(220, 210, 204, 0.3)' }}>
-                <span>💰</span>
-              </div>
-              <div className={styles.statCardContent}>
-                <h3 className={styles.statLabel}>Total Revenue</h3>
-                <p className={styles.statNumber}>₦{stats?.stats.totalRevenue?.toLocaleString() || '0'}</p>
-                <span className={styles.statSubtext}>Lifetime earnings</span>
+          {stats?.stats.totalRevenue !== null && stats?.stats.totalRevenue !== undefined && (
+            <div className={styles.statCard}>
+              <div className={styles.statCardHeader}>
+                <div className={styles.statIcon} style={{ background: 'rgba(220, 210, 204, 0.3)' }}>
+                  <span>💰</span>
+                </div>
+                <div className={styles.statCardContent}>
+                  <h3 className={styles.statLabel}>Total Revenue</h3>
+                  <p className={styles.statNumber}>₦{stats?.stats.totalRevenue?.toLocaleString() || '0'}</p>
+                  <span className={styles.statSubtext}>Lifetime earnings</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className={styles.statCard}>
             <div className={styles.statCardHeader}>

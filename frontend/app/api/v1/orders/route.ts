@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/server/emailService';
 import { emailTemplates } from '@/lib/server/emailTemplates';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +51,80 @@ export async function POST(request: NextRequest) {
     // Generate unique order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
 
-    // Create order with items
+    // Auto-create or find Customer
+    let customerId: string | null = null;
+    
+    try {
+      // Normalize email
+      const normalizedEmail = customerEmail.toLowerCase().trim();
+      
+      // Check if User exists with this email
+      let user = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+        include: { customer: true },
+      });
+
+      // If User doesn't exist, create one
+      if (!user) {
+        // Generate a secure temporary password (user can reset via email)
+        const tempPassword = crypto.randomBytes(16).toString('hex');
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        
+        // Generate password reset token so they can set their password
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+        user = await prisma.user.create({
+          data: {
+            email: normalizedEmail,
+            name: customerName,
+            phone: customerPhone || null,
+            password: hashedPassword, // Temporary password
+            role: 'CUSTOMER',
+            emailVerified: false, // They haven't verified yet
+            isActive: true,
+            passwordResetToken: resetToken,
+            passwordResetExpires: resetExpires,
+          },
+          include: { customer: true },
+        });
+      }
+
+      // Check if Customer record exists
+      let customer = user.customer;
+      
+      if (!customer) {
+        // Generate unique customer ID
+        const customerIdStr = `CUST-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+        
+        // Create Customer record
+        customer = await prisma.customer.create({
+          data: {
+            userId: user.id,
+            customerId: customerIdStr,
+            address: address || null, // Store address from first order
+            membershipType: 'BASIC',
+            loyaltyPoints: 0,
+          },
+        });
+      } else {
+        // Update address if not set and we have one
+        if (!customer.address && address) {
+          await prisma.customer.update({
+            where: { id: customer.id },
+            data: { address },
+          });
+        }
+      }
+
+      customerId = customer.id;
+    } catch (customerError: any) {
+      console.error('Error creating/finding customer:', customerError);
+      // Continue with order creation even if customer creation fails
+      // Order will still have customerEmail for tracking
+    }
+
+    // Create order with items and link to customer
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -65,6 +140,7 @@ export async function POST(request: NextRequest) {
         paymentMethod: paymentMethod || null,
         paymentStatus: paymentReference ? 'PAID' : 'PENDING',
         status: paymentReference ? 'CONFIRMED' : 'PENDING',
+        customerId: customerId, // Link to customer if created/found
         items: {
           create: items.map((item: any) => ({
             productId: item.productId,
@@ -292,6 +368,17 @@ export async function GET(request: NextRequest) {
               product: true,
             },
           },
+          assignedBarber: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -312,10 +399,21 @@ export async function GET(request: NextRequest) {
         customerPhone: order.customerPhone,
         city: order.city,
         location: order.location,
+        address: order.address,
+        additionalNotes: order.additionalNotes,
         totalAmount: Number(order.totalAmount),
         paymentReference: order.paymentReference,
+        paymentMethod: order.paymentMethod,
         status: order.status,
         paymentStatus: order.paymentStatus,
+        jobStatus: order.jobStatus,
+        assignedBarberId: order.assignedBarberId,
+        assignedBarber: order.assignedBarber ? {
+          id: order.assignedBarber.id,
+          barberId: order.assignedBarber.barberId,
+          name: order.assignedBarber.user?.name || 'Unknown',
+          email: order.assignedBarber.user?.email || null,
+        } : null,
         items: order.items.map((item: typeof order.items[0]) => ({
           id: item.id,
           title: item.title,

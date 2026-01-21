@@ -145,6 +145,8 @@ function BarberApplicationForm() {
     email: '',
     maritalStatus: '',
     phone: '',
+    state: '',
+    city: '',
     address: '',
     ninNumber: '',
     gender: '',
@@ -256,6 +258,8 @@ function BarberApplicationForm() {
           email: formData.email,
           maritalStatus: formData.maritalStatus || undefined,
           phone: formData.phone,
+          state: formData.state || undefined,
+          city: formData.city || undefined,
           address: formData.address,
           ninNumber: formData.ninNumber || undefined,
           gender: formData.gender || undefined,
@@ -281,6 +285,8 @@ function BarberApplicationForm() {
           email: '',
           maritalStatus: '',
           phone: '',
+          state: '',
+          city: '',
           address: '',
           ninNumber: '',
           gender: '',
@@ -408,14 +414,77 @@ function BarberApplicationForm() {
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="address">Location/Address *</label>
+        <label htmlFor="state">State *</label>
+        <select
+          id="state"
+          name="state"
+          value={formData.state}
+          onChange={handleChange}
+          required
+        >
+          <option value="">Select State</option>
+          <option value="Abia">Abia</option>
+          <option value="Adamawa">Adamawa</option>
+          <option value="Akwa Ibom">Akwa Ibom</option>
+          <option value="Anambra">Anambra</option>
+          <option value="Bauchi">Bauchi</option>
+          <option value="Bayelsa">Bayelsa</option>
+          <option value="Benue">Benue</option>
+          <option value="Borno">Borno</option>
+          <option value="Cross River">Cross River</option>
+          <option value="Delta">Delta</option>
+          <option value="Ebonyi">Ebonyi</option>
+          <option value="Edo">Edo</option>
+          <option value="Ekiti">Ekiti</option>
+          <option value="Enugu">Enugu</option>
+          <option value="FCT">FCT (Abuja)</option>
+          <option value="Gombe">Gombe</option>
+          <option value="Imo">Imo</option>
+          <option value="Jigawa">Jigawa</option>
+          <option value="Kaduna">Kaduna</option>
+          <option value="Kano">Kano</option>
+          <option value="Katsina">Katsina</option>
+          <option value="Kebbi">Kebbi</option>
+          <option value="Kogi">Kogi</option>
+          <option value="Kwara">Kwara</option>
+          <option value="Lagos">Lagos</option>
+          <option value="Nasarawa">Nasarawa</option>
+          <option value="Niger">Niger</option>
+          <option value="Ogun">Ogun</option>
+          <option value="Ondo">Ondo</option>
+          <option value="Osun">Osun</option>
+          <option value="Oyo">Oyo</option>
+          <option value="Plateau">Plateau</option>
+          <option value="Rivers">Rivers</option>
+          <option value="Sokoto">Sokoto</option>
+          <option value="Taraba">Taraba</option>
+          <option value="Yobe">Yobe</option>
+          <option value="Zamfara">Zamfara</option>
+        </select>
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="city">City *</label>
+        <input
+          type="text"
+          id="city"
+          name="city"
+          value={formData.city}
+          onChange={handleChange}
+          placeholder="e.g., Ikeja, Victoria Island, Wuse"
+          required
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="address">Exact Address/Location *</label>
         <input
           type="text"
           id="address"
           name="address"
           value={formData.address}
           onChange={handleChange}
-          placeholder="Enter your location or address"
+          placeholder="Enter your exact address or location"
           required
         />
       </div>

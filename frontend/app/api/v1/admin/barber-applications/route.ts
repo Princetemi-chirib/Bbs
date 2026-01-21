@@ -38,9 +38,54 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const applications = await prisma.barberApplication.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    // Query applications - handle missing city column gracefully until migration runs
+    let applications;
+    try {
+      applications = await prisma.barberApplication.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (dbError: any) {
+      // If city column doesn't exist yet, use explicit select without city
+      if (dbError.message?.includes('city') || dbError.code === 'P2003') {
+        applications = await prisma.barberApplication.findMany({
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            address: true,
+            state: true,
+            status: true,
+            experienceYears: true,
+            createdAt: true,
+            updatedAt: true,
+            portfolioUrl: true,
+            whyJoinNetwork: true,
+            applicationLetterUrl: true,
+            cvUrl: true,
+            barberLicenceUrl: true,
+            dateOfBirth: true,
+            maritalStatus: true,
+            ninNumber: true,
+            gender: true,
+            otherName: true,
+            name: true,
+            userId: true,
+            specialties: true,
+            certifications: true,
+            resumeUrl: true,
+            adminNotes: true,
+            declineReason: true,
+            reviewedBy: true,
+            reviewedAt: true,
+          },
+        });
+      } else {
+        throw dbError;
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -63,18 +108,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { firstName, lastName, otherName, dateOfBirth, email, maritalStatus, phone, address, ninNumber, gender, experienceYears, portfolioUrl, whyJoinNetwork, applicationLetterUrl, cvUrl, barberLicenceUrl } = body;
+    const { firstName, lastName, otherName, dateOfBirth, email, maritalStatus, phone, state, city, address, ninNumber, gender, experienceYears, portfolioUrl, whyJoinNetwork, applicationLetterUrl, cvUrl, barberLicenceUrl } = body;
 
-    if (!firstName || !lastName || !email || !phone || !address || !ninNumber || !gender || !experienceYears || !whyJoinNetwork || !applicationLetterUrl || !cvUrl) {
+    if (!firstName || !lastName || !email || !phone || !state || !city || !address || !ninNumber || !gender || !experienceYears || !whyJoinNetwork || !applicationLetterUrl || !cvUrl) {
       return NextResponse.json(
-        { success: false, error: { message: 'First name, last name, email, phone, address, NIN number, gender, years of experience, why join network, application letter, and CV are required' } },
+        { success: false, error: { message: 'First name, last name, email, phone, state, city, address, NIN number, gender, years of experience, why join network, application letter, and CV are required' } },
         { status: 400 }
       );
     }
 
     // Check if application already exists for this email
+    // Use select to avoid errors if city column doesn't exist yet (before migration)
     const existing = await prisma.barberApplication.findFirst({
       where: { email: email.toLowerCase(), status: 'PENDING' },
+      select: { id: true, email: true, status: true }, // Only select fields we need
     });
 
     if (existing) {
@@ -86,29 +133,53 @@ export async function POST(request: NextRequest) {
 
     // Create application
     const fullName = `${firstName} ${lastName}${otherName ? ' ' + otherName : ''}`;
-    const application = await prisma.barberApplication.create({
-      data: {
-        email: email.toLowerCase(),
-        firstName,
-        lastName,
-        otherName: otherName || null,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-        name: fullName, // Keep for backward compatibility
-        phone,
-        address,
-        maritalStatus: maritalStatus || null,
-        ninNumber: ninNumber || null,
-        gender: gender || null,
-        experienceYears: experienceYears ? parseInt(experienceYears) : null,
-        portfolioUrl: portfolioUrl || null,
-        whyJoinNetwork: whyJoinNetwork || null,
-        applicationLetterUrl: applicationLetterUrl || null,
-        cvUrl: cvUrl || null,
-        barberLicenceUrl: barberLicenceUrl || null,
-        specialties: [],
-        status: 'PENDING',
-      },
-    });
+    
+    // Prepare data object - conditionally include city if column exists in DB
+    const applicationData: any = {
+      email: email.toLowerCase(),
+      firstName,
+      lastName,
+      otherName: otherName || null,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+      name: fullName, // Keep for backward compatibility
+      phone,
+      state: state || null,
+      address,
+      maritalStatus: maritalStatus || null,
+      ninNumber: ninNumber || null,
+      gender: gender || null,
+      experienceYears: experienceYears ? parseInt(experienceYears) : null,
+      portfolioUrl: portfolioUrl || null,
+      whyJoinNetwork: whyJoinNetwork || null,
+      applicationLetterUrl: applicationLetterUrl || null,
+      cvUrl: cvUrl || null,
+      barberLicenceUrl: barberLicenceUrl || null,
+      specialties: [],
+      status: 'PENDING',
+    };
+    
+    // Only include city if database column exists (will be added after migration)
+    // For now, we'll try to include it and catch the error if column doesn't exist
+    if (city) {
+      applicationData.city = city;
+    }
+    
+    let application;
+    try {
+      application = await prisma.barberApplication.create({
+        data: applicationData,
+      });
+    } catch (dbError: any) {
+      // If city column doesn't exist yet, retry without it
+      if (dbError.message?.includes('city') || dbError.code === 'P2003') {
+        delete applicationData.city;
+        application = await prisma.barberApplication.create({
+          data: applicationData,
+        });
+      } else {
+        throw dbError;
+      }
+    }
 
     // Send email to admin
     const adminEmail = 'admin@bbslimited.online';
@@ -146,6 +217,8 @@ export async function POST(request: NextRequest) {
                   <div class="detail-row"><span class="detail-label">Years of Experience:</span> ${experienceYears || 'N/A'}</div>
                   ${portfolioUrl ? `<div class="detail-row"><span class="detail-label">Portfolio/Instagram:</span> <a href="${portfolioUrl}" target="_blank">${portfolioUrl}</a></div>` : ''}
                   ${whyJoinNetwork ? `<div class="detail-row"><span class="detail-label">Why Join Network:</span> ${whyJoinNetwork}</div>` : ''}
+                  <div class="detail-row"><span class="detail-label">State:</span> ${state || 'N/A'}</div>
+                  <div class="detail-row"><span class="detail-label">City:</span> ${city || 'N/A'}</div>
                   <div class="detail-row"><span class="detail-label">Address:</span> ${address}</div>
                   ${applicationLetterUrl ? `<div class="detail-row"><span class="detail-label">Application Letter:</span> <a href="${process.env.NEXT_PUBLIC_BASE_URL}${applicationLetterUrl}">Download</a></div>` : ''}
                   ${cvUrl ? `<div class="detail-row"><span class="detail-label">CV:</span> <a href="${process.env.NEXT_PUBLIC_BASE_URL}${cvUrl}">Download</a></div>` : ''}
@@ -170,7 +243,7 @@ export async function POST(request: NextRequest) {
           to: adminEmail,
           subject: `New Barber Application: ${fullName}`,
           html: emailHtml,
-          text: `New barber application from ${fullName} (${email}). Years of Experience: ${experienceYears || 'N/A'}. ${portfolioUrl ? `Portfolio/Instagram: ${portfolioUrl}. ` : ''}${whyJoinNetwork ? `Why Join: ${whyJoinNetwork.substring(0, 100)}${whyJoinNetwork.length > 100 ? '...' : ''}. ` : ''}Address: ${address}. ${barberLicenceUrl ? 'Barber Licence attached. ' : ''}View: ${process.env.NEXT_PUBLIC_BASE_URL}/admin/barbers`,
+          text: `New barber application from ${fullName} (${email}). Years of Experience: ${experienceYears || 'N/A'}. ${portfolioUrl ? `Portfolio/Instagram: ${portfolioUrl}. ` : ''}${whyJoinNetwork ? `Why Join: ${whyJoinNetwork.substring(0, 100)}${whyJoinNetwork.length > 100 ? '...' : ''}. ` : ''}Location: ${state || 'N/A'}, ${city || 'N/A'} - ${address}. ${barberLicenceUrl ? 'Barber Licence attached. ' : ''}View: ${process.env.NEXT_PUBLIC_BASE_URL}/admin/barbers`,
         });
         console.log(`Admin notification email sent for application ${application.id}`);
       } catch (emailError) {

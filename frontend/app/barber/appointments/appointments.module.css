@@ -1,28 +1,56 @@
+/* Modern Professional Appointments Page */
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
+  color: #ffffff;
+  padding-bottom: 80px;
 }
 
 .header {
-  background: #39413f;
-  color: #ffffff;
-  padding: 20px 40px;
+  background: rgba(57, 65, 63, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 24px;
+  border-bottom: 1px solid rgba(220, 210, 204, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
 }
 
-.header a {
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: #dcd2cc;
   text-decoration: none;
-  margin-bottom: 10px;
-  display: inline-block;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.backLink:hover {
+  color: #ffffff;
+  transform: translateX(-4px);
 }
 
 .header h1 {
-  margin: 10px 0 0 0;
-  font-size: 1.5rem;
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.headerSubtitle {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
 }
 
 .main {
-  padding: 40px;
+  padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -30,30 +58,57 @@
 .filters {
   display: flex;
   gap: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
   flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(220, 210, 204, 0.1);
 }
 
 .filterButton,
 .activeFilter {
   padding: 10px 20px;
-  border: 1px solid #b8aea8;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #39413f;
+  border: 2px solid rgba(220, 210, 204, 0.2);
+  border-radius: 12px;
+  background: rgba(57, 65, 63, 0.6);
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.2s;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.filterButton::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(220, 210, 204, 0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+}
+
+.filterButton:hover::before {
+  width: 200px;
+  height: 200px;
 }
 
 .filterButton:hover {
-  background: #f5f5f5;
+  background: rgba(57, 65, 63, 0.8);
+  border-color: rgba(220, 210, 204, 0.3);
+  color: #ffffff;
+  transform: translateY(-2px);
 }
 
 .activeFilter {
-  background: #39413f;
-  color: #ffffff;
-  border-color: #39413f;
+  background: linear-gradient(135deg, #39413f 0%, #2a312f 100%);
+  color: #dcd2cc;
+  border-color: #dcd2cc;
+  box-shadow: 0 4px 15px rgba(220, 210, 204, 0.2);
 }
 
 .ordersList {
@@ -63,10 +118,30 @@
 }
 
 .orderCard {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(57, 65, 63, 0.8) 0%, rgba(42, 49, 47, 0.9) 100%);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(220, 210, 204, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.orderCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #dcd2cc 0%, transparent 100%);
+}
+
+.orderCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  border-color: rgba(220, 210, 204, 0.3);
 }
 
 .orderHeader {
@@ -75,128 +150,288 @@
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 1px solid rgba(220, 210, 204, 0.15);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.orderHeader > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .orderHeader strong {
-  font-size: 1.2rem;
-  color: #39413f;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.3px;
 }
 
 .statusBadge {
   display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  margin-left: 12px;
-  background: #e0e0e0;
-  color: #39413f;
+  letter-spacing: 0.5px;
+  background: rgba(220, 210, 204, 0.2);
+  color: #dcd2cc;
+  border: 1px solid rgba(220, 210, 204, 0.3);
 }
 
 .amount {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #39413f;
+  font-size: 24px;
+  font-weight: 800;
+  color: #dcd2cc;
+  letter-spacing: -0.5px;
 }
 
 .orderDetails {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .detailRow {
   display: flex;
   gap: 12px;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(220, 210, 204, 0.08);
+  flex-wrap: wrap;
+}
+
+.detailRow:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .detailRow strong {
   min-width: 100px;
-  color: #39413f;
+  color: #dcd2cc;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .detailRow span {
-  color: #5a625f;
+  color: rgba(255, 255, 255, 0.9);
   flex: 1;
+  font-size: 15px;
 }
 
 .orderItems {
-  background: #f9f9f9;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(220, 210, 204, 0.1);
 }
 
 .orderItems strong {
   display: block;
-  margin-bottom: 12px;
-  color: #39413f;
+  margin-bottom: 14px;
+  color: #dcd2cc;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .orderItems ul {
   margin: 0;
-  padding-left: 20px;
-  color: #5a625f;
+  padding-left: 0;
+  list-style: none;
 }
 
 .orderItems li {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  padding: 10px 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  border-bottom: 1px solid rgba(220, 210, 204, 0.08);
+}
+
+.orderItems li:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .orderActions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .statusButton {
-  padding: 12px 24px;
-  background: #39413f;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #39413f 0%, #2a312f 100%);
   color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  border: 2px solid rgba(220, 210, 204, 0.2);
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.statusButton::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(220, 210, 204, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.statusButton:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .statusButton:hover {
-  background: #2a312f;
+  background: linear-gradient(135deg, #2a312f 0%, #39413f 100%);
+  border-color: rgba(220, 210, 204, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .completedBadge,
 .declinedBadge {
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 700;
   display: inline-block;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .completedBadge {
-  background: #46b450;
+  background: linear-gradient(135deg, #46b450 0%, #3a9a42 100%);
   color: #ffffff;
+  box-shadow: 0 4px 15px rgba(70, 180, 80, 0.3);
 }
 
 .declinedBadge {
-  background: #dc3232;
+  background: linear-gradient(135deg, #dc3232 0%, #c02a2a 100%);
   color: #ffffff;
+  box-shadow: 0 4px 15px rgba(220, 50, 50, 0.3);
 }
 
 .empty {
   text-align: center;
-  color: #5a625f;
-  padding: 60px 20px;
-  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 80px 20px;
+  font-size: 18px;
   font-style: italic;
+  background: rgba(57, 65, 63, 0.4);
+  border-radius: 20px;
+  border: 1px dashed rgba(220, 210, 204, 0.2);
 }
 
 .loading {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #39413f;
+  color: #ffffff;
+  gap: 20px;
+}
+
+.loading::before {
+  content: '';
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(220, 210, 204, 0.2);
+  border-top-color: #dcd2cc;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 20px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .main {
+    padding: 20px;
+  }
+
+  .filters {
+    gap: 8px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filterButton,
+  .activeFilter {
+    padding: 8px 16px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .orderCard {
+    padding: 20px;
+  }
+
+  .orderHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .orderHeader strong {
+    font-size: 16px;
+  }
+
+  .amount {
+    font-size: 20px;
+  }
+
+  .detailRow {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .detailRow strong {
+    min-width: auto;
+  }
+
+  .orderActions {
+    flex-direction: column;
+  }
+
+  .statusButton {
+    width: 100%;
+  }
 }

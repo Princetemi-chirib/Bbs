@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchAuth } from '@/lib/auth';
+import { fetchAuth, isAdmin } from '@/lib/auth';
 import styles from './barbers.module.css';
 
 export default function AdminBarbersPage() {
@@ -173,7 +173,7 @@ export default function AdminBarbersPage() {
       </header>
 
       <main className={styles.main}>
-        {showAddForm && (
+        {showAddForm && isAdmin() && (
           <section className={styles.formSection}>
             <h2>{editingBarber ? 'Edit Barber' : 'Add New Barber'}</h2>
             <form onSubmit={handleSubmit} className={styles.form}>
@@ -293,10 +293,10 @@ export default function AdminBarbersPage() {
                     </div>
                   </div>
                   <div className={styles.appDetails}>
-                    <p><strong>Location:</strong> {app.state} - {app.address}</p>
+                    <p><strong>Location:</strong> {app.state || 'N/A'}, {app.city || 'N/A'} - {app.address}</p>
                     {app.experienceYears && <p><strong>Experience:</strong> {app.experienceYears} years</p>}
                   </div>
-                  {app.status === 'PENDING' && decliningAppId !== app.id && (
+                  {app.status === 'PENDING' && decliningAppId !== app.id && isAdmin() && (
                     <div className={styles.actionButtons}>
                       <button
                         onClick={() => handleApproveApplication(app.id)}
@@ -312,7 +312,7 @@ export default function AdminBarbersPage() {
                       </button>
                     </div>
                   )}
-                  {app.status === 'PENDING' && decliningAppId === app.id && (
+                  {app.status === 'PENDING' && decliningAppId === app.id && isAdmin() && (
                     <div className={styles.declineForm}>
                       <textarea
                         value={declineReason}

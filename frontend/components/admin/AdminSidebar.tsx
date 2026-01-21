@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { getUserData, isAdmin } from '@/lib/auth';
 import styles from './AdminSidebar.module.css';
 
 interface AdminSidebarProps {
@@ -13,20 +14,36 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [userRole, setUserRole] = useState<'ADMIN' | 'REP' | null>(null);
+
+  // Get user role on mount
+  useEffect(() => {
+    const user = getUserData();
+    if (user?.role === 'ADMIN' || user?.role === 'REP') {
+      setUserRole(user.role);
+    }
+  }, []);
 
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
 
-  const menuItems = [
-    { href: '/admin', label: 'Dashboard', icon: '📊' },
-    { href: '/admin/orders', label: 'Orders', icon: '📦' },
-    { href: '/admin/customers', label: 'Customers', icon: '👥' },
-    { href: '/admin/barbers', label: 'Barbers', icon: '✂️' },
-    { href: '/admin/services', label: 'Services', icon: '💇' },
-    { href: '/admin/financials', label: 'Financials', icon: '💰' },
+  // All menu items
+  const allMenuItems = [
+    { href: '/admin', label: 'Dashboard', icon: '📊', roles: ['ADMIN', 'REP'] },
+    { href: '/admin/orders', label: 'Orders', icon: '📦', roles: ['ADMIN', 'REP'] },
+    { href: '/admin/customers', label: 'Customers', icon: '👥', roles: ['ADMIN', 'REP'] },
+    { href: '/admin/barbers', label: 'Barbers', icon: '✂️', roles: ['ADMIN', 'REP'] },
+    { href: '/admin/services', label: 'Services', icon: '💇', roles: ['ADMIN', 'REP'] },
+    { href: '/admin/financials', label: 'Financials', icon: '💰', roles: ['ADMIN', 'REP'] },
+    { href: '/admin/team', label: 'Team', icon: '👔', roles: ['ADMIN'] },
   ];
+
+  // Filter menu items based on user role
+  const menuItems = allMenuItems.filter(item => 
+    userRole && item.roles.includes(userRole)
+  );
 
   return (
     <>
@@ -66,6 +83,9 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
                 priority
               />
             </Link>
+            {userRole === 'REP' && (
+              <span className={styles.roleBadge}>Customer Rep</span>
+            )}
           </div>
 
           {/* Navigation */}

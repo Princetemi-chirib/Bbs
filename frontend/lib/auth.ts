@@ -65,6 +65,45 @@ export function hasRole(role: 'ADMIN' | 'BARBER' | 'CUSTOMER' | 'REP'): boolean 
   return user?.role === role;
 }
 
+// Check if user is admin (super admin)
+export function isAdmin(): boolean {
+  return hasRole('ADMIN');
+}
+
+// Check if user is admin or rep (has admin dashboard access)
+export function isAdminOrRep(): boolean {
+  const user = getUserData();
+  return user?.role === 'ADMIN' || user?.role === 'REP';
+}
+
+// Check if user has permission for an action (admin has all permissions)
+export function hasPermission(permission: string): boolean {
+  const user = getUserData();
+  if (!user) return false;
+  
+  // Super admin has all permissions
+  if (user.role === 'ADMIN') return true;
+  
+  // Rep permissions
+  if (user.role === 'REP') {
+    const repPermissions = [
+      'view_dashboard',
+      'view_orders',
+      'update_order_status',
+      'assign_orders',
+      'view_customers',
+      'edit_customers',
+      'view_barbers',
+      'view_services',
+      'view_financials_limited',
+      'view_support_tickets',
+    ];
+    return repPermissions.includes(permission);
+  }
+  
+  return false;
+}
+
 // Get auth headers for API requests
 export function getAuthHeaders(): Record<string, string> {
   const token = getAuthToken();

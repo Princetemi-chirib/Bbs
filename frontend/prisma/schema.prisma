@@ -142,6 +142,7 @@ model Customer {
   reviews          Review[]
   payments         Payment[]
   tickets          SupportTicket[]
+  orders           Order[]
 
   @@map("customers")
   @@index([preferredBarberId])
@@ -348,7 +349,9 @@ model BarberApplication {
   email           String
   maritalStatus   String?   @map("marital_status")
   phone           String
-  address         String    @db.Text // Location/address
+  address         String    @db.Text // Exact location/address
+  state           String?   // State where barber will operate
+  city            String?   // City where barber will operate
   ninNumber       String?   @map("nin_number") // National Identification Number
   gender          String?
   applicationLetterUrl String? @map("application_letter_url") // Uploaded application letter (PDF/JPG)
@@ -357,7 +360,6 @@ model BarberApplication {
   whyJoinNetwork   String?  @db.Text @map("why_join_network") // Why applicant wants to join
   // Legacy fields - keep for backward compatibility
   name            String?   // Computed: firstName + lastName (optional, can derive)
-  state           String?   // Deprecated - can be extracted from address if needed
   experienceYears Int?      @map("experience_years")
   specialties     String[]
   certifications  Json?
@@ -417,6 +419,7 @@ model Order {
   status            OrderStatus   @default(PENDING)
   jobStatus         JobStatus?    @map("job_status") // Job assignment status
   assignedBarberId  String?       @map("assigned_barber_id") // Link to Barber when assigned
+  customerId        String?       @map("customer_id") // Link to Customer (optional for backward compatibility)
   declineReason     String?       @db.Text @map("decline_reason") // Reason when declined
   emailSent         Boolean       @default(false) @map("email_sent")
   createdAt         DateTime      @default(now()) @map("created_at")
@@ -424,10 +427,12 @@ model Order {
 
   items             OrderItem[]
   assignedBarber    Barber?       @relation("AssignedOrders", fields: [assignedBarberId], references: [id])
+  customer          Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@map("orders")
   @@index([orderNumber])
   @@index([customerEmail])
+  @@index([customerId])
   @@index([paymentReference])
   @@index([status])
   @@index([jobStatus])

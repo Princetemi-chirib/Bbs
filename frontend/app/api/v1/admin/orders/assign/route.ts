@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { emailService } from '@/lib/server/emailService';
+import { emailTemplates } from '@/lib/server/emailTemplates';
 
 export const dynamic = 'force-dynamic';
 
@@ -104,8 +106,54 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Send email notification to barber about assignment
-    // You can use your existing email service here
+    // Send email notification to barber about assignment (non-blocking)
+    if (barber.user.email) {
+      try {
+        const barberEmailHtml = emailTemplates.barberAssignment({
+          barberName: barber.user.name,
+          barberEmail: barber.user.email,
+          orderNumber: updatedOrder.orderNumber,
+          customerName: updatedOrder.customerName,
+          customerPhone: updatedOrder.customerPhone,
+          city: updatedOrder.city,
+          location: updatedOrder.location,
+          address: updatedOrder.address || undefined,
+          items: updatedOrder.items.map((item) => ({
+            title: item.title,
+            quantity: item.quantity,
+          })),
+          totalAmount: Number(updatedOrder.totalAmount),
+        });
+
+        const barberEmailText = emailTemplates.barberAssignmentText({
+          barberName: barber.user.name,
+          orderNumber: updatedOrder.orderNumber,
+          customerName: updatedOrder.customerName,
+          customerPhone: updatedOrder.customerPhone,
+          city: updatedOrder.city,
+          location: updatedOrder.location,
+          items: updatedOrder.items.map((item) => ({
+            title: item.title,
+            quantity: item.quantity,
+          })),
+          totalAmount: Number(updatedOrder.totalAmount),
+        });
+
+        await emailService.sendEmail({
+          to: barber.user.email,
+          subject: `New Order Assigned - ${updatedOrder.orderNumber}`,
+          html: barberEmailHtml,
+          text: barberEmailText,
+        });
+
+        console.log(`✅ Barber assignment email sent to ${barber.user.email}`);
+      } catch (emailError) {
+        console.error('⚠️ Failed to send barber assignment email:', emailError);
+        // Don't fail the assignment if email fails
+      }
+    } else {
+      console.warn(`⚠️ Barber ${barber.id} has no email address, skipping email notification`);
+    }
 
     return NextResponse.json({
       success: true,

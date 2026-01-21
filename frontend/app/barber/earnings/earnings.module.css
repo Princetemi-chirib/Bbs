@@ -1,28 +1,56 @@
+/* Modern Professional Earnings Page */
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
+  color: #ffffff;
+  padding-bottom: 80px;
 }
 
 .header {
-  background: #39413f;
-  color: #ffffff;
-  padding: 20px 40px;
+  background: rgba(57, 65, 63, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 24px;
+  border-bottom: 1px solid rgba(220, 210, 204, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
 }
 
-.header a {
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: #dcd2cc;
   text-decoration: none;
-  margin-bottom: 10px;
-  display: inline-block;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.backLink:hover {
+  color: #ffffff;
+  transform: translateX(-4px);
 }
 
 .header h1 {
-  margin: 10px 0 0 0;
-  font-size: 1.5rem;
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.headerSubtitle {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
 }
 
 .main {
-  padding: 40px;
+  padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -30,128 +58,206 @@
 .periodFilters {
   display: flex;
   gap: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
   flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(220, 210, 204, 0.1);
 }
 
 .periodButton,
 .activePeriod {
-  padding: 10px 24px;
-  border: 1px solid #b8aea8;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #39413f;
+  padding: 10px 20px;
+  border: 2px solid rgba(220, 210, 204, 0.2);
+  border-radius: 12px;
+  background: rgba(57, 65, 63, 0.6);
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.2s;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.periodButton::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(220, 210, 204, 0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+}
+
+.periodButton:hover::before {
+  width: 200px;
+  height: 200px;
 }
 
 .periodButton:hover {
-  background: #f5f5f5;
+  background: rgba(57, 65, 63, 0.8);
+  border-color: rgba(220, 210, 204, 0.3);
+  color: #ffffff;
+  transform: translateY(-2px);
 }
 
 .activePeriod {
-  background: #39413f;
-  color: #ffffff;
-  border-color: #39413f;
+  background: linear-gradient(135deg, #39413f 0%, #2a312f 100%);
+  color: #dcd2cc;
+  border-color: #dcd2cc;
+  box-shadow: 0 4px 15px rgba(220, 210, 204, 0.2);
 }
 
 .overview {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 20px;
+  gap: 24px;
   margin-bottom: 40px;
 }
 
 .totalEarnings {
-  background: linear-gradient(135deg, #39413f 0%, #2a312f 100%);
+  background: linear-gradient(135deg, rgba(57, 65, 63, 0.9) 0%, rgba(42, 49, 47, 0.95) 100%);
   color: #ffffff;
-  border-radius: 12px;
+  border-radius: 24px;
   padding: 40px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(220, 210, 204, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.totalEarnings::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(220, 210, 204, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(50%, -50%);
 }
 
 .totalEarnings h2 {
   margin: 0 0 16px 0;
-  font-size: 1.2rem;
-  color: #dcd2cc;
+  font-size: 16px;
+  color: rgba(220, 210, 204, 0.8);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  position: relative;
+  z-index: 1;
 }
 
 .earningsAmount {
-  font-size: 3rem;
-  font-weight: 700;
+  font-size: 48px;
+  font-weight: 900;
   margin: 16px 0;
+  letter-spacing: -2px;
+  background: linear-gradient(135deg, #dcd2cc 0%, #ffffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  z-index: 1;
 }
 
 .commissionRate {
   display: block;
-  color: #dcd2cc;
-  font-size: 0.9rem;
-  margin-top: 8px;
+  color: rgba(220, 210, 204, 0.7);
+  font-size: 13px;
+  margin-top: 12px;
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
 }
 
 .statsGrid {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .statCard {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(57, 65, 63, 0.8) 0%, rgba(42, 49, 47, 0.9) 100%);
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(220, 210, 204, 0.15);
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  border-color: rgba(220, 210, 204, 0.3);
 }
 
 .statCard h3 {
   margin: 0 0 12px 0;
-  color: #5a625f;
-  font-size: 0.9rem;
+  color: rgba(220, 210, 204, 0.8);
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
 .statCard p {
   margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #39413f;
+  font-size: 28px;
+  font-weight: 800;
+  color: #dcd2cc;
+  letter-spacing: -1px;
 }
 
 .pendingCount {
   display: block;
-  color: #5a625f;
-  font-size: 0.85rem;
+  color: rgba(220, 210, 204, 0.6);
+  font-size: 12px;
   margin-top: 8px;
+  font-weight: 500;
 }
 
 .serviceEarnings,
 .recentEarnings {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 30px;
+  background: linear-gradient(135deg, rgba(57, 65, 63, 0.8) 0%, rgba(42, 49, 47, 0.9) 100%);
+  border-radius: 24px;
+  padding: 32px;
   margin-bottom: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(220, 210, 204, 0.15);
 }
 
 .serviceEarnings h2,
 .recentEarnings h2 {
-  margin: 0 0 20px 0;
-  color: #39413f;
-  font-size: 1.3rem;
+  margin: 0 0 24px 0;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .serviceList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .serviceItem {
-  padding: 16px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border-left: 4px solid #39413f;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 14px;
+  border-left: 4px solid #dcd2cc;
+  transition: all 0.3s ease;
+}
+
+.serviceItem:hover {
+  background: rgba(0, 0, 0, 0.3);
+  transform: translateX(4px);
+  border-left-color: #ffffff;
 }
 
 .serviceHeader {
@@ -159,98 +265,202 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .serviceName {
   font-weight: 600;
-  color: #39413f;
+  color: #ffffff;
+  font-size: 16px;
 }
 
 .serviceAmount {
-  font-weight: 700;
-  color: #39413f;
-  font-size: 1.1rem;
+  font-weight: 800;
+  color: #dcd2cc;
+  font-size: 18px;
+  letter-spacing: -0.5px;
 }
 
 .serviceMeta {
-  color: #5a625f;
-  font-size: 0.9rem;
+  color: rgba(220, 210, 204, 0.7);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .ordersList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .earningsItem {
-  padding: 16px;
-  background: #f9f9f9;
-  border-radius: 8px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border: 1px solid rgba(220, 210, 204, 0.1);
+  transition: all 0.3s ease;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.earningsItem:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(220, 210, 204, 0.2);
+  transform: translateY(-2px);
 }
 
 .earningsItem > div:first-child {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .earningsItem strong {
-  color: #39413f;
-  font-size: 1rem;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
 }
 
 .orderDate {
-  color: #5a625f;
-  font-size: 0.85rem;
+  color: rgba(220, 210, 204, 0.7);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .earningsDetails {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
 }
 
 .earningsDetails span {
-  color: #5a625f;
-  font-size: 0.9rem;
+  color: rgba(220, 210, 204, 0.8);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .earningsAmount {
-  font-weight: 700;
-  color: #39413f;
-  font-size: 1.1rem;
+  font-weight: 800;
+  color: #dcd2cc;
+  font-size: 18px;
+  letter-spacing: -0.5px;
 }
 
 .empty {
   text-align: center;
-  color: #5a625f;
-  padding: 60px 20px;
-  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 80px 20px;
+  font-size: 18px;
   font-style: italic;
-  background: #ffffff;
-  border-radius: 12px;
+  background: rgba(57, 65, 63, 0.4);
+  border-radius: 20px;
+  border: 1px dashed rgba(220, 210, 204, 0.2);
 }
 
 .loading,
 .error {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #39413f;
+  gap: 20px;
+  color: #ffffff;
+}
+
+.loading::before {
+  content: '';
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(220, 210, 204, 0.2);
+  border-top-color: #dcd2cc;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error {
   color: #dc3232;
 }
 
+/* Mobile Responsive */
 @media (max-width: 768px) {
+  .header {
+    padding: 20px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .main {
+    padding: 20px;
+  }
+
+  .periodFilters {
+    gap: 8px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .periodFilters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .periodButton,
+  .activePeriod {
+    padding: 8px 16px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
   .overview {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .totalEarnings {
+    padding: 32px 24px;
+  }
+
+  .earningsAmount {
+    font-size: 36px;
+  }
+
+  .statCard {
+    padding: 24px 20px;
+  }
+
+  .statCard p {
+    font-size: 24px;
+  }
+
+  .serviceEarnings,
+  .recentEarnings {
+    padding: 24px;
+  }
+
+  .earningsItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .earningsDetails {
+    align-items: flex-start;
+    width: 100%;
   }
 }

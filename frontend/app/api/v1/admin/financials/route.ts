@@ -1,32 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { verifyAdminOrRep } from '../utils';
 
 export const dynamic = 'force-dynamic';
-
-// Helper function to verify admin token
-async function verifyAdmin(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
-    
-    if (!user || user.role !== 'ADMIN' || !user.isActive) {
-      return null;
-    }
-    
-    return user;
-  } catch {
-    return null;
-  }
-}
 
 // Helper to get date range
 function getDateRange(period: string = 'all') {
@@ -54,10 +30,10 @@ function getDateRange(period: string = 'all') {
 
 export async function GET(request: NextRequest) {
   try {
-    const admin = await verifyAdmin(request);
-    if (!admin) {
+    const user = await verifyAdminOrRep(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: { message: 'Unauthorized. Admin access required.' } },
+        { success: false, error: { message: 'Unauthorized. Admin or Rep access required.' } },
         { status: 401 }
       );
     }
@@ -218,19 +194,21 @@ export async function GET(request: NextRequest) {
         _count: { id: true },
       }),
 
-      // Barber Earnings (from assigned orders with commission calculation)
-      prisma.order.groupBy({
-        by: ['assignedBarberId'],
-        where: {
-          ...dateFilter,
-          assignedBarberId: { not: null },
-          paymentStatus: 'PAID',
-        },
-        _sum: { totalAmount: true },
-        _count: { id: true },
-      }),
+        // Barber Earnings (from assigned orders with commission calculation) - Admin only
+      user.role === 'ADMIN'
+        ? prisma.order.groupBy({
+            by: ['assignedBarberId'],
+            where: {
+              ...dateFilter,
+              assignedBarberId: { not: null },
+              paymentStatus: 'PAID',
+            },
+            _sum: { totalAmount: true },
+            _count: { id: true },
+          })
+        : Promise.resolve([]),
 
-      // Total Company Commission (placeholder - would need commission rate from barber)
+      // Total Company Commission - Admin only
       Promise.resolve({ total: 0 }),
 
       // Total Refunds
@@ -347,9 +325,10 @@ export async function GET(request: NextRequest) {
       })(),
     ]);
 
-    // Calculate barber earnings with commission rates
-    const barberEarningsDetails = await Promise.all(
-      barberEarnings.map(async (item) => {
+    // Calculate barber earnings with commission rates (Admin only)
+    const barberEarningsDetails = user.role === 'ADMIN' 
+      ? await Promise.all(
+          (barberEarnings as any[]).map(async (item) => {
         if (!item.assignedBarberId) return null;
         
         const barber = await prisma.barber.findUnique({
@@ -383,12 +362,17 @@ export async function GET(request: NextRequest) {
           companyCommission,
           ordersCount: item._count.id,
         };
-      })
-    );
+          })
+        )
+      : [];
 
     const validBarberEarnings = barberEarningsDetails.filter(Boolean) as any[];
-    const totalBarberPayouts = validBarberEarnings.reduce((sum, b) => sum + b.barberEarning, 0);
-    const totalCompanyCommission = validBarberEarnings.reduce((sum, b) => sum + b.companyCommission, 0);
+    const totalBarberPayouts = user.role === 'ADMIN' 
+      ? validBarberEarnings.reduce((sum, b) => sum + b.barberEarning, 0)
+      : 0;
+    const totalCompanyCommission = user.role === 'ADMIN'
+      ? validBarberEarnings.reduce((sum, b) => sum + b.companyCommission, 0)
+      : 0;
 
     // Calculate averages
     const avgOrderValue = paidOrders > 0 
@@ -463,10 +447,12 @@ export async function GET(request: NextRequest) {
           count: item._count.id,
         })),
 
-        // Barber Earnings
-        barberEarnings: validBarberEarnings.sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 10),
-        totalBarberPayouts,
-        totalCompanyCommission,
+        // Barber Earnings (Admin only)
+        barberEarnings: user.role === 'ADMIN' 
+          ? validBarberEarnings.sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 10) 
+          : null,
+        totalBarberPayouts: user.role === 'ADMIN' ? totalBarberPayouts : null,
+        totalCompanyCommission: user.role === 'ADMIN' ? totalCompanyCommission : null,
 
         // Refunds
         refunds: {

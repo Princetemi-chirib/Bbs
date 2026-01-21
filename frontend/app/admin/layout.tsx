@@ -19,7 +19,7 @@ export default function AdminLayout({
   };
 
   return (
-    <AuthGuard requiredRole="ADMIN">
+    <AuthGuard requiredRole="ADMIN_OR_REP">
       <div className={styles.adminContainer}>
         <AdminSidebar onLogout={handleLogout} />
         <main className={styles.mainContent}>

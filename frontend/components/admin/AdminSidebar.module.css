@@ -85,8 +85,22 @@
   border-bottom: 1px solid #e5e5e5;
   background: linear-gradient(135deg, #39413f 0%, #2a312f 100%);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+}
+
+.roleBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  margin-top: 4px;
 }
 
 .logoLink {

@@ -53,9 +53,34 @@ export async function POST(
     }
 
     // Get application
-    const application = await prisma.barberApplication.findUnique({
-      where: { id: applicationId },
-    });
+    // Get application - handle missing city column gracefully
+    let application;
+    try {
+      application = await prisma.barberApplication.findUnique({
+        where: { id: applicationId },
+      });
+    } catch (dbError: any) {
+      // If city column doesn't exist, use explicit select without city
+      if (dbError.message?.includes('city')) {
+        application = await prisma.barberApplication.findUnique({
+          where: { id: applicationId },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            status: true,
+            createdAt: true,
+          },
+        }) as any;
+        if (application) {
+          (application as any).city = null;
+        }
+      } else {
+        throw dbError;
+      }
+    }
 
     if (!application) {
       return NextResponse.json(

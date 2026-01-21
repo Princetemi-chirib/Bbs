@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchAuth } from '@/lib/auth';
+import { fetchAuth, isAdmin } from '@/lib/auth';
 import styles from './financials.module.css';
 import {
   LineChart,
@@ -157,9 +157,11 @@ export default function AdminFinancialsPage() {
             </div>
           )}
 
-          <button onClick={exportToCSV} className={styles.exportButton}>
-            📊 Export CSV
-          </button>
+          {isAdmin() && (
+            <button onClick={exportToCSV} className={styles.exportButton}>
+              📊 Export CSV
+            </button>
+          )}
         </section>
 
         {/* KPI Cards */}
@@ -245,7 +247,8 @@ export default function AdminFinancialsPage() {
           </div>
         </section>
 
-        {/* Charts Section */}
+        {/* Charts Section - Admin Only */}
+        {isAdmin() && (
         <section className={styles.chartsSection}>
           {/* Revenue Trend Chart */}
           <div className={styles.chartCard}>
@@ -340,6 +343,7 @@ export default function AdminFinancialsPage() {
             </ResponsiveContainer>
           </div>
         </section>
+        )}
 
         {/* Summary Statistics */}
         <section className={styles.summarySection}>
@@ -368,20 +372,24 @@ export default function AdminFinancialsPage() {
                 <span className={styles.summaryLabel}>Failed Payments</span>
                 <span className={styles.summaryValue}>{orders?.failed || 0} orders</span>
               </div>
-              <div className={styles.summaryItem}>
-                <span className={styles.summaryLabel}>Company Commission</span>
-                <span className={styles.summaryValue}>{formatCurrency(financials?.totalCompanyCommission || 0)}</span>
-              </div>
-              <div className={styles.summaryItem}>
-                <span className={styles.summaryLabel}>Barber Payouts</span>
-                <span className={styles.summaryValue}>{formatCurrency(financials?.totalBarberPayouts || 0)}</span>
-              </div>
+              {isAdmin() && (
+                <>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Company Commission</span>
+                    <span className={styles.summaryValue}>{formatCurrency(financials?.totalCompanyCommission || 0)}</span>
+                  </div>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Barber Payouts</span>
+                    <span className={styles.summaryValue}>{formatCurrency(financials?.totalBarberPayouts || 0)}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>
 
-        {/* Top Earning Barbers */}
-        {barberEarnings && barberEarnings.length > 0 && (
+        {/* Top Earning Barbers - Admin Only */}
+        {isAdmin() && barberEarnings && barberEarnings.length > 0 && (
           <section className={styles.barbersSection}>
             <div className={styles.summaryCard}>
               <h2 className={styles.sectionTitle}>Top Earning Barbers</h2>

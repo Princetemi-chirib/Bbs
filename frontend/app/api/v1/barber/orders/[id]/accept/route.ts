@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { emailService } from '@/lib/server/emailService';
+import { emailTemplates } from '@/lib/server/emailTemplates';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,6 +67,26 @@ export async function POST(
       );
     }
 
+    // Get order with barber details before updating
+    const orderWithBarber = await prisma.order.findFirst({
+      where: {
+        id: orderId,
+        assignedBarberId: barber.id,
+      },
+      include: {
+        assignedBarber: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
     // Update order status
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
@@ -73,10 +95,45 @@ export async function POST(
       },
       include: {
         items: true,
+        assignedBarber: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                phone: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    // TODO: Send email notification to customer that barber accepted
+    // Send email notification to customer that barber accepted
+    if (updatedOrder.customerEmail && updatedOrder.assignedBarber) {
+      try {
+        const barberEmailHtml = emailTemplates.barberAccepted({
+          customerName: updatedOrder.customerName,
+          orderNumber: updatedOrder.orderNumber,
+          barberName: updatedOrder.assignedBarber.user.name,
+          barberPhone: updatedOrder.assignedBarber.user.phone || undefined,
+          city: updatedOrder.city,
+          location: updatedOrder.location,
+          estimatedArrival: '10 minutes', // Default estimate
+        });
+
+        await emailService.sendEmail({
+          to: updatedOrder.customerEmail,
+          subject: `Barber Accepted Your Order - ${updatedOrder.orderNumber}`,
+          html: barberEmailHtml,
+          text: `Hello ${updatedOrder.customerName},\n\nGreat news! A professional barber has accepted your order (${updatedOrder.orderNumber}) and is preparing to serve you.\n\nBarber: ${updatedOrder.assignedBarber.user.name}\nLocation: ${updatedOrder.city}, ${updatedOrder.location}\n\nYour barber will arrive within 10 minutes. Please ensure you're available at the service location.\n\nBest regards,\nBBS Limited Team`,
+        });
+
+        console.log(`✅ Barber acceptance email sent to ${updatedOrder.customerEmail}`);
+      } catch (emailError) {
+        console.error('⚠️ Failed to send barber acceptance email:', emailError);
+        // Don't fail the acceptance if email fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

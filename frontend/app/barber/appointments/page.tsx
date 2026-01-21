@@ -110,8 +110,15 @@ export default function BarberAppointmentsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <Link href="/barber">← Back to Dashboard</Link>
+        <Link href="/barber" className={styles.backLink}>
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back
+        </Link>
         <h1>My Appointments</h1>
+        <p className={styles.headerSubtitle}>Manage your orders and appointments</p>
+        <p className={styles.headerSubtitle}>Manage your orders and appointments</p>
       </header>
 
       <main className={styles.main}>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { fetchAuth } from '@/lib/auth';
+import { fetchAuth, isAdmin } from '@/lib/auth';
 import { orderApi, productApi } from '@/lib/api';
 import styles from './orders.module.css';
 
@@ -58,10 +58,21 @@ export default function AdminOrdersPage() {
     try {
       const data = await orderApi.getAll();
       if (data.success) {
-        setOrders(data.data || []);
+        const ordersData = data.data || [];
+        console.log('📦 Loaded orders:', ordersData.length);
+        console.log('📦 Orders data:', ordersData.map((o: any) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          paymentStatus: o.paymentStatus,
+          assignedBarberId: o.assignedBarberId,
+          status: o.status,
+        })));
+        setOrders(ordersData);
+      } else {
+        console.error('❌ Failed to load orders - API returned error:', data.error);
       }
     } catch (err) {
-      console.error('Failed to load orders:', err);
+      console.error('❌ Failed to load orders:', err);
     } finally {
       setLoading(false);
     }
@@ -204,10 +215,13 @@ export default function AdminOrdersPage() {
   };
 
   // Filter orders that need assignment
+  // PaymentStatus enum: PENDING, PAID, PARTIALLY_PAID, REFUNDED, FAILED
+  // Unassigned orders are those with PAID status and no assigned barber
   const unassignedOrders = orders.filter(
-    (order) => order.paymentStatus === 'COMPLETED' && !order.assignedBarberId
+    (order) => (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && !order.assignedBarberId
   );
 
+  // Assigned orders are those with a barber assigned
   const assignedOrders = orders.filter((order) => order.assignedBarberId);
 
   const totalAmount = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
@@ -224,13 +238,15 @@ export default function AdminOrdersPage() {
             <h1 className={styles.pageTitle}>Order Management</h1>
             <p className={styles.pageSubtitle}>Manage and assign orders to barbers</p>
           </div>
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className={styles.primaryBtn}
-            style={{ padding: '12px 24px' }}
-          >
-            {showCreateForm ? 'Cancel' : '+ Create Order'}
-          </button>
+          {isAdmin() && (
+            <button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className={styles.primaryBtn}
+              style={{ padding: '12px 24px' }}
+            >
+              {showCreateForm ? 'Cancel' : '+ Create Order'}
+            </button>
+          )}
         </div>
       </header>
 

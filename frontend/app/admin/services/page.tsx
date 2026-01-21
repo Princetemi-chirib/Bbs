@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { fetchAuth } from '@/lib/auth';
+import { fetchAuth, isAdmin } from '@/lib/auth';
 import styles from './services.module.css';
 
 type ServiceCategory = 'general' | 'recovery';
@@ -232,14 +232,16 @@ export default function AdminServicesPage() {
             <h1 className={styles.pageTitle}>Services Management</h1>
             <p className={styles.pageSubtitle}>Manage services that appear on the ordering page</p>
           </div>
-          <button className={styles.addButton} onClick={openCreate}>
-            + Add Service
-          </button>
+          {isAdmin() && (
+            <button className={styles.addButton} onClick={openCreate}>
+              + Add Service
+            </button>
+          )}
         </div>
       </header>
 
       <main className={styles.main}>
-        {showForm && (
+        {showForm && isAdmin() && (
           <section className={styles.formCard}>
             <div className={styles.formHeader}>
               <h2>{editingId ? 'Edit Service' : 'Create Service'}</h2>
@@ -461,8 +463,13 @@ export default function AdminServicesPage() {
                       <td>{s.displayOrder ?? 0}</td>
                       <td style={{ textAlign: 'right' }}>
                         <div className={styles.rowActions}>
-                          <button className={styles.linkBtn} onClick={() => openEdit(s)}>Edit</button>
-                          <button className={styles.dangerLink} onClick={() => deleteService(s)}>Delete</button>
+                          {isAdmin() && (
+                            <>
+                              <button className={styles.linkBtn} onClick={() => openEdit(s)}>Edit</button>
+                              <button className={styles.dangerLink} onClick={() => deleteService(s)}>Delete</button>
+                            </>
+                          )}
+                          {!isAdmin() && <span style={{ color: '#6c757d', fontSize: '0.875rem' }}>View Only</span>}
                         </div>
                       </td>
                     </tr>
