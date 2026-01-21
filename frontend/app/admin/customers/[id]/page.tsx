@@ -11,7 +11,7 @@ type TabType = 'profile' | 'bookings' | 'orders' | 'payments' | 'reviews';
 export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const customerId = params.id as string;
+  const customerId = params?.id as string | undefined;
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [customer, setCustomer] = useState<any>(null);
   const [statistics, setStatistics] = useState<any>(null);
@@ -23,7 +23,9 @@ export default function CustomerDetailPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    loadCustomerDetails();
+    if (customerId) {
+      loadCustomerDetails();
+    }
   }, [customerId]);
 
   const loadCustomerDetails = async () => {
@@ -77,6 +79,17 @@ export default function CustomerDetailPage() {
       <div className={styles.loadingContainer}>
         <div className={styles.spinner}></div>
         <p>Loading customer details...</p>
+      </div>
+    );
+  }
+
+  if (!customerId) {
+    return (
+      <div className={styles.errorContainer}>
+        <p>Invalid customer ID</p>
+        <Link href="/admin/customers" className={styles.backButton}>
+          Back to Customers
+        </Link>
       </div>
     );
   }

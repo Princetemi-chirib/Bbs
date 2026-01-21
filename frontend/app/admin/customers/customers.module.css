@@ -16,7 +16,14 @@
 @media (max-width: 768px) {
   .pageHeader {
     padding-top: 72px;
-    padding: 24px 20px;
+    padding: 20px 16px;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageHeader {
+    padding: 16px 12px;
   }
 }
 
@@ -43,10 +50,28 @@
   font-weight: 600;
   margin-bottom: 16px;
   transition: color 0.2s;
+  font-size: 0.95rem;
+  min-height: 44px; /* Better touch target */
+  padding: 4px 0;
 }
 
 .backLink:hover {
   color: #2a312f;
+}
+
+@media (max-width: 480px) {
+  .pageTitle {
+    font-size: 1.25rem;
+  }
+
+  .pageSubtitle {
+    font-size: 0.875rem;
+  }
+
+  .backLink {
+    font-size: 0.875rem;
+    margin-bottom: 12px;
+  }
 }
 
 /* Main Content */
@@ -58,11 +83,17 @@
 
 @media (max-width: 768px) {
   .main {
-    padding: 0 20px 20px 20px;
+    padding: 0 16px 20px 16px;
   }
 
   .pageTitle {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: 0 12px 16px 12px;
   }
 }
 
@@ -141,6 +172,58 @@
   .statsGrid {
     grid-template-columns: 1fr;
     gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .summaryCard,
+  .statCard {
+    padding: 20px 16px;
+  }
+
+  .summaryIcon,
+  .statIcon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+
+  .summaryValue,
+  .statValue {
+    font-size: 1.75rem;
+  }
+
+  .summaryLabel,
+  .statLabel {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .summaryGrid,
+  .statsGrid {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .summaryCard,
+  .statCard {
+    padding: 16px 12px;
+  }
+
+  .summaryIcon,
+  .statIcon {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+  }
+
+  .summaryValue,
+  .statValue {
+    font-size: 1.5rem;
+  }
+
+  .statSubtext {
+    font-size: 0.8rem;
   }
 }
 
@@ -244,26 +327,68 @@
 }
 
 @media (max-width: 768px) {
+  .filters {
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
   .searchBar {
     flex-direction: column;
+    gap: 12px;
+  }
+
+  .searchInput {
+    width: 100%;
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 44px;
+    padding: 12px 16px;
   }
 
   .searchButton {
     width: 100%;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    min-height: 44px; /* Better touch target */
   }
 
   .filterControls {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 
   .filterGroup {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
+  }
+
+  .filterGroup label {
+    font-size: 0.8rem;
   }
 
   .select {
     width: 100%;
+    padding: 12px 12px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 44px;
+  }
+
+  .sortButton {
+    width: 100%;
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filters {
+    padding: 16px 12px;
+    gap: 12px;
+  }
+
+  .filterGroup label {
+    font-size: 0.75rem;
   }
 }
 
@@ -785,39 +910,111 @@
   background: #2a312f;
 }
 
-/* Mobile Responsive */
+/* Mobile Responsive - Additional Styles */
 @media (max-width: 768px) {
-  .tableWrap {
-    overflow-x: auto !important;
-    width: 100% !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .table {
-    min-width: 900px;
-  }
-
-  .table th,
-  .table td {
-    padding: 12px 8px;
-    font-size: 0.875rem;
+  .tabsSection {
+    margin-bottom: 24px;
   }
 
   .tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    gap: 4px;
+    padding-bottom: 2px;
+    /* Add scroll indicator */
+    mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
   }
 
   .tab {
-    padding: 10px 16px;
+    padding: 12px 16px;
     font-size: 0.875rem;
+    min-height: 44px; /* Better touch target */
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .profileGrid {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 
   .tabContent {
-    padding: 24px 20px;
+    padding: 20px 16px;
+  }
+
+  .reviewsList {
+    gap: 12px;
+  }
+
+  .reviewCard {
+    padding: 16px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pageButton {
+    padding: 12px 20px;
+    min-height: 44px;
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .pageInfo {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabs {
+    gap: 2px;
+  }
+
+  .tab {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .tabContent {
+    padding: 16px 12px;
+  }
+
+  .profileGrid {
+    gap: 16px;
+  }
+
+  .profileItem {
+    gap: 6px;
+  }
+
+  .profileItem label {
+    font-size: 0.75rem;
+  }
+
+  .profileItem > div {
+    font-size: 0.875rem;
+  }
+
+  .reviewHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .reviewBarber {
+    font-size: 0.9rem;
+  }
+
+  .reviewService {
+    font-size: 0.8rem;
+  }
+
+  .reviewComment {
+    font-size: 0.875rem;
   }
 }
