@@ -63,11 +63,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { firstName, lastName, otherName, dateOfBirth, email, maritalStatus, phone, address, ninNumber, gender, applicationLetterUrl, cvUrl } = body;
+    const { firstName, lastName, otherName, dateOfBirth, email, maritalStatus, phone, address, ninNumber, gender, experienceYears, portfolioUrl, whyJoinNetwork, applicationLetterUrl, cvUrl, barberLicenceUrl } = body;
 
-    if (!firstName || !lastName || !email || !phone || !address || !ninNumber || !gender || !applicationLetterUrl || !cvUrl) {
+    if (!firstName || !lastName || !email || !phone || !address || !ninNumber || !gender || !experienceYears || !whyJoinNetwork || !applicationLetterUrl || !cvUrl) {
       return NextResponse.json(
-        { success: false, error: { message: 'First name, last name, email, phone, address, NIN number, gender, application letter, and CV are required' } },
+        { success: false, error: { message: 'First name, last name, email, phone, address, NIN number, gender, years of experience, why join network, application letter, and CV are required' } },
         { status: 400 }
       );
     }
@@ -99,8 +99,12 @@ export async function POST(request: NextRequest) {
         maritalStatus: maritalStatus || null,
         ninNumber: ninNumber || null,
         gender: gender || null,
+        experienceYears: experienceYears ? parseInt(experienceYears) : null,
+        portfolioUrl: portfolioUrl || null,
+        whyJoinNetwork: whyJoinNetwork || null,
         applicationLetterUrl: applicationLetterUrl || null,
         cvUrl: cvUrl || null,
+        barberLicenceUrl: barberLicenceUrl || null,
         specialties: [],
         status: 'PENDING',
       },
@@ -139,9 +143,13 @@ export async function POST(request: NextRequest) {
                   <div class="detail-row"><span class="detail-label">Gender:</span> ${gender || 'N/A'}</div>
                   <div class="detail-row"><span class="detail-label">Marital Status:</span> ${maritalStatus || 'N/A'}</div>
                   <div class="detail-row"><span class="detail-label">NIN Number:</span> ${ninNumber || 'N/A'}</div>
+                  <div class="detail-row"><span class="detail-label">Years of Experience:</span> ${experienceYears || 'N/A'}</div>
+                  ${portfolioUrl ? `<div class="detail-row"><span class="detail-label">Portfolio/Instagram:</span> <a href="${portfolioUrl}" target="_blank">${portfolioUrl}</a></div>` : ''}
+                  ${whyJoinNetwork ? `<div class="detail-row"><span class="detail-label">Why Join Network:</span> ${whyJoinNetwork}</div>` : ''}
                   <div class="detail-row"><span class="detail-label">Address:</span> ${address}</div>
                   ${applicationLetterUrl ? `<div class="detail-row"><span class="detail-label">Application Letter:</span> <a href="${process.env.NEXT_PUBLIC_BASE_URL}${applicationLetterUrl}">Download</a></div>` : ''}
                   ${cvUrl ? `<div class="detail-row"><span class="detail-label">CV:</span> <a href="${process.env.NEXT_PUBLIC_BASE_URL}${cvUrl}">Download</a></div>` : ''}
+                  ${barberLicenceUrl ? `<div class="detail-row"><span class="detail-label">Barber Licence:</span> <a href="${process.env.NEXT_PUBLIC_BASE_URL}${barberLicenceUrl}">Download</a></div>` : ''}
             <p style="text-align: center; margin-top: 30px;">
               <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin/barbers" style="background: #39413f; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
                 View in Admin Dashboard
@@ -162,7 +170,7 @@ export async function POST(request: NextRequest) {
           to: adminEmail,
           subject: `New Barber Application: ${fullName}`,
           html: emailHtml,
-          text: `New barber application from ${fullName} (${email}). Address: ${address}. View: ${process.env.NEXT_PUBLIC_BASE_URL}/admin/barbers`,
+          text: `New barber application from ${fullName} (${email}). Years of Experience: ${experienceYears || 'N/A'}. ${portfolioUrl ? `Portfolio/Instagram: ${portfolioUrl}. ` : ''}${whyJoinNetwork ? `Why Join: ${whyJoinNetwork.substring(0, 100)}${whyJoinNetwork.length > 100 ? '...' : ''}. ` : ''}Address: ${address}. ${barberLicenceUrl ? 'Barber Licence attached. ' : ''}View: ${process.env.NEXT_PUBLIC_BASE_URL}/admin/barbers`,
         });
         console.log(`Admin notification email sent for application ${application.id}`);
       } catch (emailError) {

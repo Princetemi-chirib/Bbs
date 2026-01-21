@@ -148,19 +148,26 @@ function BarberApplicationForm() {
     address: '',
     ninNumber: '',
     gender: '',
+    experienceYears: '',
+    portfolioUrl: '',
+    whyJoinNetwork: '',
+    declarationAccepted: false,
     applicationLetter: null as File | null,
     cv: null as File | null,
+    barberLicence: null as File | null,
   });
   const [applicationLetterUrl, setApplicationLetterUrl] = useState('');
   const [cvUrl, setCvUrl] = useState('');
+  const [barberLicenceUrl, setBarberLicenceUrl] = useState('');
   const [uploadingLetter, setUploadingLetter] = useState(false);
   const [uploadingCv, setUploadingCv] = useState(false);
+  const [uploadingLicence, setUploadingLicence] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const handleFileUpload = async (file: File, type: 'letter' | 'cv'): Promise<string | null> => {
-    const uploadType = type === 'letter' ? setUploadingLetter : setUploadingCv;
+  const handleFileUpload = async (file: File, type: 'letter' | 'cv' | 'licence'): Promise<string | null> => {
+    const uploadType = type === 'letter' ? setUploadingLetter : type === 'cv' ? setUploadingCv : setUploadingLicence;
     uploadType(true);
     
     try {
@@ -187,7 +194,7 @@ function BarberApplicationForm() {
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'letter' | 'cv') => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'letter' | 'cv' | 'licence') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -209,15 +216,23 @@ function BarberApplicationForm() {
       if (type === 'letter') {
         setApplicationLetterUrl(url);
         setFormData({ ...formData, applicationLetter: file });
-      } else {
+      } else if (type === 'cv') {
         setCvUrl(url);
         setFormData({ ...formData, cv: file });
+      } else {
+        setBarberLicenceUrl(url);
+        setFormData({ ...formData, barberLicence: file });
       }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.declarationAccepted) {
+      setError('Please confirm that the information provided is accurate and complete');
+      return;
+    }
     
     if (!applicationLetterUrl || !cvUrl) {
       setError('Please upload both application letter and CV');
@@ -244,8 +259,12 @@ function BarberApplicationForm() {
           address: formData.address,
           ninNumber: formData.ninNumber || undefined,
           gender: formData.gender || undefined,
+          experienceYears: formData.experienceYears ? parseInt(formData.experienceYears) : undefined,
+          portfolioUrl: formData.portfolioUrl || undefined,
+          whyJoinNetwork: formData.whyJoinNetwork || undefined,
           applicationLetterUrl,
           cvUrl,
+          barberLicenceUrl: barberLicenceUrl || undefined,
         }),
       });
 
@@ -265,11 +284,17 @@ function BarberApplicationForm() {
           address: '',
           ninNumber: '',
           gender: '',
+          experienceYears: '',
+          portfolioUrl: '',
+          whyJoinNetwork: '',
+          declarationAccepted: false,
           applicationLetter: null,
           cv: null,
+          barberLicence: null,
         });
         setApplicationLetterUrl('');
         setCvUrl('');
+        setBarberLicenceUrl('');
         setTimeout(() => setSubmitted(false), 5000);
       } else {
         setError(data.error?.message || 'Failed to submit application. Please try again.');
@@ -282,9 +307,11 @@ function BarberApplicationForm() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const target = e.target;
+    const value = target.type === 'checkbox' ? (target as HTMLInputElement).checked : target.value;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [target.name]: value,
     });
   };
 
@@ -423,6 +450,45 @@ function BarberApplicationForm() {
       </div>
 
       <div className={styles.formGroup}>
+        <label htmlFor="experienceYears">Years of Experience *</label>
+        <input
+          type="number"
+          id="experienceYears"
+          name="experienceYears"
+          value={formData.experienceYears}
+          onChange={handleChange}
+          min="0"
+          placeholder="e.g. 5"
+          required
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="portfolioUrl">Portfolio or Instagram Link</label>
+        <input
+          type="url"
+          id="portfolioUrl"
+          name="portfolioUrl"
+          value={formData.portfolioUrl}
+          onChange={handleChange}
+          placeholder="https://instagram.com/yourhandle or https://yourportfolio.com"
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="whyJoinNetwork">Why do you want to join our network? *</label>
+        <textarea
+          id="whyJoinNetwork"
+          name="whyJoinNetwork"
+          value={formData.whyJoinNetwork}
+          onChange={handleChange}
+          rows={5}
+          placeholder="Tell us why you want to join our network..."
+          required
+        />
+      </div>
+
+      <div className={styles.formGroup}>
         <label htmlFor="applicationLetter">Application Letter * (PDF or JPG)</label>
         <input
           type="file"
@@ -450,7 +516,35 @@ function BarberApplicationForm() {
         {cvUrl && <p style={{ color: '#46b450', fontSize: '0.9rem', marginTop: '4px' }}>✓ File uploaded</p>}
       </div>
 
-      <button type="submit" className={styles.btnSubmit} disabled={submitting || uploadingLetter || uploadingCv}>
+      <div className={styles.formGroup}>
+        <label htmlFor="barberLicence">Barber Licence (Optional) (PDF or JPG)</label>
+        <input
+          type="file"
+          id="barberLicence"
+          name="barberLicence"
+          accept=".pdf,.jpg,.jpeg"
+          onChange={(e) => handleFileChange(e, 'licence')}
+        />
+        {uploadingLicence && <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>Uploading...</p>}
+        {barberLicenceUrl && <p style={{ color: '#46b450', fontSize: '0.9rem', marginTop: '4px' }}>✓ File uploaded</p>}
+      </div>
+
+      <div className={styles.formGroup}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            id="declarationAccepted"
+            name="declarationAccepted"
+            checked={formData.declarationAccepted}
+            onChange={handleChange}
+            required
+            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+          />
+          <span>I confirm the information provided above is accurate and complete. *</span>
+        </label>
+      </div>
+
+      <button type="submit" className={styles.btnSubmit} disabled={submitting || uploadingLetter || uploadingCv || uploadingLicence}>
         {submitting ? 'Submitting...' : 'Submit Application'}
       </button>
 

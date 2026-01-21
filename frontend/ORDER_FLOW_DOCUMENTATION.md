@@ -1,13 +1,13 @@
-# Complete Order Flow Documentation
-## From Landing Page to Service Completion
+ Complete Order Flow Documentation
+ From Landing Page to Service Completion
 
 This document outlines the complete flow of an order from initial browsing to service completion, including all emails, status changes, and process steps.
 
 ---
 
-## 📋 **PHASE 1: ORDER PLACEMENT** 
+ 📋 **PHASE 1: ORDER PLACEMENT** 
 
-### **Step 1.1: Customer Browses Services** (`/book`)
+ **Step 1.1: Customer Browses Services** (`/book`)
 - **Page**: Landing/Booking Page (`app/book/page.tsx`)
 - **Actions**:
   - Customer views available services (General & Recovery categories)
@@ -16,14 +16,14 @@ This document outlines the complete flow of an order from initial browsing to se
   - For services with different adult/kids pricing, customer selects age group
   - Customer clicks "Add to Order" for desired services
 
-### **Step 1.2: Cart Management**
+ **Step 1.2: Cart Management**
 - **Storage**: Cart stored in Zustand store (persisted to localStorage)
 - **Actions**:
   - Items added to cart with quantity, pricing, age group
   - Customer can view cart summary
   - Customer clicks "View Cart & Checkout" → redirects to `/cart`
 
-### **Step 1.3: Checkout Process** (`/cart` → `/checkout`)
+ **Step 1.3: Checkout Process** (`/cart` → `/checkout`)
 - **Page**: Checkout Page (`app/checkout/page.tsx`)
 - **Customer Information Collected**:
   - First Name, Last Name
@@ -35,7 +35,7 @@ This document outlines the complete flow of an order from initial browsing to se
   - Address (optional)
   - Additional Notes (optional)
 
-### **Step 1.4: Payment Processing**
+ **Step 1.4: Payment Processing**
 - **Payment Gateway**: Paystack Integration
 - **Process**:
   1. Customer clicks "Pay Now"
@@ -43,7 +43,7 @@ This document outlines the complete flow of an order from initial browsing to se
   3. Customer completes payment
   4. Payment reference received from Paystack
 
-### **Step 1.5: Order Creation** 
+ **Step 1.5: Order Creation** 
 - **API**: `POST /api/v1/orders`
 - **Location**: `app/api/v1/orders/route.ts`
 - **Actions**:
@@ -65,7 +65,7 @@ This document outlines the complete flow of an order from initial browsing to se
 
   3. **Response**: Returns order details with order number
 
-### **Step 1.6: Order Confirmation Email**
+ **Step 1.6: Order Confirmation Email**
 - **API**: `POST /api/v1/emails/order-confirmation`
 - **Location**: `app/api/v1/emails/order-confirmation/route.ts`
 - **Recipient**: Customer email
@@ -79,7 +79,7 @@ This document outlines the complete flow of an order from initial browsing to se
   - Total amount
   - What's next steps
 
-### **Step 1.7: Success Page**
+ **Step 1.7: Success Page**
 - **Page**: `app/checkout/success/page.tsx`
 - **Display**:
   - Payment success confirmation
@@ -90,9 +90,9 @@ This document outlines the complete flow of an order from initial browsing to se
 
 ---
 
-## 📧 **PHASE 2: ADMIN ASSIGNMENT**
+ 📧 **PHASE 2: ADMIN ASSIGNMENT**
 
-### **Step 2.1: Admin Reviews Order**
+ **Step 2.1: Admin Reviews Order**
 - **Location**: Admin Dashboard (`/admin/orders`)
 - **Actions**:
   - Admin views all pending orders
@@ -102,7 +102,7 @@ This document outlines the complete flow of an order from initial browsing to se
     - Total amount, payment status
     - Order items
 
-### **Step 2.2: Admin Assigns Order to Barber**
+ **Step 2.2: Admin Assigns Order to Barber**
 - **API**: `POST /api/v1/admin/orders/assign`
 - **Location**: `app/api/v1/admin/orders/assign/route.ts`
 - **Process**:
@@ -121,13 +121,13 @@ This document outlines the complete flow of an order from initial browsing to se
 
 ---
 
-## ✋ **PHASE 3: BARBER ACCEPTANCE**
+ ✋ **PHASE 3: BARBER ACCEPTANCE**
 
-### **Step 3.1: Barber Views Assigned Orders**
+ **Step 3.1: Barber Views Assigned Orders**
 - **Location**: Barber Dashboard (`/barber/orders`)
 - **Display**: Orders with status `PENDING_ACCEPTANCE`
 
-### **Step 3.2: Barber Accepts Order**
+ **Step 3.2: Barber Accepts Order**
 - **API**: `POST /api/v1/barber/orders/{id}/accept`
 - **Location**: `app/api/v1/barber/orders/[id]/accept/route.ts`
 - **Process**:
@@ -142,7 +142,7 @@ This document outlines the complete flow of an order from initial browsing to se
      - Should notify customer that barber accepted and is preparing
      - Currently commented as TODO
 
-### **Step 3.3: Barber Declines Order** (Alternative)
+ **Step 3.3: Barber Declines Order** (Alternative)
 - **API**: `POST /api/v1/barber/orders/{id}/decline`
 - **Location**: `app/api/v1/barber/orders/[id]/decline/route.ts`
 - **Process**:
@@ -159,9 +159,9 @@ This document outlines the complete flow of an order from initial browsing to se
 
 ---
 
-## 🚗 **PHASE 4: SERVICE EXECUTION**
+ 🚗 **PHASE 4: SERVICE EXECUTION**
 
-### **Step 4.1: Barber Updates Status - On The Way**
+ **Step 4.1: Barber Updates Status - On The Way**
 - **API**: `POST /api/v1/barber/orders/{id}/status`
 - **Location**: `app/api/v1/barber/orders/[id]/status/route.ts`
 - **Process**:
@@ -175,7 +175,7 @@ This document outlines the complete flow of an order from initial browsing to se
      - Include estimated arrival time (if available)
      - Include barber contact information
 
-### **Step 4.2: Barber Updates Status - Arrived**
+ **Step 4.2: Barber Updates Status - Arrived**
 - **API**: `POST /api/v1/barber/orders/{id}/status`
 - **Process**:
   1. Barber clicks "Arrived" button
@@ -186,15 +186,15 @@ This document outlines the complete flow of an order from initial browsing to se
      - Should send: "Your barber has arrived at your location"
      - Customer can prepare for service
 
-### **Step 4.3: Service Performed**
+ **Step 4.3: Service Performed**
 - **Status**: `ARRIVED`
 - Barber performs the requested services at customer location
 
 ---
 
-## ✅ **PHASE 5: SERVICE COMPLETION**
+ ✅ **PHASE 5: SERVICE COMPLETION**
 
-### **Step 5.1: Barber Marks Service Complete**
+ **Step 5.1: Barber Marks Service Complete**
 - **API**: `POST /api/v1/barber/orders/{id}/status`
 - **Process**:
   1. Barber clicks "Mark Complete" button
@@ -209,7 +209,7 @@ This document outlines the complete flow of an order from initial browsing to se
      - Include link to rate/review the barber
      - Thank you message
 
-### **Step 5.2: Customer Review** (Future Enhancement)
+ **Step 5.2: Customer Review** (Future Enhancement)
 - **Status**: Service completed
 - Customer can optionally:
   - Rate the barber (1-5 stars)
@@ -218,9 +218,9 @@ This document outlines the complete flow of an order from initial browsing to se
 
 ---
 
-## 📊 **ORDER STATUS FLOW SUMMARY**
+ 📊 **ORDER STATUS FLOW SUMMARY**
 
-### **Order Status (`status` field)**
+ **Order Status (`status` field)**
 ```
 PENDING → CONFIRMED → PROCESSING → COMPLETED
    ↓           ↓            ↓           ↓
@@ -229,14 +229,14 @@ PENDING → CONFIRMED → PROCESSING → COMPLETED
         CANCELLED (if cancelled)
 ```
 
-### **Job Status (`jobStatus` field)**
+ **Job Status (`jobStatus` field)**
 ```
 null → PENDING_ACCEPTANCE → ACCEPTED → ON_THE_WAY → ARRIVED → COMPLETED
                     ↓
               DECLINED (if barber declines)
 ```
 
-### **Payment Status (`paymentStatus` field)**
+ **Payment Status (`paymentStatus` field)**
 ```
 PENDING → PAID → COMPLETED
    ↓       ↓        ↓
@@ -245,9 +245,9 @@ FAILED  (Paid)  (Service done)
 
 ---
 
-## 📧 **EMAIL FLOW SUMMARY**
+ 📧 **EMAIL FLOW SUMMARY**
 
-### **Current Email Implementations** ✅
+ **Current Email Implementations** ✅
 1. **Order Confirmation Email** (Customer)
    - Sent immediately after payment
    - Includes order details, items, location
@@ -258,7 +258,7 @@ FAILED  (Paid)  (Service done)
    - Includes full order details
    - Status: ✅ Implemented
 
-### **Missing Email Implementations** ⚠️
+ **Missing Email Implementations** ⚠️
 1. **Barber Assignment Email** (Barber)
    - When admin assigns order to barber
    - Should include customer details, location, services
@@ -291,7 +291,7 @@ FAILED  (Paid)  (Service done)
 
 ---
 
-## 🔄 **COMPLETE PROCESS FLOW DIAGRAM**
+ 🔄 **COMPLETE PROCESS FLOW DIAGRAM**
 
 ```
 LANDING PAGE (/book)
@@ -346,9 +346,9 @@ END OF SERVICE
 
 ---
 
-## 📝 **NOTES FOR IMPLEMENTATION**
+ 📝 **NOTES FOR IMPLEMENTATION**
 
-### **Priority Email Implementations**:
+ **Priority Email Implementations**:
 1. **High Priority**:
    - Barber Assignment Email (for barber awareness)
    - Service Complete Email (for customer satisfaction)
@@ -361,13 +361,13 @@ END OF SERVICE
 3. **Low Priority**:
    - Barber Decline Email (admin can see in dashboard)
 
-### **Current Email Service**:
+ **Current Email Service**:
 - Email service configured: ✅
 - SMTP: Hostinger (`admin@bbslimited.online`)
 - Email templates: ✅ Available in `lib/server/emailTemplates.ts`
 - Email service class: ✅ Available in `lib/server/emailService.ts`
 
-### **Testing Checklist**:
+ **Testing Checklist**:
 - [ ] Order creation flow
 - [ ] Payment processing
 - [ ] Order confirmation email
@@ -379,7 +379,7 @@ END OF SERVICE
 
 ---
 
-## 🔗 **RELATED FILES**
+ 🔗 **RELATED FILES**
 
 - **Order API**: `app/api/v1/orders/route.ts`
 - **Order Assignment**: `app/api/v1/admin/orders/assign/route.ts`

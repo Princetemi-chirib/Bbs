@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/server/emailService';
+import { emailTemplates } from '@/lib/server/emailTemplates';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,10 +85,55 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send email to admin about new order (in background, don't wait for it)
+    // Send emails in background (don't wait for them)
     (async () => {
       try {
-        const adminEmail = 'admin@bbslimited.online';
+        // Send customer confirmation email
+        const customerEmailHtml = emailTemplates.orderConfirmation({
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          orderReference: order.orderNumber,
+          items: order.items.map((item: typeof order.items[0]) => ({
+            title: item.title,
+            quantity: item.quantity,
+            price: Number(item.unitPrice),
+            displayAge: item.ageGroup === 'kids' ? 'Kids' : item.ageGroup === 'adults' ? 'Adults' : 'Fixed',
+          })),
+          total: Number(order.totalAmount),
+          city: order.city,
+          location: order.location,
+          address: order.address || undefined,
+          phone: order.customerPhone,
+          paymentReference: order.paymentReference || undefined,
+        });
+
+        const customerEmailText = emailTemplates.orderConfirmationText({
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          orderReference: order.orderNumber,
+          items: order.items.map((item: typeof order.items[0]) => ({
+            title: item.title,
+            quantity: item.quantity,
+            price: Number(item.unitPrice),
+            displayAge: item.ageGroup === 'kids' ? 'Kids' : item.ageGroup === 'adults' ? 'Adults' : 'Fixed',
+          })),
+          total: Number(order.totalAmount),
+          city: order.city,
+          location: order.location,
+          address: order.address || undefined,
+          phone: order.customerPhone,
+          paymentReference: order.paymentReference || undefined,
+        });
+
+        await emailService.sendEmail({
+          to: order.customerEmail,
+          subject: `Order Confirmation - ${order.orderNumber}`,
+          html: customerEmailHtml,
+          text: customerEmailText,
+        });
+
+        // Send admin notification email
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@bbslimited.online';
         const itemsList = order.items.map((item: typeof order.items[0]) => `- ${item.title} (${item.quantity}x) - ₦${Number(item.totalPrice).toLocaleString()}`).join('\n');
         
         const adminEmailHtml = `
@@ -145,7 +191,7 @@ export async function POST(request: NextRequest) {
                   </div>
                   ${order.additionalNotes ? `<div class="detail-row"><span class="detail-label">Additional Notes:</span> ${order.additionalNotes}</div>` : ''}
                 </div>
-                <p><a href="${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/admin/orders" style="background: #39413f; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 15px;">View Order in Dashboard</a></p>
+                <p><a href="${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/admin/orders" style="background: #39413f; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 15px;">View Order in Dashboard</a></p>
               </div>
               <div class="footer">
                 <p>This is an automated notification from BBS Limited</p>
@@ -173,7 +219,7 @@ ${itemsList}
 
 ${order.additionalNotes ? `Additional Notes: ${order.additionalNotes}` : ''}
 
-View order in dashboard: ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/admin/orders
+View order in dashboard: ${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/admin/orders
         `;
 
         await emailService.sendEmail({
@@ -183,7 +229,7 @@ View order in dashboard: ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:
           text: adminEmailText,
         });
       } catch (emailError) {
-        console.error('Failed to send admin notification email:', emailError);
+        console.error('Failed to send emails:', emailError);
         // Don't fail the order creation if email fails
       }
     })();

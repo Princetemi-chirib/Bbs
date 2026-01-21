@@ -22,8 +22,10 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
   const menuItems = [
     { href: '/admin', label: 'Dashboard', icon: '📊' },
     { href: '/admin/orders', label: 'Orders', icon: '📦' },
+    { href: '/admin/customers', label: 'Customers', icon: '👥' },
     { href: '/admin/barbers', label: 'Barbers', icon: '✂️' },
     { href: '/admin/services', label: 'Services', icon: '💇' },
+    { href: '/admin/financials', label: 'Financials', icon: '💰' },
   ];
 
   return (

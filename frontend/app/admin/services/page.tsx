@@ -319,7 +319,7 @@ export default function AdminServicesPage() {
                       <img 
                         src={form.beforeImage} 
                         alt="Before preview" 
-                        style={{ maxWidth: '200px', maxHeight: '150px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px', border: '1px solid #ddd' }}
+                        style={{ maxWidth: '100%', width: 'auto', maxHeight: '150px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px', border: '1px solid #ddd' }}
                       />
                     )}
                   </div>
@@ -350,7 +350,7 @@ export default function AdminServicesPage() {
                       <img 
                         src={form.afterImage} 
                         alt="After preview" 
-                        style={{ maxWidth: '200px', maxHeight: '150px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px', border: '1px solid #ddd' }}
+                        style={{ maxWidth: '100%', width: 'auto', maxHeight: '150px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px', border: '1px solid #ddd' }}
                       />
                     )}
                   </div>

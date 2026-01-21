@@ -353,6 +353,8 @@ model BarberApplication {
   gender          String?
   applicationLetterUrl String? @map("application_letter_url") // Uploaded application letter (PDF/JPG)
   cvUrl           String?   @map("cv_url") // Uploaded CV (PDF/JPG)
+  barberLicenceUrl String?  @map("barber_licence_url") // Uploaded barber licence (PDF/JPG) - optional
+  whyJoinNetwork   String?  @db.Text @map("why_join_network") // Why applicant wants to join
   // Legacy fields - keep for backward compatibility
   name            String?   // Computed: firstName + lastName (optional, can derive)
   state           String?   // Deprecated - can be extracted from address if needed
