@@ -8,7 +8,7 @@ import styles from './review.module.css';
 export default function ReviewPage() {
   const router = useRouter();
   const params = useParams();
-  const orderId = params.orderId as string;
+  const orderId = params?.orderId as string | undefined;
   
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -21,10 +21,21 @@ export default function ReviewPage() {
   const [comment, setComment] = useState('');
 
   useEffect(() => {
-    loadOrder();
+    if (orderId) {
+      loadOrder();
+    } else {
+      setError('Order ID is required');
+      setLoading(false);
+    }
   }, [orderId]);
 
   const loadOrder = async () => {
+    if (!orderId) {
+      setError('Order ID is required');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Get order details - need to check if this endpoint exists or create it
       const response = await fetchAuth(`/api/v1/orders/${orderId}`);

@@ -143,13 +143,14 @@ export async function GET(
             },
           },
         },
-        booking: {
+        order: {
           select: {
-            bookingNumber: true,
-            service: {
+            orderNumber: true,
+            items: {
               select: {
-                name: true,
+                title: true,
               },
+              take: 1,
             },
           },
         },
@@ -306,8 +307,9 @@ export async function GET(
         })),
         reviews: reviews.map((r) => ({
           id: r.id,
+          orderNumber: r.order.orderNumber,
           barberName: r.barber.user.name,
-          serviceName: r.booking.service?.name || 'N/A',
+          serviceName: r.order.items[0]?.title || 'N/A',
           rating: r.rating,
           comment: r.comment,
           barberResponse: r.barberResponse,

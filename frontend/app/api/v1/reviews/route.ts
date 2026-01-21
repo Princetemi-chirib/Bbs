@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         data: {
           orderId,
           customerId: customer.id,
-          barberId: order.assignedBarberId,
+          barberId: order.assignedBarberId!, // We already checked it's not null above
           rating,
           comment: comment || null,
           isVerified: true,
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
 
       // Update barber's rating average and total reviews
       const barber = await tx.barber.findUnique({
-        where: { id: order.assignedBarberId },
+        where: { id: order.assignedBarberId! }, // We already checked it's not null above
         include: {
           reviews: {
             where: { isVisible: true },
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
         const newRatingAvg = totalReviews > 0 ? sumRatings / totalReviews : 0;
 
         await tx.barber.update({
-          where: { id: order.assignedBarberId },
+          where: { id: order.assignedBarberId! }, // We already checked it's not null above
           data: {
             ratingAvg: newRatingAvg,
             totalReviews: totalReviews,
