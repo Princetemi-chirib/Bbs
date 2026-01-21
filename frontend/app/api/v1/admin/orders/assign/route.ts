@@ -155,6 +155,53 @@ export async function POST(request: NextRequest) {
       console.warn(`⚠️ Barber ${barber.id} has no email address, skipping email notification`);
     }
 
+    // Send email notification to customer about barber assignment (non-blocking)
+    if (updatedOrder.customerEmail) {
+      try {
+        const customerEmailHtml = emailTemplates.customerBarberAssigned({
+          customerName: updatedOrder.customerName,
+          orderNumber: updatedOrder.orderNumber,
+          barberName: barber.user.name,
+          barberPhone: barber.user.phone || undefined,
+          barberPicture: barber.user.avatarUrl || undefined, // Include barber picture
+          city: updatedOrder.city,
+          location: updatedOrder.location,
+          address: updatedOrder.address || undefined,
+          items: updatedOrder.items.map((item) => ({
+            title: item.title,
+            quantity: item.quantity,
+          })),
+          totalAmount: Number(updatedOrder.totalAmount),
+        });
+
+        const customerEmailText = emailTemplates.customerBarberAssignedText({
+          customerName: updatedOrder.customerName,
+          orderNumber: updatedOrder.orderNumber,
+          barberName: barber.user.name,
+          barberPhone: barber.user.phone || undefined,
+          city: updatedOrder.city,
+          location: updatedOrder.location,
+          items: updatedOrder.items.map((item) => ({
+            title: item.title,
+            quantity: item.quantity,
+          })),
+          totalAmount: Number(updatedOrder.totalAmount),
+        });
+
+        await emailService.sendEmail({
+          to: updatedOrder.customerEmail,
+          subject: `Barber Assigned - ${updatedOrder.orderNumber}`,
+          html: customerEmailHtml,
+          text: customerEmailText,
+        });
+
+        console.log(`✅ Customer notification email sent to ${updatedOrder.customerEmail}`);
+      } catch (emailError) {
+        console.error('⚠️ Failed to send customer notification email:', emailError);
+        // Don't fail the assignment if email fails
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {

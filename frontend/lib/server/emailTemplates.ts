@@ -794,4 +794,141 @@ ${env.APP_NAME} Team
 
     return wrapEmail(content, 'Order Declined');
   },
+
+  // Customer Notification - Barber Assigned (to Customer)
+  customerBarberAssigned: (data: {
+    customerName: string;
+    orderNumber: string;
+    barberName: string;
+    barberPhone?: string;
+    barberPicture?: string;
+    city: string;
+    location: string;
+    address?: string;
+    items: Array<{ title: string; quantity: number }>;
+    totalAmount: number;
+  }): string => {
+    const env = getEnv();
+    const itemsList = data.items.map(item => `- ${item.title} (x${item.quantity})`).join('<br>');
+    
+    // Get barber picture URL or use default
+    const barberPictureUrl = data.barberPicture || 'https://via.placeholder.com/150?text=Barber';
+
+    const content = `
+      <h2 style="color: ${BRAND_COLORS.primary}; margin: 0 0 20px 0; font-size: 24px;">
+        Your Barber Has Been Assigned! ✂️
+      </h2>
+      <p style="color: ${BRAND_COLORS.textSecondary}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        Hello ${data.customerName},
+      </p>
+      <p style="color: ${BRAND_COLORS.textSecondary}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+        Great news! A professional barber has been assigned to your order and will be in touch with you shortly.
+      </p>
+
+      <div style="background-color: ${BRAND_COLORS.bgLight}; padding: 30px; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid ${BRAND_COLORS.primary}; text-align: center;">
+        <div style="margin-bottom: 20px;">
+          <img 
+            src="${barberPictureUrl}" 
+            alt="${data.barberName}"
+            style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid ${BRAND_COLORS.primary}; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);"
+          />
+        </div>
+        <h3 style="color: ${BRAND_COLORS.primary}; margin: 0 0 10px 0; font-size: 22px; font-weight: 700;">
+          ${data.barberName}
+        </h3>
+        <p style="color: ${BRAND_COLORS.textSecondary}; font-size: 14px; margin: 0;">
+          Your Assigned Professional Barber
+        </p>
+      </div>
+
+      <div style="background-color: ${BRAND_COLORS.bgLight}; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid ${BRAND_COLORS.primary};">
+        <h3 style="color: ${BRAND_COLORS.primary}; margin: 0 0 15px 0; font-size: 18px;">Order Details</h3>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Order Number:</strong></td>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.orderNumber}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Barber:</strong></td>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.barberName}</td>
+          </tr>
+          ${data.barberPhone ? `
+          <tr>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Barber Phone:</strong></td>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;"><a href="tel:${data.barberPhone}" style="color: ${BRAND_COLORS.primary}; text-decoration: none;">${data.barberPhone}</a></td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Service Location:</strong></td>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.city}, ${data.location}</td>
+          </tr>
+          ${data.address ? `
+          <tr>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Address:</strong></td>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.address}</td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Services:</strong></td>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${itemsList}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Total Amount:</strong></td>
+            <td style="padding: 8px 0; color: ${BRAND_COLORS.primary}; text-align: right; font-weight: 700; font-size: 18px;">₦${data.totalAmount.toLocaleString()}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="background-color: ${BRAND_COLORS.bgLight}; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h3 style="color: ${BRAND_COLORS.primary}; margin: 0 0 15px 0; font-size: 18px;">What Happens Next?</h3>
+        <ul style="color: ${BRAND_COLORS.textSecondary}; font-size: 16px; line-height: 1.8; margin: 0; padding-left: 20px;">
+          <li>Your assigned barber will review your order</li>
+          <li>You'll receive a notification when the barber accepts your order</li>
+          <li>You'll be notified when the barber is on the way to your location</li>
+          <li>The barber will arrive at your location to provide the service</li>
+        </ul>
+      </div>
+
+      <p style="color: ${BRAND_COLORS.textSecondary}; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0;">
+        Your barber will contact you soon. If you have any questions, don't hesitate to reach out to us.
+      </p>
+      <p style="color: ${BRAND_COLORS.textSecondary}; font-size: 16px; line-height: 1.6; margin: 0;">
+        Best regards,<br>
+        <strong style="color: ${BRAND_COLORS.primary};">${env.APP_NAME} Team</strong>
+      </p>
+    `;
+
+    return wrapEmail(content, 'Barber Assigned to Your Order');
+  },
+
+  customerBarberAssignedText: (data: {
+    customerName: string;
+    orderNumber: string;
+    barberName: string;
+    barberPhone?: string;
+    city: string;
+    location: string;
+    items: Array<{ title: string; quantity: number }>;
+    totalAmount: number;
+  }): string => {
+    const env = getEnv();
+    return `
+Barber Assigned to Your Order - ${env.APP_NAME}
+
+Hello ${data.customerName},
+
+Great news! A professional barber has been assigned to your order.
+
+Order Number: ${data.orderNumber}
+Barber: ${data.barberName}
+${data.barberPhone ? `Barber Phone: ${data.barberPhone}\n` : ''}Service Location: ${data.city}, ${data.location}
+Services: ${data.items.map(i => `${i.title} (x${i.quantity})`).join(', ')}
+Total: ₦${data.totalAmount.toLocaleString()}
+
+Your barber will contact you soon. You'll receive notifications as your order progresses.
+
+Best regards,
+${env.APP_NAME} Team
+    `.trim();
+  },
 };

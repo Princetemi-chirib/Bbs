@@ -1,0 +1,253 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
+
+export const dynamic = 'force-dynamic';
+
+async function getBarberFromRequest(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
+  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
+    
+    if (decoded.role !== 'BARBER') {
+      return null;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      include: {
+        barber: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user || !user.barber || !user.isActive) {
+      return null;
+    }
+
+    return user.barber;
+  } catch {
+    return null;
+  }
+}
+
+// GET /api/v1/barber/profile - Get barber profile
+export async function GET(request: NextRequest) {
+  try {
+    const barber = await getBarberFromRequest(request);
+    
+    if (!barber) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. Barber access required.' } },
+        { status: 401 }
+      );
+    }
+
+    // Get availability
+    const availability = await prisma.barberAvailability.findMany({
+      where: { barberId: barber.id },
+      orderBy: { dayOfWeek: 'asc' },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: barber.id,
+        barberId: barber.barberId,
+        name: barber.user.name,
+        email: barber.user.email,
+        phone: barber.user.phone,
+        avatarUrl: barber.user.avatarUrl,
+        bio: barber.bio,
+        experienceYears: barber.experienceYears,
+        specialties: barber.specialties,
+        languagesSpoken: barber.languagesSpoken,
+        state: barber.state,
+        city: barber.city,
+        address: barber.address,
+        status: barber.status,
+        ratingAvg: Number(barber.ratingAvg),
+        totalReviews: barber.totalReviews,
+        totalBookings: barber.totalBookings,
+        availability,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get barber profile error:', error);
+    return NextResponse.json(
+      { success: false, error: { message: error.message || 'Failed to fetch profile' } },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/v1/barber/profile - Update barber profile
+export async function PUT(request: NextRequest) {
+  try {
+    const barber = await getBarberFromRequest(request);
+    
+    if (!barber) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. Barber access required.' } },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      name,
+      phone,
+      avatarUrl,
+      bio,
+      experienceYears,
+      specialties,
+      languagesSpoken,
+      state,
+      city,
+      address,
+      availability,
+    } = body;
+
+    // Update user info
+    if (name || phone || avatarUrl !== undefined) {
+      await prisma.user.update({
+        where: { id: barber.userId },
+        data: {
+          ...(name && { name }),
+          ...(phone !== undefined && { phone }),
+          ...(avatarUrl !== undefined && { avatarUrl }),
+        },
+      });
+    }
+
+    // Update barber info
+    const barberUpdateData: any = {};
+    if (bio !== undefined) barberUpdateData.bio = bio;
+    if (experienceYears !== undefined) barberUpdateData.experienceYears = parseInt(experienceYears);
+    if (specialties !== undefined) barberUpdateData.specialties = specialties;
+    if (languagesSpoken !== undefined) barberUpdateData.languagesSpoken = languagesSpoken;
+    if (state !== undefined) barberUpdateData.state = state;
+    if (city !== undefined) barberUpdateData.city = city;
+    if (address !== undefined) barberUpdateData.address = address;
+
+    if (Object.keys(barberUpdateData).length > 0) {
+      await prisma.barber.update({
+        where: { id: barber.id },
+        data: barberUpdateData,
+      });
+    }
+
+    // Update availability if provided
+    if (availability && Array.isArray(availability)) {
+      // Delete existing availability
+      await prisma.barberAvailability.deleteMany({
+        where: { barberId: barber.id },
+      });
+
+      // Filter and create new availability - ensure all required fields are present
+      const validAvailability = availability
+        .filter((avail: any) => 
+          avail.dayOfWeek !== undefined && 
+          avail.dayOfWeek !== null &&
+          avail.startTime &&
+          avail.endTime
+        )
+        .map((avail: any) => {
+          // Ensure startTime and endTime are in proper format (HH:mm:ss)
+          let startTime = avail.startTime;
+          let endTime = avail.endTime;
+          
+          // If time is in HH:mm format, convert to HH:mm:ss
+          if (typeof startTime === 'string' && startTime.split(':').length === 2) {
+            startTime = `${startTime}:00`;
+          }
+          if (typeof endTime === 'string' && endTime.split(':').length === 2) {
+            endTime = `${endTime}:00`;
+          }
+
+          return {
+            barberId: barber.id,
+            dayOfWeek: Number(avail.dayOfWeek),
+            startTime: startTime,
+            endTime: endTime,
+            isAvailable: avail.isAvailable !== false,
+          };
+        });
+
+      // Create new availability
+      if (validAvailability.length > 0) {
+        await prisma.barberAvailability.createMany({
+          data: validAvailability,
+        });
+      }
+    }
+
+    // Fetch updated profile
+    const updatedBarber = await prisma.barber.findUnique({
+      where: { id: barber.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            avatarUrl: true,
+          },
+        },
+        availability: {
+          orderBy: { dayOfWeek: 'asc' },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: updatedBarber!.id,
+        barberId: updatedBarber!.barberId,
+        name: updatedBarber!.user.name,
+        email: updatedBarber!.user.email,
+        phone: updatedBarber!.user.phone,
+        avatarUrl: updatedBarber!.user.avatarUrl,
+        bio: updatedBarber!.bio,
+        experienceYears: updatedBarber!.experienceYears,
+        specialties: updatedBarber!.specialties,
+        languagesSpoken: updatedBarber!.languagesSpoken,
+        state: updatedBarber!.state,
+        city: updatedBarber!.city,
+        address: updatedBarber!.address,
+        status: updatedBarber!.status,
+        ratingAvg: Number(updatedBarber!.ratingAvg),
+        totalReviews: updatedBarber!.totalReviews,
+        totalBookings: updatedBarber!.totalBookings,
+        availability: updatedBarber!.availability,
+      },
+      message: 'Profile updated successfully',
+    });
+  } catch (error: any) {
+    console.error('Update barber profile error:', error);
+    return NextResponse.json(
+      { success: false, error: { message: error.message || 'Failed to update profile' } },
+      { status: 500 }
+    );
+  }
+}

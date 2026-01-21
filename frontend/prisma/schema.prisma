@@ -101,6 +101,7 @@ model Barber {
   totalBookings    Int      @default(0) @map("total_bookings")
   status           BarberStatus @default(PENDING_APPROVAL)
   commissionRate   Decimal  @default(0.70) @db.Decimal(3, 2) @map("commission_rate")
+  isOnline         Boolean  @default(false) @map("is_online") // Manual online/offline toggle
   location         String?  // Deprecated - use city
   state            String?  // State where barber operates
   city             String?  // City where barber operates
@@ -195,7 +196,6 @@ model Booking {
   barber            Barber        @relation(fields: [barberId], references: [id])
   service           Service       @relation(fields: [serviceId], references: [id])
   payment           Payment?
-  review            Review?
   timeSlot          TimeSlot?
 
   @@map("bookings")
@@ -247,7 +247,7 @@ model BarberAvailability {
 
 model Review {
   id              String    @id @default(uuid())
-  bookingId       String    @unique @map("booking_id")
+  orderId         String    @unique @map("order_id") // Link to Order instead of Booking
   customerId      String    @map("customer_id")
   barberId        String    @map("barber_id")
   rating          Int       // 1-5
@@ -259,7 +259,7 @@ model Review {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  booking         Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   customer        Customer  @relation(fields: [customerId], references: [id])
   barber          Barber    @relation(fields: [barberId], references: [id])
 
@@ -268,6 +268,7 @@ model Review {
   @@index([barberId])
   @@index([rating])
   @@index([isVisible])
+  @@index([orderId])
 }
 
 model Payment {
@@ -428,6 +429,7 @@ model Order {
   items             OrderItem[]
   assignedBarber    Barber?       @relation("AssignedOrders", fields: [assignedBarberId], references: [id])
   customer          Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  review            Review?
 
   @@map("orders")
   @@index([orderNumber])

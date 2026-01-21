@@ -1,0 +1,83 @@
+.ratingContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  color: #ddd;
+  line-height: 1;
+}
+
+.starFilled {
+  color: #fbbf24;
+}
+
+.starHalf {
+  color: #fbbf24;
+  position: relative;
+}
+
+.starHalf::after {
+  content: '★';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  overflow: hidden;
+  color: #ddd;
+}
+
+.ratingValue {
+  font-weight: 600;
+  color: #39413f;
+}
+
+.reviewsCount {
+  color: #666;
+  font-size: 0.9em;
+}
+
+/* Size variants */
+.small .star {
+  font-size: 14px;
+}
+
+.small .ratingValue {
+  font-size: 14px;
+}
+
+.small .reviewsCount {
+  font-size: 12px;
+}
+
+.medium .star {
+  font-size: 18px;
+}
+
+.medium .ratingValue {
+  font-size: 16px;
+}
+
+.medium .reviewsCount {
+  font-size: 14px;
+}
+
+.large .star {
+  font-size: 24px;
+}
+
+.large .ratingValue {
+  font-size: 20px;
+}
+
+.large .reviewsCount {
+  font-size: 16px;
+}

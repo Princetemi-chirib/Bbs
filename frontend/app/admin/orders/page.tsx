@@ -94,7 +94,12 @@ export default function AdminOrdersPage() {
       const response = await fetchAuth('/api/v1/barbers');
       const data = await response.json();
       if (data.success) {
-        setBarbers(data.data || []);
+        // Sort barbers: available first, then unavailable
+        const barbersData = (data.data || []).sort((a: any, b: any) => {
+          if (a.isAvailable === b.isAvailable) return 0;
+          return a.isAvailable ? -1 : 1;
+        });
+        setBarbers(barbersData);
       }
     } catch (err) {
       console.error('Failed to load barbers:', err);
@@ -527,11 +532,23 @@ export default function AdminOrdersPage() {
                              orderCity.includes(barberLocation) ||
                              orderCity.includes(barberState));
                         })
-                        .map((barber) => (
-                          <option key={barber.id} value={barber.id}>
-                            {barber.user?.name || 'Unknown'} - {barber.address || barber.city || barber.location || 'No address'}
-                          </option>
-                        ))}
+                        .map((barber) => {
+                          const isAvailable = barber.isAvailable === true; // Available = online + within hours
+                          return (
+                            <option 
+                              key={barber.id} 
+                              value={barber.id}
+                              disabled={!isAvailable}
+                              style={{ 
+                                color: isAvailable ? 'inherit' : '#999',
+                                backgroundColor: isAvailable ? 'inherit' : '#f5f5f5'
+                              }}
+                            >
+                              {barber.user?.name || 'Unknown'} - {barber.address || barber.city || barber.location || 'No address'}
+                              {!isAvailable && ' (Offline)'}
+                            </option>
+                          );
+                        })}
                     </select>
                     <div className={styles.formActions}>
                       <button

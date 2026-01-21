@@ -36,6 +36,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
     { href: '/admin/customers', label: 'Customers', icon: '👥', roles: ['ADMIN', 'REP'] },
     { href: '/admin/barbers', label: 'Barbers', icon: '✂️', roles: ['ADMIN', 'REP'] },
     { href: '/admin/services', label: 'Services', icon: '💇', roles: ['ADMIN', 'REP'] },
+    { href: '/admin/reviews', label: 'Reviews', icon: '⭐', roles: ['ADMIN', 'REP'] },
     { href: '/admin/financials', label: 'Financials', icon: '💰', roles: ['ADMIN', 'REP'] },
     { href: '/admin/team', label: 'Team', icon: '👔', roles: ['ADMIN'] },
   ];

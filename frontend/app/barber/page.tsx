@@ -12,6 +12,8 @@ export default function BarberDashboard() {
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
+  const [onlineStatus, setOnlineStatus] = useState<any>(null);
+  const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
     const userData = getUserData();
@@ -21,7 +23,52 @@ export default function BarberDashboard() {
 
     loadPendingOrders();
     loadStats();
+    loadOnlineStatus();
+    
+    // Refresh status every minute to check availability hours
+    const interval = setInterval(() => {
+      loadOnlineStatus();
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
   }, []);
+
+  const loadOnlineStatus = async () => {
+    try {
+      const response = await fetchAuth('/api/v1/barber/online-status');
+      const data = await response.json();
+      if (data.success) {
+        setOnlineStatus(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load online status:', err);
+    }
+  };
+
+  const handleToggleOnline = async () => {
+    if (toggling) return;
+    
+    setToggling(true);
+    try {
+      const newStatus = !onlineStatus?.isOnline;
+      const response = await fetchAuth('/api/v1/barber/online-status', {
+        method: 'PUT',
+        body: JSON.stringify({ isOnline: newStatus }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        await loadOnlineStatus();
+        alert(data.message || (newStatus ? 'You are now online' : 'You are now offline'));
+      } else {
+        alert(data.error?.message || 'Failed to update status');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to update status');
+    } finally {
+      setToggling(false);
+    }
+  };
 
   const loadPendingOrders = async () => {
     try {
@@ -105,6 +152,29 @@ export default function BarberDashboard() {
         <div className={styles.welcomeText}>
           Welcome back, {user?.name || 'Barber'}
         </div>
+        {/* Online/Offline Toggle */}
+        {onlineStatus && (
+          <div className={styles.onlineToggleContainer}>
+            <div className={styles.onlineStatusIndicator}>
+              <div className={`${styles.statusDot} ${onlineStatus.isAvailable ? styles.online : styles.offline}`}></div>
+              <span className={styles.statusText}>
+                {onlineStatus.isAvailable ? 'Available' : 
+                 !onlineStatus.isOnline ? 'Offline' : 
+                 'Outside Hours'}
+              </span>
+            </div>
+            <button
+              onClick={handleToggleOnline}
+              disabled={toggling}
+              className={`${styles.toggleButton} ${onlineStatus.isOnline ? styles.toggleOn : styles.toggleOff}`}
+            >
+              <div className={styles.toggleSlider}></div>
+              <span className={styles.toggleLabel}>
+                {onlineStatus.isOnline ? 'Online' : 'Offline'}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Logo Section */}
