@@ -15,7 +15,9 @@
 @media (max-width: 768px) {
   .pageHeader {
     padding-top: 72px;
-    padding: 20px 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 20px;
     margin-bottom: 20px;
   }
 }

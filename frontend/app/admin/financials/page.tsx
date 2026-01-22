@@ -253,7 +253,7 @@ export default function AdminFinancialsPage() {
           {/* Revenue Trend Chart */}
           <div className={styles.chartCard}>
             <h2 className={styles.chartTitle}>Revenue Trend (Last 30 Days)</h2>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={300} className={styles.chartContainer}>
               <AreaChart data={charts?.revenueTrend || []}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -284,7 +284,7 @@ export default function AdminFinancialsPage() {
           {/* Monthly Revenue Chart */}
           <div className={styles.chartCard}>
             <h2 className={styles.chartTitle}>Monthly Revenue Comparison</h2>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={300} className={styles.chartContainer}>
               <BarChart data={charts?.monthlyRevenue || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
                 <XAxis dataKey="month" stroke="#6c757d" />
@@ -301,14 +301,14 @@ export default function AdminFinancialsPage() {
           {/* Payment Methods Pie Chart */}
           <div className={styles.chartCard}>
             <h2 className={styles.chartTitle}>Payment Methods Distribution</h2>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={300} className={styles.chartContainer}>
               <PieChart>
                 <Pie
                   data={paymentMethods || []}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ method, percent }) => `${method}: ${((percent || 0) * 100).toFixed(0)}%`}
+                  label={({ percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="amount"
@@ -330,7 +330,7 @@ export default function AdminFinancialsPage() {
           {/* Order Status Chart */}
           <div className={styles.chartCard}>
             <h2 className={styles.chartTitle}>Orders by Status</h2>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={300} className={styles.chartContainer}>
               <BarChart data={orderStatus || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
                 <XAxis dataKey="status" stroke="#6c757d" />
