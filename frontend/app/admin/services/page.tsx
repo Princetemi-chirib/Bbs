@@ -65,12 +65,9 @@ export default function AdminServicesPage() {
       formData.append('imageType', imageType);
       formData.append('serviceId', editingId || 'new');
 
-      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/v1/upload/image', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include', // Send cookies automatically
         body: formData,
       });
 

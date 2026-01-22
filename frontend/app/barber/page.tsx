@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getUserData, fetchAuth } from '@/lib/auth';
+import { getUserData, fetchAuth, clearAuthData } from '@/lib/auth';
 import styles from './barber.module.css';
 
 export default function BarberDashboard() {
@@ -309,7 +309,6 @@ export default function BarberDashboard() {
         <div 
           className={styles.navItem}
           onClick={async () => {
-            const { clearAuthData } = await import('@/lib/auth');
             await clearAuthData();
             router.push('/login');
           }}

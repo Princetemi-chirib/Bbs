@@ -1,9 +1,15 @@
 // Re-export auth utilities from centralized location
-export { 
+import { 
   verifyAdminOrRep, 
   verifyAdmin,
   type AuthUser 
 } from '../utils/auth';
+
+export { 
+  verifyAdminOrRep, 
+  verifyAdmin,
+  type AuthUser 
+};
 
 // Check if user has permission
 export function hasPermission(user: AuthUser, permission: string): boolean {
