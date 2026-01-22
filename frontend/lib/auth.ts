@@ -22,13 +22,10 @@ export interface AuthResponse {
   token: string;
 }
 
-// Get stored auth token
-export function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('auth_token');
-}
+// Note: Tokens are now stored in httpOnly cookies, not accessible from client-side JavaScript
+// User data is still stored in localStorage for client-side access
 
-// Get stored user data
+// Get stored user data (from localStorage - set after login)
 export function getUserData(): User | null {
   if (typeof window === 'undefined') return null;
   const userStr = localStorage.getItem('user_data');
@@ -40,23 +37,34 @@ export function getUserData(): User | null {
   }
 }
 
-// Store auth data
-export function setAuthData(token: string, user: User): void {
+// Store user data (after successful login)
+export function setUserData(user: User): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('auth_token', token);
   localStorage.setItem('user_data', JSON.stringify(user));
 }
 
-// Clear auth data
-export function clearAuthData(): void {
+// Clear auth data (logout)
+export async function clearAuthData(): Promise<void> {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('auth_token');
+  
+  // Call logout endpoint to clear server-side session and cookies
+  try {
+    await fetch('/api/v1/auth/logout', {
+      method: 'POST',
+      credentials: 'include', // Important: send cookies
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+  
+  // Clear local user data
   localStorage.removeItem('user_data');
 }
 
-// Check if user is authenticated
+// Check if user is authenticated (checks localStorage for user data)
+// Note: Actual authentication is handled server-side via cookies
 export function isAuthenticated(): boolean {
-  return getAuthToken() !== null;
+  return getUserData() !== null;
 }
 
 // Check if user has specific role
@@ -105,34 +113,61 @@ export function hasPermission(permission: string): boolean {
 }
 
 // Get auth headers for API requests
+// Note: Cookies are sent automatically with credentials: 'include'
+// This function is kept for backward compatibility but no longer adds Authorization header
 export function getAuthHeaders(): Record<string, string> {
-  const token = getAuthToken();
-  if (!token) return {};
-  return {
-    Authorization: `Bearer ${token}`,
-  };
+  // Cookies are sent automatically, no need for Authorization header
+  // But we keep this for backward compatibility in case some code expects it
+  return {};
 }
 
 // Fetch authenticated API
+// Cookies (access_token and refresh_token) are sent automatically with credentials: 'include'
 export async function fetchAuth(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = getAuthToken();
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: 'include', // Important: send cookies with request
   });
 
-  // If unauthorized, clear auth data
+  // If unauthorized, try to refresh token
   if (response.status === 401) {
-    clearAuthData();
+    try {
+      // Attempt to refresh the token
+      const refreshResponse = await fetch('/api/v1/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (refreshResponse.ok) {
+        // Token refreshed, retry original request
+        return fetch(url, {
+          ...options,
+          headers,
+          credentials: 'include',
+        });
+      } else {
+        // Refresh failed, clear auth data and redirect to login
+        await clearAuthData();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }
+    } catch (refreshError) {
+      console.error('Token refresh error:', refreshError);
+      await clearAuthData();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
   }
 
   return response;

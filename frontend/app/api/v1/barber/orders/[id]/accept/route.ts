@@ -48,65 +48,84 @@ export async function POST(
     const { barber } = auth;
     const orderId = params.id;
 
-    // Verify order is assigned to this barber and pending acceptance
-    const order = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        assignedBarberId: barber.id,
-        jobStatus: 'PENDING_ACCEPTANCE',
-      },
-    });
-
-    if (!order) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: { message: 'Order not found or not available for acceptance' } 
+    // Issue 2 & 5: Use transaction to prevent race condition and ensure atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Single query to verify and get order details (prevents race condition)
+      const order = await tx.order.findFirst({
+        where: {
+          id: orderId,
+          assignedBarberId: barber.id,
+          jobStatus: 'PENDING_ACCEPTANCE', // Only accept if still pending
         },
-        { status: 404 }
-      );
-    }
-
-    // Get order with barber details before updating
-    const orderWithBarber = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        assignedBarberId: barber.id,
-      },
-      include: {
-        assignedBarber: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                phone: true,
+        include: {
+          items: true,
+          assignedBarber: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  phone: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    // Update order status
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        jobStatus: 'ACCEPTED',
-      },
-      include: {
-        items: true,
-        assignedBarber: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                phone: true,
+      if (!order) {
+        throw new Error('Order not found or not available for acceptance');
+      }
+
+      // Issue 2 & 5: Update order status atomically within transaction (prevents race condition)
+      const updateResult = await tx.order.updateMany({
+        where: { 
+          id: orderId,
+          // Ensure it's still in PENDING_ACCEPTANCE state and assigned to this barber (prevents race condition)
+          assignedBarberId: barber.id,
+          jobStatus: 'PENDING_ACCEPTANCE',
+        },
+        data: {
+          jobStatus: 'ACCEPTED',
+        },
+      });
+
+      // Check if update actually affected a row
+      if (updateResult.count === 0) {
+        throw new Error('Order could not be accepted. It may have been accepted by another barber or the status changed.');
+      }
+
+      // Fetch the updated order with relations
+      const updatedOrder = await tx.order.findUnique({
+        where: { id: orderId },
+        include: {
+          items: true,
+          assignedBarber: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  phone: true,
+                },
               },
             },
           },
         },
-      },
+      });
+
+      if (!updatedOrder) {
+        throw new Error('Order not found after update');
+      }
+
+      return updatedOrder;
+    }).catch((error: any) => {
+      // Re-throw to be caught by outer try-catch
+      if (error.message.includes('not found') || error.message.includes('not available')) {
+        throw new Error(error.message);
+      }
+      throw error;
     });
+
+    const updatedOrder = result;
 
     // Send email notification to customer that barber accepted
     if (updatedOrder.customerEmail && updatedOrder.assignedBarber) {
@@ -148,6 +167,20 @@ export async function POST(
     });
   } catch (error: any) {
     console.error('Accept order error:', error);
+    
+    // Handle specific errors
+    if (error.message && (error.message.includes('not found') || error.message.includes('not available'))) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: error.message,
+          },
+        },
+        { status: 404 }
+      );
+    }
+    
     return NextResponse.json(
       {
         success: false,

@@ -3,6 +3,7 @@
 import AuthGuard from '@/components/AuthGuard';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useRouter } from 'next/navigation';
+import { clearAuthData } from '@/lib/auth';
 import styles from './admin-layout.module.css';
 
 export default function AdminLayout({
@@ -12,9 +13,8 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+  const handleLogout = async () => {
+    await clearAuthData();
     router.push('/login');
   };
 

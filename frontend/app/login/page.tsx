@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { setUserData } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Important: receive cookies
         body: JSON.stringify({ email, password }),
       });
 
@@ -33,9 +35,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Store token and user data
-      localStorage.setItem('auth_token', data.data.token);
-      localStorage.setItem('user_data', JSON.stringify(data.data.user));
+      // Store user data (tokens are in httpOnly cookies, not accessible from client)
+      setUserData(data.data.user);
 
       // Redirect based on role
       if (data.data.user.role === 'ADMIN' || data.data.user.role === 'REP') {

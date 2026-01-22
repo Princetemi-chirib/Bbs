@@ -82,6 +82,7 @@ model User {
   customer      Customer?
   notifications Notification[]
   barberApplication BarberApplication?
+  sessions      Session[]
 
   @@map("users")
   @@index([email])
@@ -459,4 +460,22 @@ model OrderItem {
   @@map("order_items")
   @@index([orderId])
   @@index([productId])
+}
+
+model Session {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  refreshToken  String   @unique @map("refresh_token")
+  userAgent     String?  @map("user_agent")
+  ipAddress     String?  @map("ip_address")
+  expiresAt     DateTime @map("expires_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
 }

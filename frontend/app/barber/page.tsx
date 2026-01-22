@@ -308,9 +308,9 @@ export default function BarberDashboard() {
         </Link>
         <div 
           className={styles.navItem}
-          onClick={() => {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_data');
+          onClick={async () => {
+            const { clearAuthData } = await import('@/lib/auth');
+            await clearAuthData();
             router.push('/login');
           }}
           style={{ cursor: 'pointer' }}

@@ -10,13 +10,12 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor - cookies are sent automatically with withCredentials
+// No need to add Authorization header anymore
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    // Ensure credentials are included to send cookies
+    config.withCredentials = true;
     return config;
   },
   (error) => {
@@ -24,16 +23,42 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor for error handling and token refresh
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized - redirect to login
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_data');
-      window.location.href = '/login';
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If unauthorized, try to refresh token
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Attempt to refresh the token
+        const refreshResponse = await fetch('/api/v1/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        if (refreshResponse.ok) {
+          // Token refreshed, retry original request
+          return apiClient(originalRequest);
+        } else {
+          // Refresh failed, clear auth data and redirect to login
+          localStorage.removeItem('user_data');
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
+      } catch (refreshError) {
+        console.error('Token refresh error:', refreshError);
+        localStorage.removeItem('user_data');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }
     }
+
     return Promise.reject(error);
   }
 );
