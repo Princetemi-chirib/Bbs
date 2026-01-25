@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdminOrRep } from '../../utils';
+import { verifyAdminOrRep } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +55,66 @@ export async function GET(
         { success: false, error: { message: 'Customer not found' } },
         { status: 404 }
       );
+    }
+
+    // Get related data (with error handling for relations that might not exist yet)
+    let notes: any[] = [];
+    let tags: any[] = [];
+    let preferences: any = null;
+    let communications: any[] = [];
+    let auditLogs: any[] = [];
+
+    try {
+      notes = await prisma.customerNote.findMany({
+        where: { customerId: customer.id },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          note: true,
+          isInternal: true,
+          createdBy: true,
+          createdAt: true,
+        },
+      });
+    } catch (e) {
+      // Notes relation doesn't exist yet
+    }
+
+    try {
+      tags = await prisma.customerTag.findMany({
+        where: { customerId: customer.id },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (e) {
+      // Tags relation doesn't exist yet
+    }
+
+    try {
+      preferences = await prisma.customerPreference.findUnique({
+        where: { customerId: customer.id },
+      });
+    } catch (e) {
+      // Preferences relation doesn't exist yet
+    }
+
+    try {
+      communications = await prisma.customerCommunication.findMany({
+        where: { customerId: customer.id },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      });
+    } catch (e) {
+      // Communications relation doesn't exist yet
+    }
+
+    try {
+      auditLogs = await prisma.customerAuditLog.findMany({
+        where: { customerId: customer.id },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      });
+    } catch (e) {
+      // Audit logs relation doesn't exist yet
     }
 
     // Get bookings
@@ -206,10 +266,90 @@ export async function GET(
       },
     });
 
-    const totalSpent = Number(bookingStats._sum.totalPrice || 0) + Number(orderStats._sum.totalAmount || 0);
-    const avgOrderValue = bookingStats._count.id > 0
-      ? Number(bookingStats._sum.totalPrice || 0) / bookingStats._count.id
+    // Get first booking
+    const firstBooking = await prisma.booking.findFirst({
+      where: { customerId: customer.id },
+      orderBy: { bookingDate: 'asc' },
+      select: {
+        bookingDate: true,
+      },
+    });
+
+    // Get first order
+    const firstOrder = await prisma.order.findFirst({
+      where: { customerEmail: customer.user.email },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        createdAt: true,
+      },
+    });
+
+    // Get no-show count
+    const noShowCount = await prisma.booking.count({
+      where: {
+        customerId: customer.id,
+        status: 'NO_SHOW',
+      },
+    });
+
+    // Get refund statistics
+    const refundStats = await prisma.payment.aggregate({
+      where: {
+        customerId: customer.id,
+        status: 'REFUNDED',
+      },
+      _sum: {
+        refundAmount: true,
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    // Get discount/refund information
+    const allPayments = await prisma.payment.findMany({
+      where: { customerId: customer.id },
+      select: {
+        amount: true,
+        refundAmount: true,
+        status: true,
+      },
+    });
+
+    const discountsUsed = allPayments.reduce((sum, p) => {
+      // Calculate if there was a discount (simplified - would need discount field in schema)
+      return sum;
+    }, 0);
+
+    // Get branches visited
+    const branches = await prisma.order.findMany({
+      where: { customerEmail: customer.user.email },
+      select: {
+        city: true,
+        location: true,
+      },
+      distinct: ['city', 'location'],
+    });
+
+    // Calculate risk indicators
+    const totalVisits = bookingStats._count.id + orderStats._count.id;
+    const cancellationRate = totalVisits > 0
+      ? (cancelledBookings + (await prisma.order.count({ where: { customerEmail: customer.user.email, status: 'CANCELLED' } }))) / totalVisits
       : 0;
+    const noShowRate = bookingStats._count.id > 0 ? noShowCount / bookingStats._count.id : 0;
+    const refundRate = allPayments.length > 0 ? refundStats._count.id / allPayments.length : 0;
+
+    const riskIndicators = {
+      highCancellationRate: cancellationRate > 0.3,
+      frequentNoShows: noShowRate > 0.2,
+      excessiveRefunds: refundStats._count.id > 2 || refundRate > 0.1,
+      abuseOfPromotions: false, // Would need promotion tracking
+    };
+
+    const totalSpent = Number(bookingStats._sum.totalPrice || 0) + Number(orderStats._sum.totalAmount || 0);
+    const totalVisitsForAvg = bookingStats._count.id + orderStats._count.id;
+    const avgOrderValue = totalVisitsForAvg > 0 ? totalSpent / totalVisitsForAvg : 0;
+    const avgSpendPerVisit = totalVisitsForAvg > 0 ? totalSpent / totalVisitsForAvg : 0;
 
     // Get average rating given
     const avgRating = reviews.length > 0
@@ -226,6 +366,11 @@ export async function GET(
       },
     });
 
+    // Determine first visit date
+    const firstVisitDate = firstBooking?.bookingDate
+      ? new Date(firstBooking.bookingDate)
+      : firstOrder?.createdAt || customer.createdAt;
+
     return NextResponse.json({
       success: true,
       data: {
@@ -238,6 +383,7 @@ export async function GET(
           avatarUrl: customer.user.avatarUrl,
           emailVerified: customer.user.emailVerified,
           isActive: customer.user.isActive,
+          status: customer.status || 'ACTIVE',
           membershipType: customer.membershipType,
           loyaltyPoints: customer.loyaltyPoints,
           preferredBarber: customer.preferredBarber
@@ -247,9 +393,18 @@ export async function GET(
                 email: customer.preferredBarber.user.email,
               }
             : null,
+          preferredBranch: (customer as any).preferredBranch || null,
           dateOfBirth: customer.dateOfBirth,
           gender: customer.gender,
           address: customer.address,
+          allergies: (customer as any).allergies || null,
+          servicePreferences: (customer as any).servicePreferences || [],
+          emailConsent: (customer as any).emailConsent !== undefined ? (customer as any).emailConsent : true,
+          smsConsent: (customer as any).smsConsent !== undefined ? (customer as any).smsConsent : true,
+          dataConsent: (customer as any).dataConsent !== undefined ? (customer as any).dataConsent : true,
+          consentDate: (customer as any).consentDate || null,
+          referralCode: (customer as any).referralCode || null,
+          tags: tags,
           createdAt: customer.createdAt,
           updatedAt: customer.updatedAt,
         },
@@ -260,11 +415,56 @@ export async function GET(
           totalOrders: orderStats._count.id,
           totalSpent,
           avgOrderValue,
+          avgSpendPerVisit,
           totalReviews: reviews.length,
           avgRatingGiven: Number(avgRating.toFixed(2)),
           totalTickets: tickets.length,
+          firstVisitDate,
           lastBookingDate: lastBooking?.bookingDate || null,
+          noShowCount,
+          refundCount: refundStats._count.id,
+          refundAmount: Number(refundStats._sum.refundAmount || 0),
+          discountsUsed,
+          outstandingBalance: 0, // Would need to track this
+          branchesVisited: branches.map(b => `${b.city}, ${b.location}`),
         },
+        riskIndicators,
+        preferences: preferences ? {
+          preferredServices: preferences.preferredServices || [],
+          preferredBarbers: preferences.preferredBarbers || [],
+          allergies: preferences.allergies || null,
+          sensitivities: preferences.sensitivities || null,
+          specialRequests: preferences.specialRequests || null,
+        } : null,
+        notes: notes.map(n => ({
+          id: n.id,
+          note: n.note,
+          isInternal: n.isInternal,
+          createdBy: n.createdBy,
+          createdAt: n.createdAt,
+        })),
+        communications: communications.map(c => ({
+          id: c.id,
+          type: c.type,
+          channel: c.channel,
+          subject: c.subject,
+          message: c.message,
+          status: c.status,
+          sentAt: c.sentAt,
+          deliveredAt: c.deliveredAt,
+          optInStatus: c.optInStatus,
+          createdAt: c.createdAt,
+        })),
+        auditLogs: auditLogs.map(a => ({
+          id: a.id,
+          action: a.action,
+          performedBy: a.performedBy,
+          reason: a.reason,
+          oldValue: a.oldValue,
+          newValue: a.newValue,
+          metadata: a.metadata,
+          createdAt: a.createdAt,
+        })),
         bookings: bookings.map((b) => ({
           id: b.id,
           bookingNumber: b.bookingNumber,

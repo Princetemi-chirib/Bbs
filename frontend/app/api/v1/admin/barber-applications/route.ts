@@ -108,11 +108,30 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { firstName, lastName, otherName, dateOfBirth, email, maritalStatus, phone, address, ninNumber, gender, whyJoinNetwork, applicationLetterUrl } = body;
+    const { 
+      firstName, 
+      lastName, 
+      otherName, 
+      dateOfBirth, 
+      email, 
+      maritalStatus, 
+      phone, 
+      state,
+      address, 
+      ninNumber, 
+      gender, 
+      experienceYears,
+      barberLicence,
+      specialties,
+      portfolioUrl,
+      whyJoinNetwork, 
+      applicationLetterUrl,
+      cvUrl
+    } = body;
 
-    if (!firstName || !lastName || !email || !phone || !address || !ninNumber || !gender || !whyJoinNetwork || !applicationLetterUrl) {
+    if (!firstName || !lastName || !email || !phone || !address || !ninNumber || !gender || !whyJoinNetwork || !applicationLetterUrl || !cvUrl) {
       return NextResponse.json(
-        { success: false, error: { message: 'First name, last name, email, phone, address, NIN number, gender, why join network, and application letter are required' } },
+        { success: false, error: { message: 'First name, last name, email, phone, address, NIN number, gender, why join network, application letter, and CV are required' } },
         { status: 400 }
       );
     }
@@ -143,13 +162,18 @@ export async function POST(request: NextRequest) {
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       name: fullName, // Keep for backward compatibility
       phone,
+      state: state || null,
       address,
       maritalStatus: maritalStatus || null,
       ninNumber: ninNumber || null,
       gender: gender || null,
+      experienceYears: experienceYears ? parseInt(experienceYears.toString()) : null,
+      barberLicence: barberLicence || null,
+      specialties: Array.isArray(specialties) && specialties.length > 0 ? specialties : [],
+      portfolioUrl: portfolioUrl || null,
       whyJoinNetwork: whyJoinNetwork || null,
       applicationLetterUrl: applicationLetterUrl || null,
-      specialties: [], // Empty array
+      cvUrl: cvUrl || null,
       status: 'PENDING',
     };
     
@@ -190,9 +214,15 @@ export async function POST(request: NextRequest) {
                   <div class="detail-row"><span class="detail-label">Gender:</span> ${gender || 'N/A'}</div>
                   <div class="detail-row"><span class="detail-label">Marital Status:</span> ${maritalStatus || 'N/A'}</div>
                   <div class="detail-row"><span class="detail-label">NIN Number:</span> ${ninNumber || 'N/A'}</div>
-                  ${whyJoinNetwork ? `<div class="detail-row"><span class="detail-label">Why Join Network:</span> ${whyJoinNetwork}</div>` : ''}
+                  ${state ? `<div class="detail-row"><span class="detail-label">State of Residence:</span> ${state}</div>` : ''}
                   <div class="detail-row"><span class="detail-label">Location/Address:</span> ${address}</div>
+                  ${experienceYears ? `<div class="detail-row"><span class="detail-label">Years of Experience:</span> ${experienceYears}</div>` : ''}
+                  ${barberLicence ? `<div class="detail-row"><span class="detail-label">Barber Licence:</span> ${barberLicence}</div>` : ''}
+                  ${specialties && specialties.length > 0 ? `<div class="detail-row"><span class="detail-label">Skills:</span> ${specialties.join(', ')}</div>` : ''}
+                  ${portfolioUrl ? `<div class="detail-row"><span class="detail-label">Social Media/Portfolio:</span> <a href="${portfolioUrl}" target="_blank">${portfolioUrl}</a></div>` : ''}
+                  ${whyJoinNetwork ? `<div class="detail-row"><span class="detail-label">Why Join Network:</span> ${whyJoinNetwork}</div>` : ''}
                   ${applicationLetterUrl ? `<div class="detail-row"><span class="detail-label">Application Letter:</span> <a href="${process.env.NEXT_PUBLIC_BASE_URL}${applicationLetterUrl}">Download</a></div>` : ''}
+                  ${cvUrl ? `<div class="detail-row"><span class="detail-label">CV/Resume:</span> <a href="${process.env.NEXT_PUBLIC_BASE_URL}${cvUrl}">Download</a></div>` : ''}
             <p style="text-align: center; margin-top: 30px;">
               <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin/barbers" style="background: #39413f; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
                 View in Admin Dashboard

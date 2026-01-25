@@ -41,6 +41,13 @@ enum BarberStatus {
   PENDING_APPROVAL
 }
 
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  FLAGGED
+  BLOCKED
+}
+
 enum ProductCategory {
   GENERAL
   RECOVERY
@@ -126,28 +133,46 @@ model Barber {
 }
 
 model Customer {
-  id               String    @id @default(uuid())
-  userId           String    @unique @map("user_id")
-  customerId       String    @unique @map("customer_id")
-  preferredBarberId String?  @map("preferred_barber_id")
-  loyaltyPoints    Int       @default(0) @map("loyalty_points")
-  membershipType   String    @default("BASIC") @map("membership_type")
-  dateOfBirth      DateTime? @map("date_of_birth")
+  id               String         @id @default(uuid())
+  userId           String         @unique @map("user_id")
+  customerId       String         @unique @map("customer_id")
+  preferredBarberId String?       @map("preferred_barber_id")
+  loyaltyPoints    Int            @default(0) @map("loyalty_points")
+  membershipType   String         @default("BASIC") @map("membership_type")
+  status           CustomerStatus @default(ACTIVE)
+  dateOfBirth      DateTime?      @map("date_of_birth")
   gender           String?
-  address          String?   @db.Text
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  address          String?        @db.Text
+  preferredBranch  String?        @map("preferred_branch")
+  allergies        String?        @db.Text
+  servicePreferences String[]     @map("service_preferences")
+  emailConsent     Boolean        @default(true) @map("email_consent")
+  smsConsent       Boolean        @default(true) @map("sms_consent")
+  dataConsent      Boolean        @default(true) @map("data_consent")
+  consentDate      DateTime?      @map("consent_date")
+  referralCode     String?        @unique @map("referral_code")
+  referredBy       String?       @map("referred_by") // Customer ID
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
 
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  preferredBarber  Barber?   @relation(fields: [preferredBarberId], references: [id])
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredBarber  Barber?        @relation(fields: [preferredBarberId], references: [id])
   bookings         Booking[]
   reviews          Review[]
   payments         Payment[]
   tickets          SupportTicket[]
   orders           Order[]
+  notes            CustomerNote[]
+  tags             CustomerTag[]
+  auditLogs        CustomerAuditLog[]
+  communications   CustomerCommunication[]
+  preferences      CustomerPreference?
 
   @@map("customers")
   @@index([preferredBarberId])
+  @@index([status])
+  @@index([membershipType])
+  @@index([referralCode])
 }
 
 model Service {
@@ -460,6 +485,97 @@ model OrderItem {
   @@map("order_items")
   @@index([orderId])
   @@index([productId])
+}
+
+model CustomerNote {
+  id          String   @id @default(uuid())
+  customerId  String   @map("customer_id")
+  createdBy   String   @map("created_by") // User ID (admin/rep)
+  note        String   @db.Text
+  isInternal  Boolean  @default(true) @map("is_internal") // Staff-only notes
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_notes")
+  @@index([customerId])
+  @@index([createdBy])
+}
+
+model CustomerTag {
+  id         String   @id @default(uuid())
+  customerId String   @map("customer_id")
+  tag        String
+  color      String?  // For UI display
+  createdAt  DateTime @default(now()) @map("created_at")
+  createdBy  String?  @map("created_by") // User ID (null = auto-generated)
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_tags")
+  @@index([customerId])
+  @@index([tag])
+  @@unique([customerId, tag])
+}
+
+model CustomerAuditLog {
+  id          String   @id @default(uuid())
+  customerId  String   @map("customer_id")
+  action      String   // EDIT, FLAG, BLOCK, UNBLOCK, MERGE, DELETE, RESTORE
+  performedBy String   @map("performed_by") // User ID
+  reason      String?  @db.Text
+  oldValue    Json?    @map("old_value")
+  newValue    Json?    @map("new_value")
+  metadata    Json?    // Additional context
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_audit_logs")
+  @@index([customerId])
+  @@index([performedBy])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model CustomerCommunication {
+  id            String    @id @default(uuid())
+  customerId    String    @map("customer_id")
+  type          String    // EMAIL, SMS, PUSH
+  channel       String    // BOOKING_REMINDER, PROMOTION, ORDER_CONFIRMATION, etc.
+  subject       String?
+  message       String?   @db.Text
+  status        String    // SENT, DELIVERED, FAILED, BOUNCED
+  sentAt        DateTime? @map("sent_at")
+  deliveredAt   DateTime? @map("delivered_at")
+  campaignId    String?   @map("campaign_id")
+  optInStatus   Boolean   @default(true) @map("opt_in_status")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_communications")
+  @@index([customerId])
+  @@index([type])
+  @@index([channel])
+  @@index([sentAt])
+}
+
+model CustomerPreference {
+  id              String   @id @default(uuid())
+  customerId      String   @unique @map("customer_id")
+  preferredServices String[] @map("preferred_services")
+  preferredBarbers String[] @map("preferred_barbers")
+  allergies       String?  @db.Text
+  sensitivities   String?  @db.Text
+  specialRequests String?  @db.Text @map("special_requests")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_preferences")
 }
 
 model Session {
