@@ -1,18 +1,72 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { fetchAuth, isAdmin } from '@/lib/auth';
+import Image from 'next/image';
 import styles from './barbers.module.css';
 
+type BarberMetrics = {
+  summary: {
+    totalBarbers: number;
+    activeBarbers: number;
+    inactiveBarbers: number;
+    suspendedBarbers: number;
+    barbersWorkingToday: number;
+    averageRating: number;
+    totalRevenue: number;
+    avgOrdersPerBarber: number;
+    noShowRate: number;
+  };
+  barbers: Barber[];
+};
+
+type Barber = {
+  id: string;
+  barberId: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  status: string;
+  isOnline: boolean;
+  state: string | null;
+  city: string | null;
+  address: string | null;
+  specialties: string[];
+  ratingAvg: number;
+  totalReviews: number;
+  totalBookings: number;
+  totalOrders: number;
+  revenue: number;
+  revenuePerDay: number;
+  noShowRate: number;
+  lastActiveDate: string;
+  createdAt: string;
+  experienceYears: number | null;
+  commissionRate: number;
+};
+
 export default function AdminBarbersPage() {
-  const [barbers, setBarbers] = useState<any[]>([]);
-  const [applications, setApplications] = useState<any[]>([]);
+  const router = useRouter();
+  const [metrics, setMetrics] = useState<BarberMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState<any[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBarber, setEditingBarber] = useState<string | null>(null);
   const [decliningAppId, setDecliningAppId] = useState<string | null>(null);
   const [declineReason, setDeclineReason] = useState('');
   const [declining, setDeclining] = useState(false);
+  
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  
+  // Action modals
+  const [actionBarber, setActionBarber] = useState<Barber | null>(null);
+  const [actionType, setActionType] = useState<'suspend' | 'activate' | 'terminate' | null>(null);
+  const [actionReason, setActionReason] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -27,21 +81,35 @@ export default function AdminBarbersPage() {
   });
 
   useEffect(() => {
-    loadBarbers();
-    loadApplications();
-  }, []);
+    loadData();
+  }, [statusFilter, startDate, endDate]);
 
-  const loadBarbers = async () => {
+  const loadData = async () => {
     try {
-      const response = await fetchAuth('/api/v1/barbers');
-      const data = await response.json();
-      if (data.success) {
-        setBarbers(data.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to load barbers:', err);
+      setLoading(true);
+      await Promise.all([
+        loadMetrics(),
+        loadApplications(),
+      ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMetrics = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (statusFilter !== 'ALL') params.append('status', statusFilter);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+
+      const response = await fetchAuth(`/api/v1/admin/barbers/metrics?${params.toString()}`);
+      const data = await response.json();
+      if (data.success) {
+        setMetrics(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load metrics:', err);
     }
   };
 
@@ -54,6 +122,26 @@ export default function AdminBarbersPage() {
       }
     } catch (err) {
       console.error('Failed to load applications:', err);
+    }
+  };
+
+  const handleApproveApplication = async (applicationId: string) => {
+    if (!confirm('Approve this application and create barber account? The barber will receive an email with a password setup link.')) return;
+
+    try {
+      const response = await fetchAuth(`/api/v1/admin/barber-applications/${applicationId}/approve`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert('Application approved! The barber has been sent an email with a password setup link.');
+        loadData();
+      } else {
+        alert(data.error?.message || 'Failed to approve application');
+      }
+    } catch (err: any) {
+      alert(err.message || 'An error occurred');
     }
   };
 
@@ -79,7 +167,7 @@ export default function AdminBarbersPage() {
         setShowAddForm(false);
         setEditingBarber(null);
         resetForm();
-        loadBarbers();
+        loadMetrics();
       } else {
         alert(data.error?.message || 'Failed to save barber');
       }
@@ -88,25 +176,18 @@ export default function AdminBarbersPage() {
     }
   };
 
-  const handleApproveApplication = async (applicationId: string) => {
-    if (!confirm('Approve this application and create barber account? The barber will receive an email with a password setup link.')) return;
-
-    try {
-      const response = await fetchAuth(`/api/v1/admin/barber-applications/${applicationId}/approve`, {
-        method: 'POST',
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        alert('Application approved! The barber has been sent an email with a password setup link.');
-        loadApplications();
-        loadBarbers();
-      } else {
-        alert(data.error?.message || 'Failed to approve application');
-      }
-    } catch (err: any) {
-      alert(err.message || 'An error occurred');
-    }
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      state: '',
+      city: '',
+      address: '',
+      bio: '',
+      specialties: [],
+      experienceYears: '',
+    });
   };
 
   const handleDeclineApplication = async (applicationId: string) => {
@@ -140,23 +221,88 @@ export default function AdminBarbersPage() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      state: '',
-      city: '',
-      address: '',
-      bio: '',
-      specialties: [],
-      experienceYears: '',
+  const handleBarberAction = async () => {
+    if (!actionBarber || !actionType) return;
+
+    if ((actionType === 'suspend' || actionType === 'terminate') && !actionReason.trim()) {
+      alert('Please provide a reason for this action');
+      return;
+    }
+
+    const confirmMessage = actionType === 'suspend' 
+      ? `Suspend ${actionBarber.name}? This will deactivate their account.`
+      : actionType === 'terminate'
+      ? `Terminate ${actionBarber.name}? This action cannot be undone.`
+      : `Activate ${actionBarber.name}?`;
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const endpoint = actionType === 'suspend' 
+        ? `/api/v1/admin/barbers/${actionBarber.id}/suspend`
+        : actionType === 'terminate'
+        ? `/api/v1/admin/barbers/${actionBarber.id}/terminate`
+        : `/api/v1/admin/barbers/${actionBarber.id}/activate`;
+
+      const body = (actionType === 'suspend' || actionType === 'terminate') 
+        ? { reason: actionReason.trim() }
+        : {};
+
+      const response = await fetchAuth(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert(data.data.message || 'Action completed successfully');
+        setActionBarber(null);
+        setActionType(null);
+        setActionReason('');
+        loadMetrics();
+      } else {
+        alert(data.error?.message || 'Failed to perform action');
+      }
+    } catch (err: any) {
+      alert(err.message || 'An error occurred');
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
-  if (loading) {
-    return <div className={styles.loading}>Loading barbers...</div>;
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return styles.statusActive;
+      case 'INACTIVE':
+        return styles.statusInactive;
+      case 'SUSPENDED':
+        return styles.statusSuspended;
+      case 'PENDING_APPROVAL':
+        return styles.statusPending;
+      default:
+        return styles.statusInactive;
+    }
+  };
+
+  if (loading && !metrics) {
+    return <div className={styles.loading}>Loading barber management...</div>;
   }
+
+  const filteredBarbers = metrics?.barbers || [];
 
   return (
     <div className={styles.page}>
@@ -164,118 +310,113 @@ export default function AdminBarbersPage() {
         <div className={styles.pageHeaderContent}>
           <div>
             <h1 className={styles.pageTitle}>Barber Management</h1>
-            <p className={styles.pageSubtitle}>Manage barbers and review applications</p>
+            <p className={styles.pageSubtitle}>Manage barbers, track performance, and review applications</p>
           </div>
-          <button onClick={() => setShowAddForm(!showAddForm)} className={styles.addButton}>
-            {showAddForm ? 'Cancel' : '+ Add Barber'}
-          </button>
+          {isAdmin() && (
+            <button onClick={() => setShowAddForm(!showAddForm)} className={styles.addButton}>
+              {showAddForm ? 'Cancel' : '+ Add Barber'}
+            </button>
+          )}
         </div>
       </header>
 
       <main className={styles.main}>
-        {showAddForm && isAdmin() && (
-          <section className={styles.formSection}>
-            <h2>{editingBarber ? 'Edit Barber' : 'Add New Barber'}</h2>
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label>Name *</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Email *</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Phone *</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>State *</label>
-                  <input
-                    type="text"
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    placeholder="e.g., Lagos, Abuja, Warri"
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>City *</label>
-                  <input
-                    type="text"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Address *</label>
-                  <input
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Exact location/address"
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Experience (Years)</label>
-                  <input
-                    type="number"
-                    value={formData.experienceYears}
-                    onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
-                    min="0"
-                  />
-                </div>
-
-                <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-                  <label>Bio</label>
-                  <textarea
-                    value={formData.bio}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    rows={4}
-                  />
+        {/* High-Level Summary Metrics */}
+        {metrics && (
+          <section className={styles.metricsSection}>
+            <div className={styles.metricsGrid}>
+              <div className={styles.metricCard}>
+                <div className={styles.metricLabel}>Total Active Barbers</div>
+                <div className={styles.metricValue}>{metrics.summary.activeBarbers}</div>
+                <div className={styles.metricSubtext}>of {metrics.summary.totalBarbers} total</div>
+              </div>
+              <div className={styles.metricCard}>
+                <div className={styles.metricLabel}>Inactive / Suspended</div>
+                <div className={styles.metricValue}>{metrics.summary.inactiveBarbers + metrics.summary.suspendedBarbers}</div>
+                <div className={styles.metricSubtext}>
+                  {metrics.summary.inactiveBarbers} inactive, {metrics.summary.suspendedBarbers} suspended
                 </div>
               </div>
-
-              <div className={styles.formActions}>
-                <button type="submit" className={styles.submitButton}>
-                  {editingBarber ? 'Update Barber' : 'Create Barber'}
-                </button>
-                <button type="button" onClick={() => {
-                  setShowAddForm(false);
-                  setEditingBarber(null);
-                  resetForm();
-                }} className={styles.cancelButton}>
-                  Cancel
-                </button>
+              <div className={styles.metricCard}>
+                <div className={styles.metricLabel}>Working Today</div>
+                <div className={styles.metricValue}>{metrics.summary.barbersWorkingToday}</div>
+                <div className={styles.metricSubtext}>Currently active</div>
               </div>
-            </form>
+              <div className={styles.metricCard}>
+                <div className={styles.metricLabel}>Average Rating</div>
+                <div className={styles.metricValue}>{metrics.summary.averageRating.toFixed(1)}</div>
+                <div className={styles.metricSubtext}>Across all barbers</div>
+              </div>
+              <div className={styles.metricCard}>
+                <div className={styles.metricLabel}>Total Revenue</div>
+                <div className={styles.metricValue}>{formatCurrency(metrics.summary.totalRevenue)}</div>
+                <div className={styles.metricSubtext}>All time</div>
+              </div>
+              <div className={styles.metricCard}>
+                <div className={styles.metricLabel}>Avg Orders/Barber</div>
+                <div className={styles.metricValue}>{metrics.summary.avgOrdersPerBarber.toFixed(1)}</div>
+                <div className={styles.metricSubtext}>Average per barber</div>
+              </div>
+              <div className={styles.metricCard}>
+                <div className={styles.metricLabel}>No-Show / Late Rate</div>
+                <div className={styles.metricValue}>{metrics.summary.noShowRate.toFixed(1)}%</div>
+                <div className={styles.metricSubtext}>Cancellation rate</div>
+              </div>
+            </div>
           </section>
         )}
 
+        {/* Filters */}
+        <section className={styles.filtersSection}>
+          <div className={styles.filters}>
+            <div className={styles.filterGroup}>
+              <label>Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={styles.filterSelect}
+              >
+                <option value="ALL">All Status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+                <option value="SUSPENDED">Suspended</option>
+                <option value="PENDING_APPROVAL">Pending Approval</option>
+              </select>
+            </div>
+            <div className={styles.filterGroup}>
+              <label>Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className={styles.filterInput}
+              />
+            </div>
+            <div className={styles.filterGroup}>
+              <label>End Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className={styles.filterInput}
+              />
+            </div>
+            {(startDate || endDate || statusFilter !== 'ALL') && (
+              <button
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setStatusFilter('ALL');
+                }}
+                className={styles.clearFiltersButton}
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        </section>
+
+        {/* Applications Section */}
         {applications.length > 0 && (
           <section className={styles.section}>
             <h2>Pending Applications ({applications.length})</h2>
@@ -348,37 +489,282 @@ export default function AdminBarbersPage() {
           </section>
         )}
 
+        {/* Barber List Table */}
         <section className={styles.section}>
-          <h2>All Barbers ({barbers.length})</h2>
-          <div className={styles.barbersList}>
-            {barbers.map((barber) => (
-              <div key={barber.id} className={styles.barberCard}>
-                <div className={styles.barberHeader}>
-                  <div>
-                    <strong>{barber.user?.name || 'N/A'}</strong>
-                    <span>{barber.user?.email}</span>
-                    <span>{barber.user?.phone}</span>
-                  </div>
-                  <div>
-                    <span className={styles.statusBadge}>
-                      {barber.status}
-                    </span>
-                  </div>
-                </div>
-                <div className={styles.barberDetails}>
-                  <p><strong>Location:</strong> {barber.state || barber.location || 'Not set'} - {barber.city || 'N/A'}</p>
-                  {barber.address && <p><strong>Address:</strong> {barber.address}</p>}
-                  <p><strong>Rating:</strong> {barber.ratingAvg || 0}/5.0 ({barber.totalReviews || 0} reviews)</p>
-                  <p><strong>Total Bookings:</strong> {barber.totalBookings || 0}</p>
-                </div>
-              </div>
-            ))}
-            {barbers.length === 0 && (
-              <p className={styles.empty}>No barbers found. Add your first barber above.</p>
+          <h2>All Barbers ({filteredBarbers.length})</h2>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Barber ID</th>
+                  <th>Name & Photo</th>
+                  <th>Employment Status</th>
+                  <th>Skills / Services</th>
+                  <th>Rating</th>
+                  <th>Total Orders</th>
+                  <th>Revenue/Day</th>
+                  <th>No-Show Rate</th>
+                  <th>Last Active</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredBarbers.map((barber) => (
+                  <tr key={barber.id}>
+                    <td className={styles.barberId}>{barber.barberId}</td>
+                    <td>
+                      <div className={styles.barberInfo}>
+                        {barber.avatarUrl ? (
+                          <Image
+                            src={barber.avatarUrl}
+                            alt={barber.name}
+                            width={40}
+                            height={40}
+                            className={styles.barberAvatar}
+                            unoptimized
+                          />
+                        ) : (
+                          <div className={styles.barberAvatarPlaceholder}>
+                            {barber.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <div className={styles.barberName}>{barber.name}</div>
+                          <div className={styles.barberEmail}>{barber.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`${styles.statusBadge} ${getStatusBadgeClass(barber.status)}`}>
+                        {barber.status.replace('_', ' ')}
+                      </span>
+                      {barber.isOnline && <span className={styles.onlineBadge}>Online</span>}
+                    </td>
+                    <td>
+                      <div className={styles.specialties}>
+                        {barber.specialties.length > 0 ? (
+                          barber.specialties.slice(0, 2).map((spec, idx) => (
+                            <span key={idx} className={styles.specialtyTag}>{spec}</span>
+                          ))
+                        ) : (
+                          <span className={styles.noSpecialties}>No specialties</span>
+                        )}
+                        {barber.specialties.length > 2 && (
+                          <span className={styles.moreSpecialties}>+{barber.specialties.length - 2}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className={styles.rating}>
+                        <span className={styles.ratingStars}>
+                          {'★'.repeat(Math.floor(barber.ratingAvg))}
+                          {'☆'.repeat(5 - Math.floor(barber.ratingAvg))}
+                        </span>
+                        <span className={styles.ratingValue}>{barber.ratingAvg.toFixed(1)}</span>
+                        <span className={styles.reviewCount}>({barber.totalReviews})</span>
+                      </div>
+                    </td>
+                    <td>{barber.totalOrders}</td>
+                    <td>{formatCurrency(barber.revenuePerDay)}</td>
+                    <td>
+                      <span className={barber.noShowRate > 10 ? styles.highNoShow : styles.lowNoShow}>
+                        {barber.noShowRate.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td>{formatDate(barber.lastActiveDate)}</td>
+                    <td>
+                      <div className={styles.quickActions}>
+                        <button
+                          onClick={() => router.push(`/admin/barbers/${barber.id}`)}
+                          className={styles.viewButton}
+                          title="View Profile"
+                        >
+                          👁️
+                        </button>
+                        {isAdmin() && (
+                          <>
+                            {barber.status === 'ACTIVE' ? (
+                              <button
+                                onClick={() => {
+                                  setActionBarber(barber);
+                                  setActionType('suspend');
+                                }}
+                                className={styles.suspendButton}
+                                title="Suspend"
+                              >
+                                ⏸️
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setActionBarber(barber);
+                                  setActionType('activate');
+                                }}
+                                className={styles.activateButton}
+                                title="Activate"
+                              >
+                                ▶️
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setActionBarber(barber);
+                                setActionType('terminate');
+                              }}
+                              className={styles.terminateButton}
+                              title="Terminate"
+                            >
+                              🗑️
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filteredBarbers.length === 0 && (
+              <div className={styles.empty}>No barbers found matching the filters.</div>
             )}
           </div>
         </section>
       </main>
+
+      {/* Action Modal */}
+      {actionBarber && actionType && (
+        <div className={styles.modalOverlay} onClick={() => {
+          setActionBarber(null);
+          setActionType(null);
+          setActionReason('');
+        }}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3>
+              {actionType === 'suspend' && 'Suspend Barber'}
+              {actionType === 'terminate' && 'Terminate Barber'}
+              {actionType === 'activate' && 'Activate Barber'}
+            </h3>
+            <p>
+              {actionType === 'suspend' && `Are you sure you want to suspend ${actionBarber.name}?`}
+              {actionType === 'terminate' && `Are you sure you want to terminate ${actionBarber.name}? This action cannot be undone.`}
+              {actionType === 'activate' && `Activate ${actionBarber.name}?`}
+            </p>
+            {(actionType === 'suspend' || actionType === 'terminate') && (
+              <div className={styles.modalFormGroup}>
+                <label>Reason *</label>
+                <textarea
+                  value={actionReason}
+                  onChange={(e) => setActionReason(e.target.value)}
+                  placeholder="Enter reason for this action..."
+                  rows={4}
+                  required
+                  className={styles.modalTextarea}
+                />
+              </div>
+            )}
+            <div className={styles.modalActions}>
+              <button
+                onClick={handleBarberAction}
+                disabled={(actionType === 'suspend' || actionType === 'terminate') && !actionReason.trim()}
+                className={actionType === 'terminate' ? styles.modalTerminateButton : styles.modalConfirmButton}
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => {
+                  setActionBarber(null);
+                  setActionType(null);
+                  setActionReason('');
+                }}
+                className={styles.modalCancelButton}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Barber Form (existing code) */}
+      {showAddForm && isAdmin() && (
+        <section className={styles.formSection}>
+          <h2>{editingBarber ? 'Edit Barber' : 'Add New Barber'}</h2>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            {/* Form fields remain the same */}
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label>Name *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Email *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Phone *</label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>State *</label>
+                <input
+                  type="text"
+                  value={formData.state}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>City *</label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Address *</label>
+                <input
+                  type="text"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className={styles.formActions}>
+              <button type="submit" className={styles.submitButton}>
+                {editingBarber ? 'Update Barber' : 'Create Barber'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddForm(false);
+                  setEditingBarber(null);
+                }}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
     </div>
   );
 }

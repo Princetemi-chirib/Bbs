@@ -276,8 +276,8 @@ export default function AdminTeamPage() {
                           </div>
                         </td>
                         <td>
-                          <div>
-                            {member.email}
+                          <div className={styles.emailCell}>
+                            <span className={styles.emailText}>{member.email}</span>
                             {!member.emailVerified && (
                               <span className={styles.unverifiedBadge}>Unverified</span>
                             )}
@@ -286,7 +286,12 @@ export default function AdminTeamPage() {
                         <td>{member.phone || '—'}</td>
                         <td>
                           <span className={`${styles.roleBadge} ${styles[`role${member.role}`]}`}>
-                            {member.role === 'ADMIN' ? 'Super Admin' : 'Customer Rep'}
+                            <span className={styles.roleTextDesktop}>
+                              {member.role === 'ADMIN' ? 'Super Admin' : 'Customer Rep'}
+                            </span>
+                            <span className={styles.roleTextMobile}>
+                              {member.role === 'ADMIN' ? 'S A' : 'C R'}
+                            </span>
                           </span>
                         </td>
                         <td>

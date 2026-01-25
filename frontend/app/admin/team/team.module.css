@@ -354,6 +354,19 @@
   color: #721c24;
 }
 
+.emailCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.emailText {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: block;
+}
+
 .unverifiedBadge {
   display: inline-block;
   padding: 4px 8px;
@@ -362,7 +375,22 @@
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  margin-left: 8px;
+  width: fit-content;
+}
+
+/* Role badge text - show/hide based on screen size */
+.roleTextMobile {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .roleTextDesktop {
+    display: none;
+  }
+
+  .roleTextMobile {
+    display: inline;
+  }
 }
 
 /* Empty State */
@@ -427,29 +455,180 @@
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-  .tableWrap {
-    overflow-x: auto !important;
-    width: 100% !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .table {
-    min-width: 700px;
-  }
-
-  .table th,
-  .table td {
-    padding: 12px 8px;
-    font-size: 0.875rem;
-  }
-
   .card {
-    padding: 24px 20px;
+    padding: 20px 16px;
+    border-radius: 10px;
   }
 
   .sectionHeader {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .sectionTitle {
+    font-size: 1.25rem;
+  }
+
+  .sectionBadge {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+  }
+
+  .tableWrap {
+    overflow-x: auto !important;
+    width: 100% !important;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    margin: 0 -16px;
+    padding: 0 16px;
+    /* Add scroll indicator */
+    background: linear-gradient(to right, white 30%, rgba(255,255,255,0)),
+                linear-gradient(to right, rgba(255,255,255,0), white 70%) 0 100%,
+                radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.2), rgba(0,0,0,0)),
+                radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
+    background-repeat: no-repeat;
+    background-color: white;
+    background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-position: 0 0, 100%, 0 0, 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+
+  .table {
+    min-width: 800px;
+    font-size: 0.875rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 8px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .table th:first-child,
+  .table td:first-child {
+    padding-left: 12px;
+  }
+
+  .table th:last-child,
+  .table td:last-child {
+    padding-right: 12px;
+  }
+
+  /* Email column - allow wrapping for long emails */
+  .table td:nth-child(2) {
+    white-space: normal;
+    word-break: break-word;
+    max-width: 200px;
+    min-width: 150px;
+  }
+
+  .emailCell {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .emailText {
+    word-break: break-all;
+    font-size: 0.8rem;
+  }
+
+  /* Member name - prevent overflow */
+  .memberName {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Badge adjustments for mobile */
+  .unverifiedBadge {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+    width: fit-content;
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+
+  .roleBadge,
+  .statusBadge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+
+  /* Created date - smaller font */
+  .table td:last-child {
+    font-size: 0.75rem;
+    color: #6c757d;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 16px 12px;
+    border-radius: 8px;
+  }
+
+  .sectionTitle {
+    font-size: 1.1rem;
+  }
+
+  .sectionBadge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+
+  .tableWrap {
+    margin: 0 -12px;
+    padding: 0 12px;
+  }
+
+  .table {
+    min-width: 750px;
+  }
+
+  .table th,
+  .table td {
+    padding: 10px 6px;
+    font-size: 0.75rem;
+  }
+
+  .table th {
+    font-size: 0.7rem;
+  }
+
+  /* Email column on small mobile */
+  .table td:nth-child(2) {
+    max-width: 180px;
+    min-width: 120px;
+  }
+
+  .emailText {
+    font-size: 0.75rem;
+    word-break: break-all;
+  }
+
+  .memberName {
+    max-width: 100px;
+  }
+
+  .roleBadge,
+  .statusBadge {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+
+  .unverifiedBadge {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+  }
+
+  /* Abbreviate role text on very small screens */
+  .roleBadge::before {
+    content: '';
   }
 }
