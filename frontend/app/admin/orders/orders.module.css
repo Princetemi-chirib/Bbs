@@ -10,7 +10,7 @@
 .pageHeader {
   background: #ffffff;
   border-bottom: 1px solid #e5e5e5;
-  padding: 32px 40px;
+  padding: 32px 24px;
   margin-bottom: 32px;
   width: 100%;
   box-sizing: border-box;
@@ -18,7 +18,7 @@
 }
 
 .pageHeader > div {
-  max-width: 1600px;
+  max-width: 100%;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
@@ -46,8 +46,8 @@
 
 /* Main Content */
 .main {
-  padding: 0 40px 40px 40px;
-  max-width: 1600px;
+  padding: 0 24px 40px 24px;
+  max-width: 100%;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
@@ -57,7 +57,7 @@
 .section {
   background: #ffffff;
   border-radius: 12px;
-  padding: 32px;
+  padding: 24px;
   margin-bottom: 32px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border: 1px solid #e5e5e5;
@@ -369,7 +369,7 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .pageHeader {
-    padding: 24px 20px;
+    padding: 24px 16px;
     padding-top: 72px;
   }
 
@@ -378,12 +378,12 @@
   }
 
   .main {
-    padding: 0 20px 20px 20px;
+    padding: 0 16px 20px 16px;
     max-width: 100%;
   }
 
   .section {
-    padding: 24px 20px;
+    padding: 20px 16px;
   }
   
   .ordersTable {
