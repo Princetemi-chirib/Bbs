@@ -132,6 +132,27 @@ export async function verifyBarber(request: NextRequest): Promise<AuthUser | nul
 }
 
 /**
+ * Verify customer representative (REP) only
+ */
+export async function verifyRep(request: NextRequest): Promise<AuthUser | null> {
+  const token = getTokenFromRequest(request);
+  if (!token) {
+    return null;
+  }
+
+  const user = await verifyToken(token);
+  if (!user) {
+    return null;
+  }
+
+  if (user.role !== 'REP') {
+    return null;
+  }
+  
+  return user;
+}
+
+/**
  * Verify any authenticated user
  */
 export async function verifyUser(request: NextRequest): Promise<AuthUser | null> {
