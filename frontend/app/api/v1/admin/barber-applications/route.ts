@@ -108,11 +108,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { firstName, lastName, otherName, dateOfBirth, email, maritalStatus, phone, state, address, ninNumber, gender, experienceYears, barberLicence, specialties, portfolioUrl, whyJoinNetwork, applicationLetterUrl, cvUrl } = body;
+    const { firstName, lastName, otherName, dateOfBirth, email, maritalStatus, phone, address, ninNumber, gender, whyJoinNetwork, applicationLetterUrl } = body;
 
-    if (!firstName || !lastName || !email || !phone || !state || !address || !ninNumber || !gender || !experienceYears || !whyJoinNetwork || !applicationLetterUrl || !cvUrl) {
+    if (!firstName || !lastName || !email || !phone || !address || !ninNumber || !gender || !whyJoinNetwork || !applicationLetterUrl) {
       return NextResponse.json(
-        { success: false, error: { message: 'First name, last name, email, phone, state, address, NIN number, gender, years of experience, why join network, application letter, and CV are required' } },
+        { success: false, error: { message: 'First name, last name, email, phone, address, NIN number, gender, why join network, and application letter are required' } },
         { status: 400 }
       );
     }
@@ -143,24 +143,15 @@ export async function POST(request: NextRequest) {
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       name: fullName, // Keep for backward compatibility
       phone,
-      state: state || null,
       address,
       maritalStatus: maritalStatus || null,
       ninNumber: ninNumber || null,
       gender: gender || null,
-      experienceYears: experienceYears ? parseInt(experienceYears) : null,
-      portfolioUrl: portfolioUrl || null,
       whyJoinNetwork: whyJoinNetwork || null,
       applicationLetterUrl: applicationLetterUrl || null,
-      cvUrl: cvUrl || null,
-      specialties: specialties && Array.isArray(specialties) ? specialties : [],
+      specialties: [], // Empty array
       status: 'PENDING',
     };
-    
-    // Store barber licence as text in adminNotes (since schema has barberLicenceUrl as upload, we'll use adminNotes for text)
-    if (barberLicence) {
-      applicationData.adminNotes = `Barber Licence: ${barberLicence}`;
-    }
     
     const application = await prisma.barberApplication.create({
       data: applicationData,
@@ -199,15 +190,9 @@ export async function POST(request: NextRequest) {
                   <div class="detail-row"><span class="detail-label">Gender:</span> ${gender || 'N/A'}</div>
                   <div class="detail-row"><span class="detail-label">Marital Status:</span> ${maritalStatus || 'N/A'}</div>
                   <div class="detail-row"><span class="detail-label">NIN Number:</span> ${ninNumber || 'N/A'}</div>
-                  <div class="detail-row"><span class="detail-label">Years of Experience:</span> ${experienceYears || 'N/A'}</div>
-                  ${barberLicence ? `<div class="detail-row"><span class="detail-label">Barber Licence:</span> ${barberLicence}</div>` : ''}
-                  ${specialties && specialties.length > 0 ? `<div class="detail-row"><span class="detail-label">Skills:</span> ${specialties.join(', ')}</div>` : ''}
-                  ${portfolioUrl ? `<div class="detail-row"><span class="detail-label">Social Media Link:</span> <a href="${portfolioUrl}" target="_blank">${portfolioUrl}</a></div>` : ''}
                   ${whyJoinNetwork ? `<div class="detail-row"><span class="detail-label">Why Join Network:</span> ${whyJoinNetwork}</div>` : ''}
-                  <div class="detail-row"><span class="detail-label">State:</span> ${state || 'N/A'}</div>
                   <div class="detail-row"><span class="detail-label">Location/Address:</span> ${address}</div>
                   ${applicationLetterUrl ? `<div class="detail-row"><span class="detail-label">Application Letter:</span> <a href="${process.env.NEXT_PUBLIC_BASE_URL}${applicationLetterUrl}">Download</a></div>` : ''}
-                  ${cvUrl ? `<div class="detail-row"><span class="detail-label">CV:</span> <a href="${process.env.NEXT_PUBLIC_BASE_URL}${cvUrl}">Download</a></div>` : ''}
             <p style="text-align: center; margin-top: 30px;">
               <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin/barbers" style="background: #39413f; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
                 View in Admin Dashboard
@@ -228,7 +213,7 @@ export async function POST(request: NextRequest) {
           to: adminEmail,
           subject: `New Barber Application: ${fullName}`,
           html: emailHtml,
-          text: `New barber application from ${fullName} (${email}). Years of Experience: ${experienceYears || 'N/A'}. ${barberLicence ? `Barber Licence: ${barberLicence}. ` : ''}${specialties && specialties.length > 0 ? `Skills: ${specialties.join(', ')}. ` : ''}${portfolioUrl ? `Social Media: ${portfolioUrl}. ` : ''}${whyJoinNetwork ? `Why Join: ${whyJoinNetwork.substring(0, 100)}${whyJoinNetwork.length > 100 ? '...' : ''}. ` : ''}State: ${state || 'N/A'}. Location: ${address}. View: ${process.env.NEXT_PUBLIC_BASE_URL}/admin/barbers`,
+          text: `New barber application from ${fullName} (${email}). ${whyJoinNetwork ? `Why Join: ${whyJoinNetwork.substring(0, 100)}${whyJoinNetwork.length > 100 ? '...' : ''}. ` : ''}Location: ${address}. View: ${process.env.NEXT_PUBLIC_BASE_URL}/admin/barbers`,
         });
         console.log(`Admin notification email sent for application ${application.id}`);
       } catch (emailError) {

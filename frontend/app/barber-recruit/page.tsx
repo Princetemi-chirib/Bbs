@@ -145,34 +145,21 @@ function BarberApplicationForm() {
     email: '',
     maritalStatus: '',
     phone: '',
-    state: '',
     address: '',
     ninNumber: '',
     gender: '',
-    experienceYears: '',
-    barberLicence: '',
-    skillHaircut: false,
-    skillDreadlocks: false,
-    skillNailsCut: false,
-    skillHairstyles: false,
-    skillMakeup: false,
-    portfolioUrl: '',
     whyJoinNetwork: '',
     declarationAccepted: false,
     applicationLetter: null as File | null,
-    cv: null as File | null,
   });
   const [applicationLetterUrl, setApplicationLetterUrl] = useState('');
-  const [cvUrl, setCvUrl] = useState('');
   const [uploadingLetter, setUploadingLetter] = useState(false);
-  const [uploadingCv, setUploadingCv] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const handleFileUpload = async (file: File, type: 'letter' | 'cv'): Promise<string | null> => {
-    const uploadType = type === 'letter' ? setUploadingLetter : setUploadingCv;
-    uploadType(true);
+  const handleFileUpload = async (file: File): Promise<string | null> => {
+    setUploadingLetter(true);
     
     try {
       const formData = new FormData();
@@ -186,19 +173,19 @@ function BarberApplicationForm() {
       const data = await response.json();
       
       if (data.success) {
-        uploadType(false);
+        setUploadingLetter(false);
         return data.data.url;
       } else {
         throw new Error(data.error?.message || 'File upload failed');
       }
     } catch (err: any) {
-      uploadType(false);
+      setUploadingLetter(false);
       setError(err.message || 'Failed to upload file');
       return null;
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'letter' | 'cv') => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -215,15 +202,10 @@ function BarberApplicationForm() {
       return;
     }
 
-    const url = await handleFileUpload(file, type);
+    const url = await handleFileUpload(file);
     if (url) {
-      if (type === 'letter') {
-        setApplicationLetterUrl(url);
-        setFormData({ ...formData, applicationLetter: file });
-      } else {
-        setCvUrl(url);
-        setFormData({ ...formData, cv: file });
-      }
+      setApplicationLetterUrl(url);
+      setFormData({ ...formData, applicationLetter: file });
     }
   };
 
@@ -235,18 +217,10 @@ function BarberApplicationForm() {
       return;
     }
     
-    if (!applicationLetterUrl || !cvUrl) {
-      setError('Please upload both application letter and CV');
+    if (!applicationLetterUrl) {
+      setError('Please upload your application letter');
       return;
     }
-
-    // Collect skills
-    const skills: string[] = [];
-    if (formData.skillHaircut) skills.push('Haircut');
-    if (formData.skillDreadlocks) skills.push('Dreadlocks');
-    if (formData.skillNailsCut) skills.push('Nails Cut');
-    if (formData.skillHairstyles) skills.push('Hairstyles');
-    if (formData.skillMakeup) skills.push('Makeup');
 
     setSubmitting(true);
     setError('');
@@ -265,17 +239,11 @@ function BarberApplicationForm() {
           email: formData.email,
           maritalStatus: formData.maritalStatus || undefined,
           phone: formData.phone,
-          state: formData.state || undefined,
           address: formData.address,
           ninNumber: formData.ninNumber || undefined,
           gender: formData.gender || undefined,
-          experienceYears: formData.experienceYears ? parseInt(formData.experienceYears) : undefined,
-          barberLicence: formData.barberLicence || undefined,
-          specialties: skills,
-          portfolioUrl: formData.portfolioUrl || undefined,
           whyJoinNetwork: formData.whyJoinNetwork || undefined,
           applicationLetterUrl,
-          cvUrl,
         }),
       });
 
@@ -292,25 +260,14 @@ function BarberApplicationForm() {
           email: '',
           maritalStatus: '',
           phone: '',
-          state: '',
           address: '',
           ninNumber: '',
           gender: '',
-          experienceYears: '',
-          barberLicence: '',
-          skillHaircut: false,
-          skillDreadlocks: false,
-          skillNailsCut: false,
-          skillHairstyles: false,
-          skillMakeup: false,
-          portfolioUrl: '',
           whyJoinNetwork: '',
           declarationAccepted: false,
           applicationLetter: null,
-          cv: null,
         });
         setApplicationLetterUrl('');
-        setCvUrl('');
         setTimeout(() => setSubmitted(false), 5000);
       } else {
         setError(data.error?.message || 'Failed to submit application. Please try again.');
@@ -328,13 +285,6 @@ function BarberApplicationForm() {
     setFormData({
       ...formData,
       [target.name]: value,
-    });
-  };
-
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.checked,
     });
   };
 
@@ -436,58 +386,7 @@ function BarberApplicationForm() {
         />
       </div>
 
-      {/* 7. State of residence */}
-      <div className={styles.formGroup}>
-        <label htmlFor="state">State of Residence *</label>
-        <select
-          id="state"
-          name="state"
-          value={formData.state}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select State</option>
-          <option value="Abia">Abia</option>
-          <option value="Adamawa">Adamawa</option>
-          <option value="Akwa Ibom">Akwa Ibom</option>
-          <option value="Anambra">Anambra</option>
-          <option value="Bauchi">Bauchi</option>
-          <option value="Bayelsa">Bayelsa</option>
-          <option value="Benue">Benue</option>
-          <option value="Borno">Borno</option>
-          <option value="Cross River">Cross River</option>
-          <option value="Delta">Delta</option>
-          <option value="Ebonyi">Ebonyi</option>
-          <option value="Edo">Edo</option>
-          <option value="Ekiti">Ekiti</option>
-          <option value="Enugu">Enugu</option>
-          <option value="FCT">FCT (Abuja)</option>
-          <option value="Gombe">Gombe</option>
-          <option value="Imo">Imo</option>
-          <option value="Jigawa">Jigawa</option>
-          <option value="Kaduna">Kaduna</option>
-          <option value="Kano">Kano</option>
-          <option value="Katsina">Katsina</option>
-          <option value="Kebbi">Kebbi</option>
-          <option value="Kogi">Kogi</option>
-          <option value="Kwara">Kwara</option>
-          <option value="Lagos">Lagos</option>
-          <option value="Nasarawa">Nasarawa</option>
-          <option value="Niger">Niger</option>
-          <option value="Ogun">Ogun</option>
-          <option value="Ondo">Ondo</option>
-          <option value="Osun">Osun</option>
-          <option value="Oyo">Oyo</option>
-          <option value="Plateau">Plateau</option>
-          <option value="Rivers">Rivers</option>
-          <option value="Sokoto">Sokoto</option>
-          <option value="Taraba">Taraba</option>
-          <option value="Yobe">Yobe</option>
-          <option value="Zamfara">Zamfara</option>
-        </select>
-      </div>
-
-      {/* 8. Location/address */}
+      {/* 7. Location/address */}
       <div className={styles.formGroup}>
         <label htmlFor="address">Location/Address *</label>
         <input
@@ -501,7 +400,7 @@ function BarberApplicationForm() {
         />
       </div>
 
-      {/* 9. NIN number */}
+      {/* 8. NIN number */}
       <div className={styles.formGroup}>
         <label htmlFor="ninNumber">NIN Number *</label>
         <input
@@ -515,7 +414,7 @@ function BarberApplicationForm() {
         />
       </div>
 
-      {/* 10. Gender */}
+      {/* 9. Gender */}
       <div className={styles.formGroup}>
         <label htmlFor="gender">Gender *</label>
         <select
@@ -532,105 +431,7 @@ function BarberApplicationForm() {
         </select>
       </div>
 
-      {/* 11. Years of experience */}
-      <div className={styles.formGroup}>
-        <label htmlFor="experienceYears">Years of Experience *</label>
-        <input
-          type="number"
-          id="experienceYears"
-          name="experienceYears"
-          value={formData.experienceYears}
-          onChange={handleChange}
-          min="0"
-          placeholder="e.g. 5"
-          required
-        />
-      </div>
-
-      {/* 12. Barber licence (optional text, not upload) */}
-      <div className={styles.formGroup}>
-        <label htmlFor="barberLicence">Barber Licence (Optional)</label>
-        <input
-          type="text"
-          id="barberLicence"
-          name="barberLicence"
-          value={formData.barberLicence}
-          onChange={handleChange}
-          placeholder="Enter your barber licence number if available"
-        />
-      </div>
-
-      {/* 13-17. Skills checkboxes */}
-      <div className={styles.formGroup}>
-        <label style={{ marginBottom: '12px', display: 'block', fontWeight: 600 }}>Skills (Select all that apply)</label>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              name="skillHaircut"
-              checked={formData.skillHaircut}
-              onChange={handleCheckboxChange}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-            />
-            <span>I'm very good with haircut</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              name="skillDreadlocks"
-              checked={formData.skillDreadlocks}
-              onChange={handleCheckboxChange}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-            />
-            <span>I'm very good with dreadlocks</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              name="skillNailsCut"
-              checked={formData.skillNailsCut}
-              onChange={handleCheckboxChange}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-            />
-            <span>I'm very good with nails cut</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              name="skillHairstyles"
-              checked={formData.skillHairstyles}
-              onChange={handleCheckboxChange}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-            />
-            <span>I'm very good with hairstyles</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              name="skillMakeup"
-              checked={formData.skillMakeup}
-              onChange={handleCheckboxChange}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-            />
-            <span>I'm very good with makeup</span>
-          </label>
-        </div>
-      </div>
-
-      {/* 18. Social media Link (optional) */}
-      <div className={styles.formGroup}>
-        <label htmlFor="portfolioUrl">Social Media Link (Optional)</label>
-        <input
-          type="url"
-          id="portfolioUrl"
-          name="portfolioUrl"
-          value={formData.portfolioUrl}
-          onChange={handleChange}
-          placeholder="https://instagram.com/yourhandle or https://yourportfolio.com"
-        />
-      </div>
-
-      {/* 19. Why do you want to join our network */}
+      {/* 10. Why do you want to join our network */}
       <div className={styles.formGroup}>
         <label htmlFor="whyJoinNetwork">Why do you want to join our network? *</label>
         <textarea
@@ -644,38 +445,25 @@ function BarberApplicationForm() {
         />
       </div>
 
-      {/* 20. Upload application letter and CV (PDF or JPG) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        <div className={styles.formGroup}>
-          <label htmlFor="applicationLetter">Application Letter * (PDF or JPG)</label>
-          <input
-            type="file"
-            id="applicationLetter"
-            name="applicationLetter"
-            accept=".pdf,.jpg,.jpeg"
-            onChange={(e) => handleFileChange(e, 'letter')}
-            required
-          />
-          {uploadingLetter && <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>Uploading...</p>}
-          {applicationLetterUrl && <p style={{ color: '#46b450', fontSize: '0.9rem', marginTop: '4px' }}>✓ File uploaded</p>}
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor="cv">CV/Resume * (PDF or JPG)</label>
-          <input
-            type="file"
-            id="cv"
-            name="cv"
-            accept=".pdf,.jpg,.jpeg"
-            onChange={(e) => handleFileChange(e, 'cv')}
-            required
-          />
-          {uploadingCv && <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>Uploading...</p>}
-          {cvUrl && <p style={{ color: '#46b450', fontSize: '0.9rem', marginTop: '4px' }}>✓ File uploaded</p>}
-        </div>
+      {/* 11. Upload application letter (PDF or JPG) */}
+      <div className={styles.formGroup}>
+        <label htmlFor="applicationLetter">Upload Application Letter * (PDF or JPG)</label>
+        <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '8px' }}>
+          Upload your application letter requesting to become a professional barber
+        </p>
+        <input
+          type="file"
+          id="applicationLetter"
+          name="applicationLetter"
+          accept=".pdf,.jpg,.jpeg"
+          onChange={handleFileChange}
+          required
+        />
+        {uploadingLetter && <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>Uploading...</p>}
+        {applicationLetterUrl && <p style={{ color: '#46b450', fontSize: '0.9rem', marginTop: '4px' }}>✓ File uploaded</p>}
       </div>
 
-      {/* 21. Declaration */}
+      {/* 12. Declaration */}
 
       <div className={styles.formGroup}>
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -692,7 +480,7 @@ function BarberApplicationForm() {
         </label>
       </div>
 
-      <button type="submit" className={styles.btnSubmit} disabled={submitting || uploadingLetter || uploadingCv}>
+      <button type="submit" className={styles.btnSubmit} disabled={submitting || uploadingLetter}>
         {submitting ? 'Submitting...' : 'Submit Application'}
       </button>
 
