@@ -63,6 +63,7 @@ class EmailService {
     text?: string;
     from?: string;
     replyTo?: string;
+    attachments?: { filename: string; content: string | Buffer }[];
   }): Promise<{ success: boolean; messageId?: string; previewUrl?: string; error?: string }> {
     if (!this.transporter) {
       return {
@@ -74,7 +75,7 @@ class EmailService {
     const env = getEnv();
 
     try {
-      const mailOptions = {
+      const mailOptions: Parameters<Transporter['sendMail']>[0] = {
         from: options.from || env.EMAIL_FROM,
         to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
         subject: options.subject,
@@ -82,6 +83,9 @@ class EmailService {
         html: options.html,
         replyTo: options.replyTo,
       };
+      if (options.attachments?.length) {
+        mailOptions.attachments = options.attachments.map((a) => ({ filename: a.filename, content: a.content }));
+      }
 
       const info = await this.transporter.sendMail(mailOptions);
 

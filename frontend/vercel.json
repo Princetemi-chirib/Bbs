@@ -8,6 +8,10 @@
     {
       "path": "/api/v1/admin/reports/weekly-email-cron",
       "schedule": "0 9 * * 1"
+    },
+    {
+      "path": "/api/v1/admin/reports/scheduled-export-cron",
+      "schedule": "0 10 * * 2"
     }
   ],
   "functions": {

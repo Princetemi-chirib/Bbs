@@ -10,6 +10,7 @@ import {
   Package,
   Scissors,
   Star,
+  Globe,
   FileDown,
   FileSpreadsheet,
   FileText,
@@ -51,7 +52,7 @@ import {
 
 const COLORS = ['#46B450', '#39413f', '#DCB2CC', '#FFC107', '#17A2B8', '#FF6B6B'];
 
-type TabId = 'overview' | 'financial' | 'customers' | 'orders' | 'barbers' | 'reviews';
+type TabId = 'overview' | 'financial' | 'customers' | 'orders' | 'barbers' | 'reviews' | 'traffic';
 
 const TABS: { id: TabId; label: string; Icon: LucideIcon }[] = [
   { id: 'overview', label: 'Overview', Icon: LayoutDashboard },
@@ -60,6 +61,7 @@ const TABS: { id: TabId; label: string; Icon: LucideIcon }[] = [
   { id: 'orders', label: 'Orders & Services', Icon: Package },
   { id: 'barbers', label: 'Barbers', Icon: Scissors },
   { id: 'reviews', label: 'Reviews & Feedback', Icon: Star },
+  { id: 'traffic', label: 'Site Traffic', Icon: Globe },
 ];
 
 export default function AdminFinancialsPage() {
@@ -93,6 +95,8 @@ export default function AdminFinancialsPage() {
   const [weeklyReportMessage, setWeeklyReportMessage] = useState('');
   const [savedViews, setSavedViews] = useState<{ id: string; name: string; filters: { period: string; startDate: string; endDate: string; filterBarber: string; filterLocation: string; filterCategory: string; filterService: string } }[]>([]);
   const [savedViewSelect, setSavedViewSelect] = useState('');
+  const [trafficData, setTrafficData] = useState<{ totalPageViews: number; uniqueVisitors?: number; byPage: { url: string; count: number }[]; byReferrer: { referrer: string; count: number }[]; byDevice: { device: string; count: number }[]; overTime: { date: string; count: number }[] } | null>(null);
+  const [trafficLoading, setTrafficLoading] = useState(false);
 
   useEffect(() => {
     loadFinancials();
@@ -161,6 +165,29 @@ export default function AdminFinancialsPage() {
     if (activeTab !== 'reviews') return;
     loadReviewsAnalytics();
   }, [activeTab, period, startDate, endDate]);
+
+  useEffect(() => {
+    if (activeTab !== 'traffic') return;
+    loadTraffic();
+  }, [activeTab, period, startDate, endDate]);
+
+  const loadTraffic = async () => {
+    setTrafficLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (period !== 'all') params.set('period', period);
+      if (startDate) params.set('startDate', startDate);
+      if (endDate) params.set('endDate', endDate);
+      const res = await fetchAuth(`/api/v1/admin/analytics/traffic?${params}`);
+      const json = await res.json();
+      if (json.success && json.data) setTrafficData(json.data);
+      else setTrafficData(null);
+    } catch {
+      setTrafficData(null);
+    } finally {
+      setTrafficLoading(false);
+    }
+  };
 
   const loadBarberMetrics = async () => {
     if (!isAdmin()) return;
@@ -246,6 +273,7 @@ export default function AdminFinancialsPage() {
       const res = await fetchAuth('/api/v1/admin/reports/weekly-email', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
+        recordAudit('SEND_WEEKLY_REPORT', 'reports');
         setWeeklyReportMessage(data.data?.message || 'Report sent to your email.');
       } else {
         setWeeklyReportMessage(data.error?.message || 'Failed to send report.');
@@ -285,6 +313,10 @@ export default function AdminFinancialsPage() {
     setFilterService(f.filterService || '');
   };
 
+  const recordAudit = (action: string, entity?: string) => {
+    fetchAuth('/api/v1/admin/audit-log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, entity: entity || 'financials' }) }).catch(() => {});
+  };
+
   const formatCurrency = (amount: number) => {
     return `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
@@ -305,6 +337,7 @@ export default function AdminFinancialsPage() {
 
   const exportToCSV = () => {
     if (!financials?.recentTransactions) return;
+    recordAudit('EXPORT_CSV', 'financials');
 
     const headers = ['Order Number', 'Customer', 'Amount', 'Payment Method', 'Status', 'Date'];
     const rows = financials.recentTransactions.map((t: any) => [
@@ -327,6 +360,7 @@ export default function AdminFinancialsPage() {
 
   const exportToExcel = () => {
     if (!financials?.recentTransactions) return;
+    recordAudit('EXPORT_EXCEL', 'financials');
 
     const headers = ['Order Number', 'Customer', 'Amount', 'Payment Method', 'Status', 'Barber', 'Date'];
     const rows = financials.recentTransactions.map((t: any) => [
@@ -349,6 +383,7 @@ export default function AdminFinancialsPage() {
   const exportToPDF = async () => {
     if (!financials) return;
     try {
+      recordAudit('EXPORT_PDF', 'financials');
       const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
       const doc = await PDFDocument.create();
       const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -473,6 +508,7 @@ export default function AdminFinancialsPage() {
 
   const exportTaxSummary = () => {
     if (!financials) return;
+    recordAudit('EXPORT_TAX_SUMMARY', 'financials');
     const periodLabels: Record<string, string> = {
       all: 'All Time',
       today: 'Today',
@@ -513,6 +549,7 @@ export default function AdminFinancialsPage() {
 
   const exportToJSON = () => {
     if (!financials) return;
+    recordAudit('EXPORT_JSON', 'financials');
     const payload = {
       generatedAt: new Date().toISOString(),
       kpis: financials.kpis,
@@ -548,6 +585,12 @@ export default function AdminFinancialsPage() {
       leastSoldProducts: financials.leastSoldProducts,
       revenueBySegment: financials.revenueBySegment,
       preferredPaymentMethods: financials.preferredPaymentMethods,
+      discounts: financials.discounts,
+      financialHealth: financials.financialHealth,
+      paymentProcessingFeesByMethod: financials.paymentProcessingFeesByMethod,
+      paymentRetrySuccessRate: financials.paymentRetrySuccessRate,
+      chargebacks: financials.chargebacks,
+      bookingChannels: financials.bookingChannels,
       ...(financials.bookingNoShowRate != null
         ? { bookingNoShowRate: financials.bookingNoShowRate, bookingNoShowCount: financials.bookingNoShowCount, bookingTotal: financials.bookingTotal }
         : {}),
@@ -579,7 +622,7 @@ export default function AdminFinancialsPage() {
     );
   }
 
-  const { kpis, orders, paymentMethods, paymentAnalytics, orderStatus, orderFunnel, barberEarnings, refunds, recentTransactions, charts, customers, topServices, leastOrderedServices, mostSoldProducts, leastSoldProducts, preferredPaymentMethods, bookingNoShowRate, bookingNoShowCount, bookingTotal, avgBookingLeadTimeDays, sameDayBookingsCount, cancellationByTimeBefore, revenueBySegment, clvBySegment, serviceVsProductRevenue, revenueByLocation, revenueByLocationOverTime, serviceCategories, productCategories, productRevenueByMonth, peakBookingTimes, bookingHeatmap, revenueForecast, weekendWeekday, seasonalRevenueByMonth, demographics, serviceDemandByLocation, partialPayments, priorYearSamePeriod, peakTimesByLocation, cancellationByService, holidayImpact } = financials || {};
+  const { kpis, orders, paymentMethods, paymentAnalytics, orderStatus, orderFunnel, barberEarnings, refunds, recentTransactions, charts, customers, topServices, leastOrderedServices, mostSoldProducts, leastSoldProducts, preferredPaymentMethods, bookingNoShowRate, bookingNoShowCount, bookingTotal, avgBookingLeadTimeDays, sameDayBookingsCount, cancellationByTimeBefore, revenueBySegment, clvBySegment, serviceVsProductRevenue, revenueByLocation, revenueByLocationOverTime, serviceCategories, productCategories, productRevenueByMonth, peakBookingTimes, bookingHeatmap, revenueForecast, weekendWeekday, seasonalRevenueByMonth, demographics, serviceDemandByLocation, partialPayments, priorYearSamePeriod, peakTimesByLocation, cancellationByService, holidayImpact, discounts, financialHealth, paymentProcessingFeesByMethod, paymentRetrySuccessRate, chargebacks, bookingChannels } = financials || {};
 
   const priorYearYoYPct = priorYearSamePeriod && (priorYearSamePeriod.revenue ?? 0) > 0
     ? (((kpis?.filteredRevenue ?? 0) - (priorYearSamePeriod.revenue ?? 0)) / (priorYearSamePeriod.revenue ?? 1)) * 100
@@ -913,6 +956,31 @@ export default function AdminFinancialsPage() {
                 ))}
               </div>
             </section>
+
+            {/* Revenue momentum / trend (§11.2) — last 3 mo vs prev 3 mo */}
+            {charts?.monthlyRevenue && charts.monthlyRevenue.length >= 6 && (() => {
+              const mr = charts.monthlyRevenue as { month: string; revenue: number; orders?: number }[];
+              const last3 = mr.slice(-3).reduce((s, x) => s + (x.revenue ?? 0), 0);
+              const prev3 = mr.slice(-6, -3).reduce((s, x) => s + (x.revenue ?? 0), 0);
+              const pct = prev3 > 0 ? ((last3 - prev3) / prev3) * 100 : (last3 > 0 ? 100 : 0);
+              const label = pct >= 5 ? 'Upward' : pct <= -5 ? 'Declining' : 'Stable';
+              const bg = pct >= 5 ? 'rgba(70, 180, 80, 0.12)' : pct <= -5 ? 'rgba(220, 53, 69, 0.12)' : 'rgba(255, 193, 7, 0.12)';
+              const fg = pct >= 5 ? '#46B450' : pct <= -5 ? '#dc3232' : '#b8860b';
+              return (
+                <section className={styles.chartCard} style={{ marginBottom: 16 }}>
+                  <h2 className={styles.chartTitle}>Revenue Momentum (§11.2)</h2>
+                  <p className={styles.sectionSubtext}>Last 3 months vs previous 3 months (monthly revenue)</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
+                    <span style={{ padding: '8px 16px', background: bg, borderRadius: 8, fontWeight: 600, color: fg }}>
+                      {label}
+                    </span>
+                    <span style={{ fontSize: 14, color: '#6c757d' }}>
+                      {(pct >= 0 ? '+' : '') + pct.toFixed(1)}% ({formatCurrency(last3)} vs {formatCurrency(prev3)})
+                    </span>
+                  </div>
+                </section>
+              );
+            })()}
 
             {/* Holiday impact (§11) — revenue on Nigerian public holidays vs avg daily in month */}
             {holidayImpact?.holidayDays?.length > 0 && (
@@ -1440,6 +1508,31 @@ export default function AdminFinancialsPage() {
             </div>
           )}
 
+          {/* Payment Processing Fees by Method (§1.4) */}
+          {paymentProcessingFeesByMethod && paymentProcessingFeesByMethod.length > 0 && (
+            <div className={styles.chartCard}>
+              <h2 className={styles.chartTitle}>Payment Processing Fees by Method</h2>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Payment Method</th>
+                      <th>Total Fees</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentProcessingFeesByMethod.map((row: { method: string; totalFees: number }, idx: number) => (
+                      <tr key={idx}>
+                        <td>{row.method}</td>
+                        <td>{formatCurrency(row.totalFees ?? 0)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Weekend vs Weekday */}
           {weekendWeekday && (
             <div className={styles.chartCard}>
@@ -1563,17 +1656,29 @@ export default function AdminFinancialsPage() {
                       <th>Revenue</th>
                       <th>Orders</th>
                       <th>Customers</th>
+                      <th>Growth (MoM %)</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {revenueByLocation.map((r: any, i: number) => (
+                    {revenueByLocation.map((r: any, i: number) => {
+                      let mom: number | null = null;
+                      const loc = revenueByLocationOverTime?.find((x: any) => x.city === r.city);
+                      const m = loc?.monthly || [];
+                      if (m.length >= 2) {
+                        const last = m[m.length - 1]?.revenue ?? 0;
+                        const prev = m[m.length - 2]?.revenue ?? 0;
+                        if (prev > 0) mom = ((last - prev) / prev) * 100;
+                        else if (last > 0) mom = 100;
+                      }
+                      return (
                       <tr key={i}>
                         <td style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setFilterLocation(r.city || '')} title="Click to filter by this location">{r.city}</td>
                         <td>{formatCurrency(r.revenue ?? 0)}</td>
                         <td>{r.orders ?? 0}</td>
                         <td>{r.customers ?? 0}</td>
+                        <td style={{ color: mom != null ? (mom >= 0 ? '#46B450' : '#dc3232') : undefined }}>{mom != null ? (mom >= 0 ? '+' : '') + mom.toFixed(1) + '%' : '—'}</td>
                       </tr>
-                    ))}
+                    ); })}
                   </tbody>
                 </table>
               </div>
@@ -1732,6 +1837,18 @@ export default function AdminFinancialsPage() {
                   <span className={styles.summaryValue}>{partialPayments.count} orders · {formatCurrency(partialPayments.totalAmount)}</span>
                 </div>
               )}
+              {discounts && (Number(discounts.total) > 0 || Number(discounts.percentOfRevenue) > 0) && (
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Discounts Given</span>
+                  <span className={styles.summaryValue}>{formatCurrency(discounts.total ?? 0)} · {(discounts.percentOfRevenue ?? 0).toFixed(1)}% of revenue</span>
+                </div>
+              )}
+              {paymentRetrySuccessRate != null && (
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Payment Retry Success Rate</span>
+                  <span className={styles.summaryValue}>{paymentRetrySuccessRate.toFixed(1)}%</span>
+                </div>
+              )}
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>Order Completion Rate</span>
                 <span className={styles.summaryValue}>{orders?.completionRate != null ? orders.completionRate.toFixed(1) + '%' : '0%'}</span>
@@ -1768,6 +1885,81 @@ export default function AdminFinancialsPage() {
           </div>
         </section>
 
+        {/* Financial Health (§1.3) — profit margin, CoGS, operating cost, cash flow, breakeven, CPA, LTV:CPA */}
+        {financialHealth && isAdmin() && (
+          <section className={styles.summarySection}>
+            <div className={styles.summaryCard}>
+              <h2 className={styles.sectionTitle}>Financial Health</h2>
+              <div className={styles.summaryGrid}>
+                {financialHealth.profitMarginPercent != null && (
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Profit Margin</span>
+                    <span className={styles.summaryValue}>{(financialHealth.profitMarginPercent ?? 0).toFixed(1)}%</span>
+                  </div>
+                )}
+                {financialHealth.cogs != null && Number(financialHealth.cogs) > 0 && (
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Cost of Goods Sold (CoGS)</span>
+                    <span className={styles.summaryValue}>{formatCurrency(Number(financialHealth.cogs))}</span>
+                  </div>
+                )}
+                {financialHealth.grossProfit != null && (
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Gross Profit</span>
+                    <span className={styles.summaryValue}>{formatCurrency(Number(financialHealth.grossProfit))}</span>
+                  </div>
+                )}
+                {financialHealth.operatingCostMonthly != null && Number(financialHealth.operatingCostMonthly) > 0 && (
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Operating Cost (Monthly)</span>
+                    <span className={styles.summaryValue}>{formatCurrency(Number(financialHealth.operatingCostMonthly))}</span>
+                  </div>
+                )}
+                {financialHealth.operatingCostProrated != null && Number(financialHealth.operatingCostProrated) > 0 && (
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Operating Cost (Period)</span>
+                    <span className={styles.summaryValue}>{formatCurrency(Number(financialHealth.operatingCostProrated))}</span>
+                  </div>
+                )}
+                {financialHealth.cashFlow && (
+                  <>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Cash Flow Inflow</span>
+                      <span className={styles.summaryValue}>{formatCurrency(financialHealth.cashFlow.inflow ?? 0)}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Cash Flow Outflow</span>
+                      <span className={styles.summaryValue}>{formatCurrency(financialHealth.cashFlow.outflow ?? 0)}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Cash Flow Net</span>
+                      <span className={styles.summaryValue} style={{ color: Number(financialHealth.cashFlow.net ?? 0) >= 0 ? '#46B450' : '#dc3232' }}>{formatCurrency(financialHealth.cashFlow.net ?? 0)}</span>
+                    </div>
+                  </>
+                )}
+                {financialHealth.breakevenOrders != null && financialHealth.breakevenOrders > 0 && (
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Breakeven Orders (Period)</span>
+                    <span className={styles.summaryValue}>{financialHealth.breakevenOrders} orders</span>
+                  </div>
+                )}
+                {financialHealth.cpa != null && financialHealth.cpa > 0 && (
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Cost per Acquisition (CPA)</span>
+                    <span className={styles.summaryValue}>{formatCurrency(financialHealth.cpa)}</span>
+                  </div>
+                )}
+                {financialHealth.ltvToCpa != null && financialHealth.ltvToCpa > 0 && (
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>LTV : CPA Ratio</span>
+                    <span className={styles.summaryValue}>{Number(financialHealth.ltvToCpa).toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Top Earning Barbers - Admin Only */}
         {isAdmin() && barberEarnings && barberEarnings.length > 0 && (
           <section className={styles.barbersSection}>
@@ -1783,25 +1975,41 @@ export default function AdminFinancialsPage() {
                       <th>Earnings</th>
                       <th>Orders</th>
                       <th>Services</th>
+                      <th>Hours</th>
                       <th>Growth</th>
                       <th>Cancellation Rate</th>
                       <th>Retention</th>
+                      <th>Productivity</th>
+                      <th>Peak Hrs</th>
+                      <th>Payouts</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {barberEarnings.map((barber: any) => (
+                    {barberEarnings.map((barber: any) => {
+                      const ph = barber.payoutHistory ?? [];
+                      const last = ph.length > 0 ? ph[0] : null;
+                      const payoutsTitle = last ? `Last: ${formatCurrency(last.amount)}${last.paidAt ? ' on ' + new Date(last.paidAt).toLocaleDateString() : ''} (${ph.length} total)` : 'No payouts';
+                      const bySvc = (barber.earningsByServiceType ?? []) as { serviceName: string; revenue: number }[];
+                      const earningsTitle = bySvc.length > 0 ? 'By service: ' + bySvc.slice(0, 5).map((s: { serviceName: string; revenue: number }) => `${s.serviceName}: ${formatCurrency(s.revenue)}`).join('; ') : undefined;
+                      const peak = (barber.peakPerformanceTimes ?? []) as number[];
+                      const peakStr = peak.length > 0 ? peak.map((h: number) => h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`).join(', ') : '—';
+                      return (
                       <tr key={barber.barberId}>
                         <td style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setFilterBarber(barber.barberId)} title="Click to filter by this barber">{barber.barberName}</td>
                         <td>{formatCurrency(barber.totalRevenue)}</td>
                         <td>{((barber.commissionRate ?? 0) * 100).toFixed(0)}%</td>
-                        <td>{formatCurrency(barber.barberEarning)}</td>
+                        <td title={earningsTitle}>{formatCurrency(barber.barberEarning)}</td>
                         <td>{barber.ordersCount}</td>
                         <td>{barber.servicesCompleted ?? 0}</td>
+                        <td>{barber.hoursWorkedEstimate != null ? Number(barber.hoursWorkedEstimate).toFixed(1) : '—'}</td>
                         <td style={{ color: barber.earningsGrowth != null ? (barber.earningsGrowth >= 0 ? '#46B450' : '#dc3232') : undefined }}>{barber.earningsGrowth != null ? (barber.earningsGrowth >= 0 ? '+' : '') + barber.earningsGrowth.toFixed(1) + '%' : '—'}</td>
                         <td>{barber.cancellationRate != null ? barber.cancellationRate.toFixed(1) + '%' : '—'}</td>
                         <td>{barber.retentionRate != null ? barber.retentionRate.toFixed(1) + '%' : '—'}</td>
+                        <td>{barber.productivity != null ? Number(barber.productivity).toFixed(1) + '/hr' : '—'}</td>
+                        <td title={peak.length > 0 ? 'Busiest hours (0–23)' : undefined}>{peakStr}</td>
+                        <td title={payoutsTitle}>{ph.length > 0 ? ph.length : '—'}</td>
                       </tr>
-                    ))}
+                    ); })}
                   </tbody>
                 </table>
               </div>
@@ -1841,6 +2049,45 @@ export default function AdminFinancialsPage() {
             </div>
           </div>
         </section>
+
+        {/* Chargebacks (§1.5) */}
+        {chargebacks && (Number(chargebacks.total) > 0 || (chargebacks.recent && chargebacks.recent.length > 0)) && (
+          <section className={styles.transactionsSection}>
+            <div className={styles.summaryCard}>
+              <h2 className={styles.sectionTitle}>Chargebacks</h2>
+              <div className={styles.summaryItem} style={{ marginBottom: 12 }}>
+                <span className={styles.summaryLabel}>Total Chargebacks</span>
+                <span className={styles.summaryValue} style={{ color: '#dc3232' }}>{formatCurrency(chargebacks.total ?? 0)}</span>
+              </div>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Order #</th>
+                      <th>Customer</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chargebacks.recent?.length ? (
+                      chargebacks.recent.map((c: { orderNumber: string; customerName?: string; amount: number; chargebackAt: string | Date | null }, i: number) => (
+                        <tr key={i}>
+                          <td>{c.orderNumber}</td>
+                          <td>{c.customerName ?? '—'}</td>
+                          <td>{formatCurrency(c.amount ?? 0)}</td>
+                          <td>{c.chargebackAt ? new Date(c.chargebackAt).toLocaleDateString() : '—'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan={4} className={styles.emptyState}>No chargeback records</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Recent Transactions */}
         <section className={styles.transactionsSection}>
@@ -2388,6 +2635,35 @@ export default function AdminFinancialsPage() {
                 </ResponsiveContainer>
               </div>
             </section>
+
+            {/* Booking Channels (§4.4) — Online, Phone, In-person, App */}
+            {bookingChannels && bookingChannels.length > 0 && (
+              <div className={styles.chartCard} style={{ marginBottom: 24 }}>
+                <h2 className={styles.chartTitle}>Booking Channels</h2>
+                <p className={styles.sectionSubtext}>Source of paid bookings in selected period</p>
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Channel</th>
+                        <th>Bookings</th>
+                        <th>Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bookingChannels.map((ch: { source: string; count: number; revenue: number }, i: number) => (
+                        <tr key={i}>
+                          <td>{ch.source || 'Unknown'}</td>
+                          <td>{ch.count ?? 0}</td>
+                          <td>{formatCurrency(ch.revenue ?? 0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <div className={styles.chartCard} style={{ marginBottom: 24 }}>
               <h2 className={styles.chartTitle}>Top Services</h2>
               {topServices?.[0]?.ordersGrowth != null && (
@@ -2604,6 +2880,7 @@ export default function AdminFinancialsPage() {
               <section className={styles.summarySection}>
                 <div className={styles.chartCard}>
                   <h2 className={styles.chartTitle}>Revenue by Product Category</h2>
+                  <p className={styles.sectionSubtext}>§4.3 CoGS and profit margin when product costPrice is set</p>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={productCategories}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -2621,6 +2898,8 @@ export default function AdminFinancialsPage() {
                           <tr>
                             <th>Category</th>
                             <th>Revenue</th>
+                            <th>CoGS</th>
+                            <th>Margin %</th>
                             <th>Orders</th>
                             <th>Quantity</th>
                           </tr>
@@ -2630,6 +2909,8 @@ export default function AdminFinancialsPage() {
                             <tr key={idx}>
                               <td style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setFilterCategory(cat.category)} title="Click to filter by this category">{cat.category}</td>
                               <td>{formatCurrency(cat.revenue)}</td>
+                              <td>{cat.cogs != null ? formatCurrency(cat.cogs) : '—'}</td>
+                              <td style={{ color: cat.marginPercent != null ? (cat.marginPercent >= 0 ? '#46B450' : '#dc3232') : undefined }}>{cat.marginPercent != null ? cat.marginPercent.toFixed(1) + '%' : '—'}</td>
                               <td>{cat.orders}</td>
                               <td>{cat.quantity}</td>
                             </tr>
@@ -2667,6 +2948,20 @@ export default function AdminFinancialsPage() {
                 <div className={styles.summaryCard}>
                   <h2 className={styles.sectionTitle}>Peak Booking Times</h2>
                   <p className={styles.sectionSubtext}>Bookings by hour, day of week, month, and quarter (paid bookings in selected period)</p>
+                  {((peakBookingTimes.daily?.length && peakBookingTimes.monthly?.length) || (peakBookingTimes.daily?.length) || (peakBookingTimes.monthly?.length)) && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16, fontSize: 14, color: '#6c757d' }}>
+                      {peakBookingTimes.daily && peakBookingTimes.daily.length > 0 && (() => {
+                        const top = [...peakBookingTimes.daily].sort((a: { bookings: number }, b: { bookings: number }) => (b.bookings ?? 0) - (a.bookings ?? 0)).slice(0, 3);
+                        const labels = top.map((d: { label?: string }) => d.label || '').filter(Boolean).join(', ');
+                        return labels ? <span><strong>Top peak days (§4.4):</strong> {labels}</span> : null;
+                      })()}
+                      {peakBookingTimes.monthly && peakBookingTimes.monthly.length > 0 && (() => {
+                        const top = [...peakBookingTimes.monthly].sort((a: { bookings: number }, b: { bookings: number }) => (b.bookings ?? 0) - (a.bookings ?? 0)).slice(0, 3);
+                        const labels = top.map((m: { label?: string }) => m.label || '').filter(Boolean).join(', ');
+                        return labels ? <span><strong>Top peak months (§4.4):</strong> {labels}</span> : null;
+                      })()}
+                    </div>
+                  )}
                   <div className={styles.chartGrid}>
                     {peakBookingTimes.hourly && peakBookingTimes.hourly.length > 0 && (
                       <div className={styles.chartCard}>
@@ -3394,6 +3689,112 @@ export default function AdminFinancialsPage() {
                   </div>
                 </div>
               </section>
+            )}
+          </>
+        )}
+
+        {/* Tab: Site Traffic (§2) */}
+        {activeTab === 'traffic' && (
+          <>
+            {trafficLoading ? (
+              <div className={styles.loadingContainer} style={{ padding: 40 }}>
+                <div className={styles.spinner} />
+                <p>Loading traffic data...</p>
+              </div>
+            ) : (
+              <>
+                <section className={styles.summarySection}>
+                  <div className={styles.summaryCard}>
+                    <h2 className={styles.sectionTitle}>Site Traffic</h2>
+                    <p className={styles.sectionSubtext}>First‑party page views from TrafficTracker. Use period filter above.</p>
+                    <div className={styles.summaryGrid}>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryLabel}>Total Page Views</span>
+                        <span className={styles.summaryValue}>{(trafficData?.totalPageViews ?? 0).toLocaleString()}</span>
+                      </div>
+                      {(trafficData?.uniqueVisitors ?? 0) >= 0 && (
+                        <div className={styles.summaryItem} title="Distinct sessions (30 min) when sessionId present">
+                          <span className={styles.summaryLabel}>Unique Visitors (approx.)</span>
+                          <span className={styles.summaryValue}>{(trafficData?.uniqueVisitors ?? 0).toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                {(!trafficData || trafficData.totalPageViews === 0) ? (
+                  <div className={styles.chartCard} style={{ textAlign: 'center', padding: 48 }}>
+                    <p>No traffic data yet. Tracking runs on each page; data will appear as users visit the site.</p>
+                  </div>
+                ) : (
+                  <>
+                    {trafficData.overTime && trafficData.overTime.length > 0 && (
+                      <div className={styles.chartCard} style={{ marginBottom: 24 }}>
+                        <h2 className={styles.chartTitle}>Page Views Over Time</h2>
+                        <ResponsiveContainer width="100%" height={280}>
+                          <LineChart data={trafficData.overTime}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip />
+                            <Line type="monotone" dataKey="count" stroke="#17A2B8" name="Page views" strokeWidth={2} dot={false} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 24 }}>
+                      {trafficData.byPage && trafficData.byPage.length > 0 && (
+                        <div className={styles.chartCard}>
+                          <h2 className={styles.chartTitle}>Top Pages</h2>
+                          <div className={styles.tableWrap}>
+                            <table className={styles.table}>
+                              <thead>
+                                <tr><th>Page</th><th>Views</th></tr>
+                              </thead>
+                              <tbody>
+                                {trafficData.byPage.map((r: { url: string; count: number }, i: number) => (
+                                  <tr key={i}><td style={{ wordBreak: 'break-all' }}>{r.url || '(empty)'}</td><td>{r.count.toLocaleString()}</td></tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                      {trafficData.byReferrer && trafficData.byReferrer.length > 0 && (
+                        <div className={styles.chartCard}>
+                          <h2 className={styles.chartTitle}>Top Referrers</h2>
+                          <div className={styles.tableWrap}>
+                            <table className={styles.table}>
+                              <thead>
+                                <tr><th>Source</th><th>Views</th></tr>
+                              </thead>
+                              <tbody>
+                                {trafficData.byReferrer.map((r: { referrer: string; count: number }, i: number) => (
+                                  <tr key={i}><td style={{ wordBreak: 'break-all' }} title={r.referrer}>{r.referrer.length > 50 ? r.referrer.slice(0, 47) + '...' : r.referrer}</td><td>{r.count.toLocaleString()}</td></tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                      {trafficData.byDevice && trafficData.byDevice.length > 0 && (
+                        <div className={styles.chartCard}>
+                          <h2 className={styles.chartTitle}>By Device</h2>
+                          <ResponsiveContainer width="100%" height={220}>
+                            <PieChart>
+                              <Pie data={trafficData.byDevice} dataKey="count" nameKey="device" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
+                                {(trafficData.byDevice || []).map((_: unknown, i: number) => (<Cell key={i} fill={COLORS[i % COLORS.length]} />))}
+                              </Pie>
+                              <Tooltip formatter={(v: number | undefined) => (v ?? 0).toLocaleString()} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </>
             )}
           </>
         )}

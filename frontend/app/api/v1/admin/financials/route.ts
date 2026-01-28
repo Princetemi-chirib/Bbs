@@ -475,7 +475,7 @@ export async function GET(request: NextRequest) {
         },
       }),
 
-      // Order items with products for product category analytics
+      // Order items with products for product category analytics (include costPrice for §4.3 margins)
       prisma.orderItem.findMany({
         where: {
           order: {
@@ -492,6 +492,7 @@ export async function GET(request: NextRequest) {
           product: {
             select: {
               category: true,
+              costPrice: true,
             },
           },
         },
@@ -1196,23 +1197,32 @@ export async function GET(request: NextRequest) {
       }))
       .sort((a, b) => b.revenue - a.revenue);
 
-    // Product category analytics (from order items)
-    const productCategoryMap = new Map<string, { revenue: number; orders: Set<string>; quantity: number }>();
+    // Product category analytics (from order items); §4.3 add cogs and margin
+    const productCategoryMap = new Map<string, { revenue: number; cogs: number; orders: Set<string>; quantity: number }>();
     for (const item of orderItemsForProductCategories as any[]) {
       const category = item.product?.category || 'Unknown';
-      const existing = productCategoryMap.get(category) || { revenue: 0, orders: new Set<string>(), quantity: 0 };
+      const existing = productCategoryMap.get(category) || { revenue: 0, cogs: 0, orders: new Set<string>(), quantity: 0 };
+      const qty = item.quantity || 1;
       existing.revenue += Number(item.totalPrice || 0);
+      existing.cogs += qty * Number((item.product as any)?.costPrice ?? 0);
       existing.orders.add(item.orderId);
-      existing.quantity += item.quantity || 1;
+      existing.quantity += qty;
       productCategoryMap.set(category, existing);
     }
     const productCategories = Array.from(productCategoryMap.entries())
-      .map(([category, data]) => ({
-        category,
-        revenue: Number(data.revenue.toFixed(2)),
-        orders: data.orders.size,
-        quantity: data.quantity,
-      }))
+      .map(([category, data]) => {
+        const revenue = Number(data.revenue.toFixed(2));
+        const cogs = Number(data.cogs.toFixed(2));
+        const marginPercent = revenue > 0 ? Number((((revenue - cogs) / revenue) * 100).toFixed(1)) : null;
+        return {
+          category,
+          revenue,
+          cogs,
+          marginPercent,
+          orders: data.orders.size,
+          quantity: data.quantity,
+        };
+      })
       .sort((a, b) => b.revenue - a.revenue);
 
     // Most / least sold products (by productId)

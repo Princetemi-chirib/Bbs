@@ -28,7 +28,7 @@
 |-----------|--------|
 | Service revenue vs product revenue | ✅ |
 | Commission breakdown (barber vs platform) | ✅ |
-| Discounts given (total, % of revenue) | ❌ No discount tracking in schema |
+| Discounts given (total, % of revenue) | ✅ In Summary Statistics (Financial tab) when data present |
 | Refunds (total amount, refund rate) | ✅ |
 | Outstanding payments / accounts receivable | ✅ Pending orders count |
 | Revenue per customer (avg, median, top 10%) | ✅ Avg, median, top 10% (revenue + % of total) on Financials |
@@ -39,13 +39,13 @@
 
 | Spec Item | Status |
 |-----------|--------|
-| Profit margins | ❌ |
-| Operating costs | ❌ |
+| Profit margins | ✅ Financial Health card (CoGS, gross profit, margin %) |
+| Operating costs | ✅ Monthly + prorated for period |
 | Net profit | ✅ Revenue − refunds |
-| Cash flow (inflow vs outflow) | ❌ |
-| Breakeven analysis | ❌ |
-| Cost per acquisition (CPA) | ❌ |
-| LTV to CPA ratio | ❌ |
+| Cash flow (inflow vs outflow) | ✅ Inflow, outflow, net in Financial Health card |
+| Breakeven analysis | ✅ Breakeven orders (period) |
+| Cost per acquisition (CPA) | ✅ From campaign spend when set |
+| LTV to CPA ratio | ✅ In Financial Health card |
 
 ### 1.4 Payment Analytics
 
@@ -56,13 +56,13 @@
 | Success rate by payment method | ✅ |
 | Average transaction value by method | ✅ |
 | Failed payment attempts | ✅ Failed orders count |
-| Payment processing fees by method | ❌ |
+| Payment processing fees by method | ✅ Table in Financial tab (when data present) |
 | **Payment Status** | |
 | Paid vs pending vs failed | ✅ |
 | Payment completion rate | ✅ |
 | Average time to payment | ✅ |
 | Partial payments tracking | ✅ Count and total amount |
-| Payment retry success rate | ❌ |
+| Payment retry success rate | ✅ In Summary Statistics when available |
 
 ### 1.5 Transaction Details
 
@@ -75,7 +75,7 @@
 | Service/product details | ✅ Item titles in Recent Transactions (Financial + Orders tab) |
 | Amount, payment method, status | ✅ |
 | Refund history | ✅ Dedicated table |
-| Chargeback tracking | ❌ |
+| Chargeback tracking | ✅ Total + recent table (Financial tab) |
 
 ### 1.6 Financial Reports
 
@@ -94,9 +94,16 @@
 
 ## 2. Site Analytics & Traffic
 
-**All of Section 2:** ❌ **Not implemented.**  
-No first‑party traffic or site analytics (page views, visitors, sources, geography, device, etc.).  
-Requires analytics/tracking schema and instrumentation.
+| Spec Item | Status |
+|-----------|--------|
+| Page views | ✅ TrafficEvent + TrafficTracker (LayoutWrapper); POST /api/v1/analytics/track |
+| Visitors (approximate) | ✅ Distinct sessions (30 min TTL) via sessionId; uniqueVisitors in Site Traffic tab |
+| Top pages | ✅ By URL in Site Traffic tab |
+| Referrers / sources | ✅ By referrer in Site Traffic tab |
+| Device (desktop, mobile, tablet) | ✅ By device in Site Traffic tab; pie chart |
+| Page views over time | ✅ Line chart in Site Traffic tab |
+| Geography (country, city) | ❌ TrafficEvent has country, city; not yet captured (would need geo IP) |
+| Admin view & period filter | ✅ GET /api/v1/admin/analytics/traffic; Site Traffic tab in Financials; uses period/start/end |
 
 ---
 
@@ -144,7 +151,7 @@ Requires analytics/tracking schema and instrumentation.
 | CLV | ✅ Avg lifetime value (revenue / customers with ≥1 paid order) |
 | ARPU | ✅ |
 | Top 10% (contribution to revenue) | ⚠️ Customer analytics page |
-| CAC, CLV:CAC, profitability | ❌ |
+| CAC, CLV:CAC, profitability | ✅ CAC (= CPA) and LTV:CPA in Financial Health card; profitability via profit margins |
 
 ---
 
@@ -185,7 +192,7 @@ Requires analytics/tracking schema and instrumentation.
 | Spec Item | Status |
 |-----------|--------|
 | Most / least sold products | ✅ |
-| Product revenue, profit margins | ⚠️ Product revenue via categories & productRevenueByMonth; profit margins ❌ |
+| Product revenue, profit margins | ✅ Product revenue via categories & productRevenueByMonth; profit margins (CoGS, margin %) per category in Revenue by Product Category table |
 | Inventory turnover, out‑of‑stock, return rate | ❌ |
 | Product sales by category, seasonality | ✅ Product categories (revenue/orders); product revenue by month (last 12 mo) |
 
@@ -194,11 +201,11 @@ Requires analytics/tracking schema and instrumentation.
 | Spec Item | Status |
 |-----------|--------|
 | Peak booking times (hourly, daily, weekly) | ✅ Hourly, daily, monthly |
-| Peak booking days / months / seasons | ⚠️ Day of week & month |
+| Peak booking days / months / seasons | ✅ Day of week & month charts; top-3 peak days and top-3 peak months summary in Peak Booking Times |
 | Booking lead time, same‑day, walk‑in vs scheduled | ✅ Avg lead time (days), same‑day count; walk‑in/scheduled not in schema |
 | No‑show rate, cancellation by time before | ✅ No‑show rate; cancellation by time (same day / 1–7d / 7+d) |
 | **Booking Channels** | |
-| Online, phone, in‑person, app, source | ❌ |
+| Online, phone, in‑person, app, source | ✅ Booking Channels table (Orders & Services tab) from Booking.source |
 
 ---
 
@@ -222,11 +229,11 @@ Requires analytics/tracking schema and instrumentation.
 
 | Spec Item | Status |
 |-----------|--------|
-| Hours worked, services completed | ⚠️ Services completed ✅ (completed paid bookings per barber); hours worked ❌ |
+| Hours worked, services completed | ✅ Services completed (completed paid bookings); hours worked (Hours column, from booking duration) |
 | Online/offline status | ✅ Barbers online/offline counts; isOnline per barber |
-| Peak performance times, productivity | ❌ |
+| Peak performance times, productivity | ✅ Peak Hrs and Productivity columns in Top Earning Barbers; earnings by service in Earnings tooltip |
 | Commission earned | ✅ |
-| Earnings trends, by service type, payout history | ⚠️ Earnings trend vs prior period (growth %) ✅; by service type, payout history ❌ |
+| Earnings trends, by service type, payout history | ✅ Growth %; earnings by service type (tooltip on Earnings); payout history (Payouts column + tooltip) |
 
 ---
 
@@ -268,8 +275,8 @@ No inventory schema or product‑level analytics.
 
 | Spec Item | Status |
 |-----------|--------|
-| Revenue/orders per branch | ✅ By city; customers per city in table |
-| Customers per branch, utilization, profitability, growth | ❌ |
+| Revenue/orders per branch | ✅ By city; customers per city in Revenue by Location table |
+| Customers per branch, utilization, profitability, growth | ⚠️ Customers per branch ✅ (Revenue by Location); growth ✅ (MoM % column); utilization, profitability ❌ |
 | Service demand by location, customer distribution | ✅ Service demand by location (top services per barber city) |
 | Peak times by location, location‑specific trends | ✅ Peak times by location (hourly per city); revenue by city by month (last 12 mo) |
 
@@ -289,7 +296,7 @@ No inventory schema or product‑level analytics.
 
 | Spec Item | Status |
 |-----------|--------|
-| Growth/decline/seasonal/cyclical trends | ⚠️ Growth rates only |
+| Growth/decline/seasonal/cyclical trends | ✅ Growth rates (DoD/WoW/MoM/QoQ/YoY); Revenue momentum (last 3 vs prev 3 months → Upward/Stable/Declining) in Overview |
 | Anomaly detection | ❌ |
 
 ---
@@ -345,7 +352,7 @@ No inventory schema or product‑level analytics.
 | PDF reports | ✅ |
 | Excel/CSV export | ✅ |
 | JSON export | ✅ |
-| Scheduled exports | ❌ |
+| Scheduled exports | ✅ GET /api/v1/admin/reports/scheduled-export-cron; Vercel Cron Tue 10am; last week CSV emailed to SCHEDULED_EXPORT_EMAILS or WEEKLY_REPORT_EMAILS |
 | Custom report templates | ❌ |
 
 ---
@@ -377,7 +384,7 @@ No inventory schema or product‑level analytics.
 | Spec Item | Status |
 |-----------|--------|
 | Encrypted storage, secure transmission, access controls | ⚠️ App‑level |
-| Audit logs (who viewed what, exports, etc.) | ❌ |
+| Audit logs (who viewed what, exports, etc.) | ✅ VIEW_FINANCIALS; EXPORT_CSV, EXPORT_EXCEL, EXPORT_PDF, EXPORT_JSON, EXPORT_TAX_SUMMARY; SEND_WEEKLY_REPORT via POST /api/v1/admin/audit-log → AnalyticsAuditLog |
 | GDPR, anonymization, consent, minimization, deletion | ❌ |
 
 ---
@@ -394,24 +401,19 @@ No inventory schema or product‑level analytics.
 |-----------|--------|
 | Role‑based access (Admin, Rep) | ✅ |
 | Manager, view‑only, custom permission sets | ❌ |
-| Audit trail (views, exports, report generation) | ❌ |
-
----
+| Audit trail (views, exports, report generation) | ✅ Exports and weekly report logged to AnalyticsAuditLog; VIEW_FINANCIALS on load |
 
 ## Implementation Priority (from spec)
-
 | Phase | Status |
 |-------|--------|
-| **Phase 1:** Financial revenue, order analytics, customer metrics, basic site analytics, weekly email reports | ⚠️ Financial, orders, customers done; site analytics & weekly emails not |
+| **Phase 1:** Financial revenue, order analytics, customer metrics, basic site analytics, weekly email reports | ⚠️ Financial, orders, customers, weekly emails ✅; site analytics ✅ (first‑party TrafficEvent, track API, Traffic tab) |
 | **Phase 2:** Traffic, barber metrics, marketing, predictive, advanced viz | ⚠️ Barber metrics largely done; rest not |
 | **Phase 3:** Real‑time, AI insights, integrations, custom report builder, mobile analytics | ❌ |
-
 ---
-
 ## Summary
+- **Done (or partial):** §1 (financial, revenue breakdown, financial health, payment, transactions, export, discounts, chargebacks, fees, retry rate), **§2 (Site/Traffic: first‑party tracking, Traffic tab, by page/referrer/device, over time)**, §3 (core customer metrics), §4 (orders, services, bookings, peak times, booking channels), §5 (barber performance, rankings, productivity, peak hours, earnings by service, payout history), §8 (reviews), §10 (location, customers per city, growth MoM; utilization/profitability ❌), §11 (hourly/daily/monthly, weekend vs weekday, holiday impact), §12 (DoD/WoW/MoM/YoY), §14 (charts, filters, export, saved views), §15 (manual + cron weekly email), §18 (audit logs for views, exports, report generation), §20 (admin/rep roles, audit trail).
+- **Not done:** §2 (geography); §6 (Operations); §7 (Marketing); §9 (Inventory); §10 (utilization, profitability per branch); §13 (Predictive); §16 (Real‑time); §17 (Retention); §19 (Integrations); plus §3/§4/§8 deeper items.
 
-- **Done (or partial):** §1 (most financial, payment, transactions, export, revenue per customer top 10%), §3 (core customer metrics), §4 (orders, services, bookings, peak times), §5 (barber performance & rankings), §8 (reviews), §10 (location trends over time), §11 (hourly/daily/monthly, weekend vs weekday, holiday impact), §12 (DoD/WoW/MoM/YoY), §14 (charts, filters, export, saved views), §15 (manual + cron weekly email), §20 (admin/rep roles).
-- **Not done:** §2 (Site/Traffic), §6 (Operations), §7 (Marketing), §9 (Inventory), §10 (customers per branch, utilization, etc.), §13 (Predictive), §16 (Real‑time), §17 (Retention), §19 (Integrations), plus deeper items in §1, §3, §4, §5, §8.
+**Rough completion:** ~**80%** of the full spec (for items feasible with current schema and data).  
 
-**Rough completion:** ~**60%** of the full spec (for items feasible with current schema and data).  
-*Recent adds: revenue per customer (avg, median, top 10%); scheduled weekly email (GET /api/v1/admin/reports/weekly-email-cron, Vercel Cron, CRON_SECRET, WEEKLY_REPORT_EMAILS); holiday impact (Nigerian holidays vs avg daily in month); revenue by location over time (last 12 mo); §14.2 saved views; exportToJSON includes holidayImpact, revenueByLocationOverTime.*
+*Recent adds (this round): §14.3 Scheduled exports — GET /api/v1/admin/reports/scheduled-export-cron; Vercel Cron Tue 10am; last week financial CSV emailed as attachment to SCHEDULED_EXPORT_EMAILS or WEEKLY_REPORT_EMAILS; emailService attachments support. §4.4 Peak days/months — Top 3 peak days and Top 3 peak months summary in Peak Booking Times. §3.4 CAC, CLV:CAC — marked done (CPA + LTV:CPA in Financial Health). Earlier: §2 unique visitors, §4.3 product margins, §11.2 revenue momentum; traffic tab, audit logs, etc.*
