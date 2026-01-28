@@ -113,7 +113,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
                   href={item.href}
                   className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
                 >
-                  <span className={styles.navIcon}>{item.icon}</span>
+                  <item.Icon size={20} className={styles.navIcon} aria-hidden />
                   <span className={styles.navLabel}>{item.label}</span>
                 </Link>
               );

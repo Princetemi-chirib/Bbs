@@ -291,6 +291,7 @@ A fullfeatured analytics and financial tracking dashboard that provides realtime
    Noshow rate
    Cancellation rate by time before appointment
 
+
  Booking Channels
    Online bookings
    Phone bookings

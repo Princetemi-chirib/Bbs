@@ -60,20 +60,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get all reviews with related data
+    // Get all reviews with related data (Review links to Order, not Booking; use order.items[].product as service proxy)
     const reviews = await prisma.review.findMany({
       where: {
         ...dateFilter,
         isVisible: true,
       },
       include: {
-        booking: {
+        order: {
           include: {
-            service: {
-              select: {
-                id: true,
-                name: true,
-                category: true,
+            items: {
+              include: {
+                product: {
+                  select: {
+                    id: true,
+                    title: true,
+                    category: true,
+                  },
+                },
               },
             },
           },
@@ -161,14 +165,14 @@ export async function GET(request: NextRequest) {
     }>();
 
     for (const review of reviews) {
-      const service = review.booking.service;
-      if (!service) continue;
-      const key = service.id;
+      const product = review.order?.items?.[0]?.product;
+      if (!product) continue;
+      const key = product.id;
       if (!byService.has(key)) {
         byService.set(key, {
           serviceId: key,
-          serviceName: service.name,
-          category: service.category,
+          serviceName: product.title,
+          category: String(product.category),
           count: 0,
           avgRating: 0,
           ratings: [],
@@ -193,7 +197,7 @@ export async function GET(request: NextRequest) {
     }>();
 
     for (const review of reviews) {
-      const category = review.booking.service?.category || 'Unknown';
+      const category = review.order?.items?.[0]?.product?.category != null ? String(review.order.items[0].product!.category) : 'Unknown';
       if (!byCategory.has(category)) {
         byCategory.set(category, {
           category,
@@ -223,7 +227,7 @@ export async function GET(request: NextRequest) {
         barberResponse: r.barberResponse,
         barberResponseAt: r.barberResponseAt,
         barberName: r.barber.user.name,
-        serviceName: r.booking.service?.name || 'Unknown',
+        serviceName: r.order?.items?.[0]?.product?.title || 'Unknown',
         customerName: r.customer.user.name,
         createdAt: r.createdAt,
       }));

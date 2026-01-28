@@ -15,6 +15,8 @@ enum UserRole {
   BARBER
   ADMIN
   REP
+  MANAGER   // department/location-scoped
+  VIEWER    // view-only
 }
 
 enum BookingStatus {
@@ -126,6 +128,7 @@ model Barber {
   reviews          Review[]
   preferredBy      Customer[]
   assignedOrders   Order[]  @relation("AssignedOrders")
+  payouts          BarberPayout[]
 
   @@map("barbers")
   @@index([status])
@@ -209,6 +212,7 @@ model Booking {
   totalPrice        Decimal       @db.Decimal(10, 2) @map("total_price")
   paymentStatus     PaymentStatus @default(PENDING) @map("payment_status")
   paymentMethod     String?       @map("payment_method")
+  source            String?       // ONLINE, PHONE, IN_PERSON, APP — booking channel
   notes             String?       @db.Text
   barberNotes       String?       @db.Text @map("barber_notes")
   cancellationReason String?      @db.Text @map("cancellation_reason")
@@ -229,6 +233,7 @@ model Booking {
   @@index([barberId])
   @@index([bookingDate])
   @@index([status])
+  @@index([source])
   @@index([barberId, bookingDate, bookingTime])
 }
 
@@ -413,15 +418,19 @@ model Product {
   description     String?         @db.Text
   adultPrice      Decimal         @db.Decimal(10, 2) @map("adult_price")
   kidsPrice       Decimal?        @db.Decimal(10, 2) @map("kids_price") // null means same as adult
+  costPrice       Decimal?        @db.Decimal(10, 2) @map("cost_price") // for profit margin
   category        ProductCategory
   beforeImage     String          @map("before_image")
   afterImage      String          @map("after_image")
   isActive        Boolean         @default(true) @map("is_active")
   displayOrder    Int             @default(0) @map("display_order")
+  stockQuantity   Int?            @map("stock_quantity") // null = not tracked
+  reorderPoint    Int?            @map("reorder_point")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
-  orderItems      OrderItem[]
+  orderItems         OrderItem[]
+  inventoryMovements InventoryMovement[]
 
   @@map("products")
   @@index([category])
@@ -430,27 +439,32 @@ model Product {
 }
 
 model Order {
-  id                String        @id @default(uuid())
-  orderNumber       String        @unique @map("order_number")
-  customerName      String        @map("customer_name")
-  customerEmail     String        @map("customer_email")
-  customerPhone     String        @map("customer_phone")
-  city              String
-  location          String
-  address           String?       @db.Text
-  additionalNotes   String?       @db.Text @map("additional_notes")
-  totalAmount       Decimal       @db.Decimal(10, 2) @map("total_amount")
-  paymentReference  String?       @unique @map("payment_reference")
-  paymentMethod     String?       @map("payment_method")
-  paymentStatus     PaymentStatus @default(PENDING) @map("payment_status")
-  status            OrderStatus   @default(PENDING)
-  jobStatus         JobStatus?    @map("job_status") // Job assignment status
-  assignedBarberId  String?       @map("assigned_barber_id") // Link to Barber when assigned
-  customerId        String?       @map("customer_id") // Link to Customer (optional for backward compatibility)
-  declineReason     String?       @db.Text @map("decline_reason") // Reason when declined
-  emailSent         Boolean       @default(false) @map("email_sent")
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  id                    String        @id @default(uuid())
+  orderNumber           String        @unique @map("order_number")
+  customerName          String        @map("customer_name")
+  customerEmail         String        @map("customer_email")
+  customerPhone         String        @map("customer_phone")
+  city                  String
+  location              String
+  address               String?       @db.Text
+  additionalNotes       String?       @db.Text @map("additional_notes")
+  totalAmount           Decimal       @db.Decimal(10, 2) @map("total_amount")
+  discountAmount        Decimal       @default(0) @db.Decimal(10, 2) @map("discount_amount")
+  paymentReference      String?       @unique @map("payment_reference")
+  paymentMethod         String?       @map("payment_method")
+  paymentStatus         PaymentStatus @default(PENDING) @map("payment_status")
+  paymentProcessingFee  Decimal?      @db.Decimal(10, 2) @map("payment_processing_fee")
+  paymentAttemptCount   Int?          @default(1) @map("payment_attempt_count") // for retry success rate
+  status                OrderStatus   @default(PENDING)
+  jobStatus             JobStatus?    @map("job_status") // Job assignment status
+  assignedBarberId      String?       @map("assigned_barber_id") // Link to Barber when assigned
+  customerId            String?       @map("customer_id") // Link to Customer (optional for backward compatibility)
+  declineReason         String?       @db.Text @map("decline_reason") // Reason when declined
+  emailSent             Boolean       @default(false) @map("email_sent")
+  chargebackAmount      Decimal?      @db.Decimal(10, 2) @map("chargeback_amount")
+  chargebackAt          DateTime?     @map("chargeback_at")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
 
   items             OrderItem[]
   assignedBarber    Barber?       @relation("AssignedOrders", fields: [assignedBarberId], references: [id])
@@ -594,4 +608,123 @@ model Session {
   @@index([userId])
   @@index([refreshToken])
   @@index([expiresAt])
+}
+
+// --------------- Analytics & ops (spec §2, §6, §7, §9, §17, §18, §19) ---------------
+
+model BarberPayout {
+  id          String    @id @default(uuid())
+  barberId    String    @map("barber_id")
+  amount      Decimal   @db.Decimal(10, 2)
+  periodStart DateTime  @map("period_start")
+  periodEnd   DateTime  @map("period_end")
+  status      String    @default("PENDING") // PENDING, PAID, FAILED
+  paidAt      DateTime? @map("paid_at")
+  reference   String?   // external payout ref
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  barber      Barber    @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@map("barber_payouts")
+  @@index([barberId])
+  @@index([periodStart, periodEnd])
+}
+
+model AnalyticsAuditLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String   // VIEW_FINANCIALS, EXPORT_PDF, EXPORT_CSV, EXPORT_JSON, SEND_WEEKLY_REPORT, etc.
+  entity    String?  // financials, reports, etc.
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("analytics_audit_logs")
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model TrafficEvent {
+  id        String   @id @default(uuid())
+  url       String   @db.Text
+  userId    String?  @map("user_id")
+  sessionId String?  @map("session_id")
+  referrer  String?  @db.Text
+  device    String?  // desktop, mobile, tablet
+  country   String?
+  city      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("traffic_events")
+  @@index([createdAt])
+  @@index([url])
+}
+
+model OperationalMetric {
+  id         String   @id @default(uuid())
+  type       String   // UPTIME, RESPONSE_TIME, ERROR_RATE, etc.
+  name       String
+  value      Decimal  @db.Decimal(12, 4)
+  unit       String?  // %, ms, etc.
+  details    Json?
+  recordedAt DateTime @default(now()) @map("recorded_at")
+
+  @@map("operational_metrics")
+  @@index([type])
+  @@index([recordedAt])
+}
+
+model Campaign {
+  id        String    @id @default(uuid())
+  name      String
+  type      String    // EMAIL, SMS, SOCIAL, REFERRAL, etc.
+  startAt   DateTime  @map("start_at")
+  endAt     DateTime? @map("end_at")
+  spend     Decimal?  @db.Decimal(12, 2) // for CPA/ROAS
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("campaigns")
+  @@index([type])
+  @@index([startAt])
+}
+
+model InventoryMovement {
+  id         String   @id @default(uuid())
+  productId  String   @map("product_id")
+  type       String   // IN, OUT, ADJUSTMENT, RETURN
+  quantity   Int
+  reason     String?  @db.Text
+  reference  String?  // order id, etc.
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("inventory_movements")
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model DataRetentionPolicy {
+  id              String   @id @default(uuid())
+  entity          String   @unique // orders, traffic_events, etc.
+  retentionMonths Int      @map("retention_months")
+  archive         Boolean  @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("data_retention_policies")
+}
+
+model Integration {
+  id         String    @id @default(uuid())
+  name       String
+  type       String    // GOOGLE_ANALYTICS, FACEBOOK_PIXEL, PAYMENT_GATEWAY, etc.
+  config     Json?     // encrypted/sensitive config
+  isActive   Boolean   @default(true) @map("is_active")
+  lastSyncAt DateTime? @map("last_sync_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@map("integrations")
+  @@index([type])
 }

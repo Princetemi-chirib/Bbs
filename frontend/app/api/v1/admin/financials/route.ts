@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
+    void prisma.analyticsAuditLog.create({ data: { userId: user.id, action: 'VIEW_FINANCIALS', entity: 'financials' } }).catch(() => {});
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || 'all';
@@ -524,6 +525,154 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    // §1.2 Discounts; §1.4 Payment processing fees, retry rate; §1.5 Chargebacks; §4.4 Booking channels; §1.3 CoGS; §5.2 Barber metrics
+    const [
+      periodRevenueAgg,
+      discountsAgg,
+      paymentFeesByMethod,
+      paymentRetryRows,
+      chargebacksAgg,
+      chargebacksList,
+      bookingChannelsGroup,
+      orderItemsWithCost,
+      campaignsWithSpend,
+      barberBookingsForMetrics,
+      payoutsList,
+    ] = await Promise.all([
+      prisma.order.aggregate({ where: { paymentStatus: 'PAID', ...orderWhere }, _sum: { totalAmount: true } }),
+      (prisma as any).order.aggregate({ where: { paymentStatus: 'PAID', ...orderWhere }, _sum: { discountAmount: true } }),
+      (prisma as any).order.groupBy({
+        by: ['paymentMethod'],
+        where: { paymentStatus: 'PAID', ...orderWhere, paymentMethod: { not: null } },
+        _sum: { paymentProcessingFee: true },
+      }),
+      (prisma as any).order.findMany({
+        where: { ...orderWhere, paymentAttemptCount: { gt: 1 } },
+        select: { paymentStatus: true },
+      }),
+      (prisma as any).order.aggregate({
+        where: { ...orderWhere, chargebackAmount: { not: null } },
+        _sum: { chargebackAmount: true },
+      }),
+      (prisma as any).order.findMany({
+        where: { chargebackAt: { not: null } },
+        take: 10,
+        orderBy: { chargebackAt: 'desc' },
+        select: { id: true, orderNumber: true, chargebackAmount: true, chargebackAt: true, customerName: true },
+      }),
+      (prisma as any).booking.groupBy({
+        by: ['source'],
+        where: { paymentStatus: 'PAID', ...(dateFilter.createdAt ? { createdAt: dateFilter.createdAt } : {}) },
+        _count: { id: true },
+        _sum: { totalPrice: true },
+      }),
+      (prisma as any).orderItem.findMany({
+        where: { order: { paymentStatus: 'PAID', ...orderWhere } },
+        select: { quantity: true, totalPrice: true, product: { select: { costPrice: true } } },
+      }),
+      (prisma as any).campaign.findMany({
+        where: { spend: { not: null } },
+        select: { id: true, spend: true, startAt: true, endAt: true },
+      }),
+      prisma.booking.findMany({
+        where: {
+          status: 'COMPLETED',
+          paymentStatus: 'PAID',
+          ...(dateFilter.createdAt ? { createdAt: dateFilter.createdAt } : {}),
+        },
+        select: {
+          barberId: true,
+          service: { select: { name: true } },
+          totalPrice: true,
+          durationMinutes: true,
+          bookingTime: true,
+        },
+      }),
+      (prisma as any).barberPayout.findMany({
+        take: 30,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, barberId: true, amount: true, periodStart: true, periodEnd: true, status: true, paidAt: true },
+      }),
+    ]);
+
+    const periodRevenueForHealth = Number(periodRevenueAgg._sum.totalAmount || 0) || Number(totalRevenue._sum?.totalAmount || 0);
+    const totalDiscounts = Number(discountsAgg._sum.discountAmount || 0);
+    const paymentProcessingFeesByMethod = (paymentFeesByMethod as { paymentMethod: string; _sum: { paymentProcessingFee: unknown } }[]).map((r) => ({
+      method: r.paymentMethod || 'Unknown',
+      totalFees: Number(r._sum?.paymentProcessingFee || 0),
+    }));
+    const totalPaymentRetries = paymentRetryRows.length;
+    const paymentRetrySuccessCount = (paymentRetryRows as { paymentStatus: string }[]).filter((o) => o.paymentStatus === 'PAID').length;
+    const paymentRetrySuccessRate = totalPaymentRetries > 0 ? Number(((paymentRetrySuccessCount / totalPaymentRetries) * 100).toFixed(2)) : null;
+    const totalChargebacks = Number(chargebacksAgg._sum.chargebackAmount || 0);
+    const bookingChannels = (bookingChannelsGroup as { source: string | null; _count: { id: number }; _sum: { totalPrice: unknown } }[]).map((r) => ({
+      source: r.source || 'Unknown',
+      count: r._count.id,
+      revenue: Number(r._sum?.totalPrice || 0),
+    })).sort((a, b) => b.count - a.count);
+
+    let cogs = 0;
+    for (const it of (orderItemsWithCost as { quantity: number; product: { costPrice: unknown } }[])) {
+      const cp = it.product?.costPrice;
+      cogs += it.quantity * Number(cp || 0);
+    }
+    const grossProfit = periodRevenueForHealth - cogs;
+    const profitMarginPercent = periodRevenueForHealth > 0 ? Number(((grossProfit / periodRevenueForHealth) * 100).toFixed(2)) : 0;
+    const operatingCostMonthly = Number(process.env.OPERATING_COST_MONTHLY || '0') || 0;
+    const periodMonths = period === 'month' ? 1 : period === 'quarter' ? 3 : period === 'year' ? 12 : period === 'week' ? 1 / 4.33 : period === 'today' ? 1 / 30 : 0;
+    const operatingCostProrated = periodMonths > 0 ? operatingCostMonthly * periodMonths : (dateFilter.createdAt ? (operatingCostMonthly * 1) : 0);
+    const cashFlowInflow = periodRevenueForHealth;
+    const cashFlowOutflow = Number(totalRefunds._sum.totalAmount || 0) + totalChargebacks + operatingCostProrated;
+    const cashFlow = { inflow: Number(cashFlowInflow.toFixed(2)), outflow: Number(cashFlowOutflow.toFixed(2)), net: Number((cashFlowInflow - cashFlowOutflow).toFixed(2)) };
+    const avgOrderVal = paidOrders > 0 ? periodRevenueForHealth / paidOrders : 0;
+    const marginPerOrder = profitMarginPercent / 100 * avgOrderVal;
+    const breakevenOrders = marginPerOrder > 0 && operatingCostProrated > 0 ? Math.ceil(operatingCostProrated / marginPerOrder) : null;
+    const rangeStart = dateFilter.createdAt?.gte ? (dateFilter.createdAt.gte instanceof Date ? dateFilter.createdAt.gte : new Date(dateFilter.createdAt.gte as string)) : null;
+    const rangeEnd = dateFilter.createdAt?.lte ? (dateFilter.createdAt.lte instanceof Date ? dateFilter.createdAt.lte : new Date(dateFilter.createdAt.lte as string)) : null;
+    let totalCampaignSpend = 0;
+    for (const c of (campaignsWithSpend as { spend: unknown; startAt: Date; endAt: Date | null }[])) {
+      const start = c.startAt instanceof Date ? c.startAt : new Date(c.startAt);
+      const end = (c.endAt ? new Date(c.endAt) : new Date(start.getTime() + 30 * 864e5));
+      if (!rangeStart || !rangeEnd || (start <= rangeEnd && end >= rangeStart)) totalCampaignSpend += Number(c.spend || 0);
+    }
+    const newC = (newCustomersThisPeriod as number) || 0;
+    const cpa = newC > 0 && totalCampaignSpend > 0 ? Number((totalCampaignSpend / newC).toFixed(2)) : null;
+    const financialHealth = {
+      profitMarginPercent: Number(profitMarginPercent.toFixed(2)),
+      cogs: Number(cogs.toFixed(2)),
+      grossProfit: Number(grossProfit.toFixed(2)),
+      operatingCostMonthly,
+      operatingCostProrated: Number(operatingCostProrated.toFixed(2)),
+      cashFlow,
+      breakevenOrders,
+      cpa,
+      ltvToCpa: null as number | null, // set after clv is computed
+    };
+
+    const barberServiceEarningsMap = new Map<string, { serviceName: string; revenue: number }[]>();
+    const barberHoursMap = new Map<string, number>();
+    const barberPeakHourMap = new Map<string, { hour: number; count: number }[]>();
+    for (const b of (barberBookingsForMetrics as { barberId: string; service: { name: string }; totalPrice: unknown; durationMinutes: number; bookingTime: Date }[])) {
+      const bid = b.barberId;
+      let arr = barberServiceEarningsMap.get(bid);
+      if (!arr) { arr = []; barberServiceEarningsMap.set(bid, arr); }
+      const name = b.service?.name || 'Unknown';
+      const cur = arr.find((x) => x.serviceName === name);
+      if (cur) cur.revenue += Number(b.totalPrice || 0); else arr.push({ serviceName: name, revenue: Number(b.totalPrice || 0) });
+      barberHoursMap.set(bid, (barberHoursMap.get(bid) || 0) + (b.durationMinutes || 0) / 60);
+      const h = (b.bookingTime instanceof Date ? b.bookingTime : new Date(b.bookingTime)).getHours();
+      let ph = barberPeakHourMap.get(bid);
+      if (!ph) { ph = []; barberPeakHourMap.set(bid, ph); }
+      const eh = ph.find((x) => x.hour === h);
+      if (eh) eh.count++; else ph.push({ hour: h, count: 1 });
+    }
+    const payoutsByBarberMap = new Map<string, { id: string; amount: number; periodStart: Date; periodEnd: Date; status: string; paidAt: Date | null }[]>();
+    for (const p of (payoutsList as { id: string; barberId: string; amount: unknown; periodStart: Date; periodEnd: Date; status: string; paidAt: Date | null }[])) {
+      const arr = payoutsByBarberMap.get(p.barberId) || [];
+      arr.push({ id: p.id, amount: Number(p.amount), periodStart: p.periodStart, periodEnd: p.periodEnd, status: p.status, paidAt: p.paidAt });
+      payoutsByBarberMap.set(p.barberId, arr);
+    }
+
     // Seasonal patterns, demographics, service demand by location
     const [seasonalRevenueRows, customersForDemographics, bookingsForServiceDemand] = await Promise.all([
       prisma.$queryRaw<{ month: number; revenue: unknown; orders: unknown }[]>(Prisma.sql`SELECT EXTRACT(MONTH FROM created_at)::int AS month, COALESCE(SUM(total_amount),0)::float AS revenue, COUNT(*)::int AS orders FROM orders WHERE payment_status = 'PAID' GROUP BY EXTRACT(MONTH FROM created_at) ORDER BY 1`),
@@ -695,6 +844,27 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.cancelled - a.cancelled)
       .slice(0, 15);
 
+    // Services completed per barber (§5.2) — completed paid bookings, same filters as orders
+    const bookingWhere: any = { status: 'COMPLETED', paymentStatus: 'PAID' };
+    if (dateFilter?.createdAt) bookingWhere.createdAt = dateFilter.createdAt;
+    const bFilters: any[] = [];
+    if (barberId) bFilters.push({ barberId });
+    if (location) bFilters.push({ barber: { city: location } });
+    if (category) bFilters.push({ service: { category } });
+    if (service) bFilters.push({ service: { name: service } });
+    if (bFilters.length) bookingWhere.AND = bFilters;
+    const servicesCompletedByBarber = user.role === 'ADMIN'
+      ? await prisma.booking.groupBy({
+          by: ['barberId'],
+          where: bookingWhere,
+          _count: { id: true },
+        })
+      : [];
+    const servicesCompletedMap = new Map<string, number>();
+    for (const r of (servicesCompletedByBarber as { barberId: string; _count: { id: number } }[]) || []) {
+      servicesCompletedMap.set(r.barberId, r._count.id);
+    }
+
     // Calculate barber earnings with commission rates (Admin only)
     const barberEarningsDetails = user.role === 'ADMIN' 
       ? await Promise.all(
@@ -731,6 +901,7 @@ export async function GET(request: NextRequest) {
           barberEarning,
           companyCommission,
           ordersCount: item._count.id,
+          servicesCompleted: servicesCompletedMap.get(barber.id) ?? 0,
         };
           })
         )
@@ -888,6 +1059,27 @@ export async function GET(request: NextRequest) {
     const dodGrowth = yesterdayRevenueVal > 0 ? ((todayRevenueVal - yesterdayRevenueVal) / yesterdayRevenueVal) * 100 : 0;
     const orderDodGrowth = ordersYesterday > 0 ? ((ordersToday - ordersYesterday) / ordersYesterday) * 100 : 0;
 
+    // Barber earnings growth vs prior period (§5.2)
+    let prevBarberRevenueMap = new Map<string, number>();
+    if (user.role === 'ADMIN' && period !== 'all') {
+      let prevBarberWhere: { createdAt: { gte: Date; lte?: Date; lt?: Date } } | null = null;
+      if (period === 'today') prevBarberWhere = { createdAt: { gte: yesterdayStart, lte: yesterdayEnd } };
+      else if (period === 'week') prevBarberWhere = { createdAt: { gte: prevWeekStart, lt: weekRange.start! } };
+      else if (period === 'month') prevBarberWhere = { createdAt: { gte: prevMonthStart, lte: prevMonthEnd } };
+      else if (period === 'quarter') prevBarberWhere = { createdAt: { gte: prevQuarterStart, lte: prevQuarterEnd } };
+      else if (period === 'year') prevBarberWhere = { createdAt: { gte: prevYearStart, lte: prevYearEnd } };
+      if (prevBarberWhere) {
+        const prevBarberRows = await prisma.order.groupBy({
+          by: ['assignedBarberId'],
+          where: { paymentStatus: 'PAID', assignedBarberId: { not: null }, ...prevBarberWhere, ...extraOrderWhere },
+          _sum: { totalAmount: true },
+        });
+        for (const r of prevBarberRows as { assignedBarberId: string | null; _sum: { totalAmount: unknown } }[]) {
+          if (r.assignedBarberId) prevBarberRevenueMap.set(r.assignedBarberId, Number(r._sum?.totalAmount || 0));
+        }
+      }
+    }
+
     // Median AOV (paid orders, optionally filtered by period)
     const medianResult = dateFilter.createdAt
       ? await prisma.$queryRaw<[{ percentile_cont: number | null }]>(
@@ -978,10 +1170,10 @@ export async function GET(request: NextRequest) {
       if (!s) { s = new Set(); cityCustomerMap.set(o.city, s); }
       s.add(o.customerId);
     }
-    const revenueByLocationList = (revenueByLocation as { city: string; _sum: { totalAmount: number }; _count: { id: number } }[]).map(
+    const revenueByLocationList = (revenueByLocation as unknown as { city: string; _sum: { totalAmount: number | null }; _count: { id: number } }[]).map(
       (r) => ({
         city: r.city,
-        revenue: Number(r._sum.totalAmount || 0),
+        revenue: Number(r._sum?.totalAmount ?? 0),
         orders: r._count.id,
         customers: cityCustomerMap.get(r.city)?.size ?? 0,
       })
@@ -1075,6 +1267,11 @@ export async function GET(request: NextRequest) {
       const month = d instanceof Date ? d.getMonth() + 1 : 1;
       monthlyMap.set(month, (monthlyMap.get(month) ?? 0) + 1);
     }
+    // Quarterly (seasons): Q1=Jan–Mar, Q2=Apr–Jun, Q3=Jul–Sep, Q4=Oct–Dec (§4.4)
+    const quarterlyMap = [0, 1, 2, 3].map((q) => {
+      const m1 = q * 3 + 1, m2 = q * 3 + 2, m3 = q * 3 + 3;
+      return { quarter: q + 1, label: `Q${q + 1} (${MONTH_NAMES[m1 - 1]}–${MONTH_NAMES[m3 - 1]})`, bookings: (monthlyMap.get(m1) ?? 0) + (monthlyMap.get(m2) ?? 0) + (monthlyMap.get(m3) ?? 0) };
+    });
     const peakBookingTimes = {
       hourly: Array.from({ length: 24 }, (_, h) => ({
         hour: h,
@@ -1090,6 +1287,7 @@ export async function GET(request: NextRequest) {
         const m = i + 1;
         return { month: m, label: MONTH_NAMES[i], bookings: monthlyMap.get(m) ?? 0 };
       }),
+      quarterly: quarterlyMap,
     };
 
     // Booking heatmap: hour (0–23) x day of week (0–6)
@@ -1169,6 +1367,73 @@ export async function GET(request: NextRequest) {
       weekend: { revenue: Number(weekendRow?.revenue ?? 0), orders: Number(weekendRow?.orders ?? 0) },
       weekday: { revenue: Number(weekdayRow?.revenue ?? 0), orders: Number(weekdayRow?.orders ?? 0) },
     };
+
+    // Holiday impact (§11) and Location-specific trends over time (§10)
+    const twelveMonthsAgo = new Date(now);
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+    const [revenueByDayRows, revenueByCityMonthRows, productRevenueByMonthRows] = await Promise.all([
+      prisma.$queryRaw<{ d: Date | string; revenue: unknown }[]>(Prisma.sql`SELECT DATE(created_at) as d, COALESCE(SUM(total_amount),0)::float as revenue FROM orders WHERE payment_status = 'PAID' AND created_at >= ${twelveMonthsAgo} GROUP BY DATE(created_at)`),
+      prisma.$queryRaw<{ city: string; y: number; m: number; revenue: unknown }[]>(Prisma.sql`SELECT city, EXTRACT(YEAR FROM created_at)::int as y, EXTRACT(MONTH FROM created_at)::int as m, COALESCE(SUM(total_amount),0)::float as revenue FROM orders WHERE payment_status = 'PAID' AND created_at >= ${twelveMonthsAgo} AND city IS NOT NULL AND TRIM(city) != '' GROUP BY city, EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at) ORDER BY city, y, m`),
+      prisma.$queryRaw<{ y: number; m: number; revenue: unknown }[]>(Prisma.sql`SELECT EXTRACT(YEAR FROM o.created_at)::int as y, EXTRACT(MONTH FROM o.created_at)::int as m, COALESCE(SUM(oi.total_price),0)::float as revenue FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE o.payment_status = 'PAID' AND o.created_at >= ${twelveMonthsAgo} GROUP BY EXTRACT(YEAR FROM o.created_at), EXTRACT(MONTH FROM o.created_at) ORDER BY y, m`),
+    ]);
+    const dayMap = new Map<string, number>();
+    for (const r of revenueByDayRows || []) {
+      const k = typeof r.d === 'string' ? r.d.slice(0, 10) : (r.d instanceof Date ? r.d.toISOString().split('T')[0] : String(r.d).slice(0, 10));
+      dayMap.set(k, Number(r.revenue || 0));
+    }
+    const NIGERIAN_HOLIDAYS: { date: string; name: string }[] = [
+      '2024-01-01', '2024-03-29', '2024-04-01', '2024-05-01', '2024-06-12', '2024-06-17', '2024-10-01', '2024-12-25',
+      '2025-01-01', '2025-04-18', '2025-04-21', '2025-05-01', '2025-06-12', '2025-06-07', '2025-10-01', '2025-12-25',
+    ].map((d) => ({
+      date: d,
+      name: { '01-01': "New Year's Day", '03-29': 'Good Friday', '04-01': 'Easter Monday', '04-18': 'Good Friday', '04-21': 'Easter Monday', '05-01': "Workers' Day", '06-07': 'Eid ul-Adha', '06-12': 'Democracy Day', '06-17': 'Eid ul-Adha', '10-01': 'Independence Day', '12-25': 'Christmas' }[d.slice(5)] || 'Public Holiday',
+    }));
+    const holidayDays: { date: string; name: string; revenue: number; avgDailyInMonth: number; impactPercent: number }[] = [];
+    let totalHolidayRevenue = 0;
+    for (const h of NIGERIAN_HOLIDAYS) {
+      const hDate = new Date(h.date + 'T12:00:00Z');
+      if (hDate < twelveMonthsAgo) continue;
+      const rev = dayMap.get(h.date) ?? 0;
+      totalHolidayRevenue += rev;
+      const [y, m] = h.date.split('-').map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+      let monthSum = 0;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const k = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        monthSum += dayMap.get(k) ?? 0;
+      }
+      const avgDailyInMonth = daysInMonth > 0 ? monthSum / daysInMonth : 0;
+      const impactPercent = avgDailyInMonth > 0 ? Number((((rev - avgDailyInMonth) / avgDailyInMonth) * 100).toFixed(2)) : (rev > 0 ? 100 : 0);
+      holidayDays.push({ date: h.date, name: h.name, revenue: Number(rev.toFixed(2)), avgDailyInMonth: Number(avgDailyInMonth.toFixed(2)), impactPercent });
+    }
+    const holidayImpact = { holidayDays, totalHolidayRevenue: Number(totalHolidayRevenue.toFixed(2)) };
+
+    const cityMonthMap = new Map<string, { year: number; month: number; label: string; revenue: number }[]>();
+    const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (const r of revenueByCityMonthRows || []) {
+      const arr = cityMonthMap.get(r.city) ?? [];
+      arr.push({ year: r.y, month: r.m, label: `${MONTH_LABELS[r.m - 1]} ${r.y}`, revenue: Number(r.revenue || 0) });
+      cityMonthMap.set(r.city, arr);
+    }
+    const revenueByLocationOverTime = [...cityMonthMap.entries()]
+      .map(([city, monthly]) => ({ city, monthly: monthly.sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month) }))
+      .sort((a, b) => b.monthly.reduce((s, x) => s + x.revenue, 0) - a.monthly.reduce((s, x) => s + x.revenue, 0));
+
+    // Product seasonality (§4.3) — product revenue by month, last 12 months
+    const productRevByMonthMap = new Map<string, number>();
+    for (const r of productRevenueByMonthRows || []) {
+      productRevByMonthMap.set(`${r.y}-${r.m}`, Number(r.revenue || 0));
+    }
+    const productRevenueByMonth: { month: number; label: string; revenue: number }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const y = d.getFullYear(), m = d.getMonth() + 1;
+      productRevenueByMonth.push({
+        month: m,
+        label: `${MONTH_LABELS[m - 1]} ${y}`,
+        revenue: productRevByMonthMap.get(`${y}-${m}`) ?? 0,
+      });
+    }
 
     // Customer metrics: growth, retention, churn, active/inactive, ARPU
     const prevMonthCustomerCount = await prisma.customer.count({
@@ -1274,6 +1539,7 @@ export async function GET(request: NextRequest) {
     const clv = lifetimeCustomerCount > 0
       ? Number(totalRevenue._sum.totalAmount || 0) / lifetimeCustomerCount
       : 0;
+    financialHealth.ltvToCpa = (cpa != null && cpa > 0 && clv > 0) ? Number((clv / cpa).toFixed(2)) : null;
 
     // Revenue by customer segment (new, returning, VIP) — only when period filter exists
     let revenueBySegment: { new: { revenue: number; count: number }; returning: { revenue: number; count: number }; vip: { revenue: number; count: number } } | null = null;
@@ -1396,6 +1662,13 @@ export async function GET(request: NextRequest) {
         ? sortedRevenues[mid]
         : (sortedRevenues[mid - 1] + sortedRevenues[mid]) / 2;
 
+    // Revenue from top 10% of customers (by revenue) — §1.2 Revenue per customer (top 10%)
+    const sortedByRevenueDesc = [...revenuesPerCustomer].sort((a, b) => b - a);
+    const top10Count = Math.max(1, Math.ceil(sortedByRevenueDesc.length * 0.1));
+    const revenueTop10Percent = sortedByRevenueDesc.slice(0, top10Count).reduce((a, b) => a + b, 0);
+    const filteredRev = Number(filteredRevenue._sum.totalAmount || 0);
+    const revenueTop10PercentOfTotal = filteredRev > 0 ? (revenueTop10Percent / filteredRev) * 100 : 0;
+
     // Time between purchases (avg days between consecutive orders, customers with ≥2 orders)
     const ordersForGaps = await prisma.order.findMany({
       where: { ...orderWhere, paymentStatus: 'PAID', customerId: { not: null } },
@@ -1465,7 +1738,7 @@ export async function GET(request: NextRequest) {
         cur.revenue += Number.isNaN(price) ? 0 : price;
         prevByTitle.set(row.title, cur);
       }
-      topServicesWithTrends = topServices.map((s: { title: string; orders: number; revenue: number }) => {
+      topServicesWithTrends = topServices.map((s: { title: string; orders: number; quantity: number; revenue: number }) => {
         const prev = prevByTitle.get(s.title) ?? { orders: new Set<string>(), revenue: 0 };
         const prevOrders = prev.orders.size;
         const ordersGrowth = prevOrders > 0 ? (((s.orders - prevOrders) / prevOrders) * 100) : (s.orders > 0 ? 100 : 0);
@@ -1581,7 +1854,7 @@ export async function GET(request: NextRequest) {
           filteredRevenue: Number(filteredRevenue._sum.totalAmount || 0),
           avgOrderValue: Number(avgOrderValue.toFixed(2)),
           medianOrderValue,
-          netProfit: Number((totalRevenue._sum.totalAmount || 0) - Number(totalRefunds._sum.totalAmount || 0)),
+          netProfit: Number(totalRevenue._sum?.totalAmount ?? 0) - Number(totalRefunds._sum?.totalAmount ?? 0),
           refundRate: Number(refundRate.toFixed(2)),
           revenuePerVisit,
         },
@@ -1615,6 +1888,12 @@ export async function GET(request: NextRequest) {
           ...(avgScheduledDurationMinutes != null ? { avgScheduledDurationMinutes } : {}),
         },
         partialPayments,
+        discounts: { total: totalDiscounts, percentOfRevenue: periodRevenueForHealth > 0 ? Number(((totalDiscounts / periodRevenueForHealth) * 100).toFixed(2)) : 0 },
+        paymentProcessingFeesByMethod,
+        paymentRetrySuccessRate,
+        chargebacks: { total: totalChargebacks, recent: chargebacksList.map((c: { orderNumber: string; chargebackAmount: unknown; chargebackAt: Date | null; customerName?: string }) => ({ orderNumber: c.orderNumber, amount: Number(c.chargebackAmount || 0), chargebackAt: c.chargebackAt, customerName: c.customerName })) },
+        bookingChannels,
+        financialHealth,
         ...(priorYearSamePeriodResult != null ? { priorYearSamePeriod: priorYearSamePeriodResult } : {}),
         peakTimesByLocation,
         cancellationByService,
@@ -1639,6 +1918,12 @@ export async function GET(request: NextRequest) {
         // Revenue by location (city)
         revenueByLocation: revenueByLocationList,
 
+        // Holiday impact (§11) — revenue on Nigerian public holidays vs avg daily in month
+        holidayImpact,
+
+        // Location-specific trends over time (§10) — revenue by city by month, last 12 months
+        revenueByLocationOverTime,
+
         // Customer Stats
         customers: {
           total: totalCustomers as number,
@@ -1652,6 +1937,9 @@ export async function GET(request: NextRequest) {
           arpu: Number(arpu.toFixed(2)),
           avgOrderValuePerCustomer: Number(avgOrderValuePerCustomer.toFixed(2)),
           medianRevenuePerCustomer: Number(medianRevenuePerCustomer.toFixed(2)),
+          revenueTop10Percent: Number(revenueTop10Percent.toFixed(2)),
+          top10PercentCustomerCount: top10Count,
+          revenueTop10PercentOfTotal: Number(revenueTop10PercentOfTotal.toFixed(2)),
           purchaseFrequency: Number(purchaseFrequency.toFixed(2)),
           avgTimeBetweenPurchasesDays: Number(avgTimeBetweenPurchasesDays.toFixed(1)),
           retentionRate: Number(retentionRate.toFixed(2)),
@@ -1688,6 +1976,9 @@ export async function GET(request: NextRequest) {
 
         // Product Categories Analytics
         productCategories,
+
+        // Product seasonality (§4.3) — product revenue by month, last 12 months
+        productRevenueByMonth,
 
         // Peak Booking Times (hourly, daily, monthly)
         peakBookingTimes,
@@ -1775,7 +2066,25 @@ export async function GET(request: NextRequest) {
                 const cancelled = barberCancelledMap.get(b.barberId) ?? 0;
                 const cancellationRate = total > 0 ? (cancelled / total) * 100 : 0;
                 const retentionRate = barberRetentionMap.get(b.barberId) ?? 0;
-                return { ...b, ordersTotal: total, ordersCancelled: cancelled, cancellationRate: Number(cancellationRate.toFixed(2)), retentionRate };
+                const prevRev = prevBarberRevenueMap.get(b.barberId) ?? 0;
+                const earningsGrowth = prevRev > 0
+                  ? Number((((b.totalRevenue - prevRev) / prevRev) * 100).toFixed(2))
+                  : (b.totalRevenue > 0 ? 100 : null);
+                const hoursEst = barberHoursMap.get(b.barberId) || 0;
+                const svcComp = b.servicesCompleted ?? 0;
+                return {
+                  ...b,
+                  ordersTotal: total,
+                  ordersCancelled: cancelled,
+                  cancellationRate: Number(cancellationRate.toFixed(2)),
+                  retentionRate,
+                  ...(earningsGrowth != null ? { earningsGrowth } : {}),
+                  earningsByServiceType: (barberServiceEarningsMap.get(b.barberId) || []).sort((a, x) => x.revenue - a.revenue).slice(0, 10),
+                  hoursWorkedEstimate: Number(hoursEst.toFixed(2)),
+                  peakPerformanceTimes: (barberPeakHourMap.get(b.barberId) || []).sort((a, x) => x.count - a.count).slice(0, 5).map((x) => x.hour),
+                  productivity: Number((svcComp / (hoursEst || 0.001)).toFixed(2)),
+                  payoutHistory: (payoutsByBarberMap.get(b.barberId) || []).slice(0, 5).map((p) => ({ id: p.id, amount: p.amount, periodStart: p.periodStart, periodEnd: p.periodEnd, status: p.status, paidAt: p.paidAt })),
+                };
               })
               .sort((a: any, b: any) => b.totalRevenue - a.totalRevenue)
               .slice(0, 10)

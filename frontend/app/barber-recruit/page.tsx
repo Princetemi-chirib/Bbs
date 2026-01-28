@@ -179,8 +179,8 @@ function BarberApplicationForm() {
 
   // Check for invitation token and email in URL
   useEffect(() => {
-    const token = searchParams.get('token');
-    const email = searchParams.get('email');
+    const token = searchParams?.get('token');
+    const email = searchParams?.get('email');
     
     if (token && email) {
       setInvitationToken(token);

@@ -17,7 +17,7 @@ import {
   Calendar,
   DollarSign,
   TrendingUp,
-  LineChart,
+  LineChart as LineChartIcon,
   RefreshCw,
   Crown,
   BarChart2,
@@ -36,6 +36,8 @@ import {
   Area,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   PieChart,
   Pie,
   Cell,
@@ -526,6 +528,7 @@ export default function AdminFinancialsPage() {
       revenueByLocation: financials.revenueByLocation,
       serviceCategories: financials.serviceCategories,
       productCategories: financials.productCategories,
+      productRevenueByMonth: financials.productRevenueByMonth,
       peakBookingTimes: financials.peakBookingTimes,
       bookingHeatmap: financials.bookingHeatmap,
       revenueForecast: financials.revenueForecast,
@@ -539,6 +542,8 @@ export default function AdminFinancialsPage() {
       peakTimesByLocation: financials.peakTimesByLocation,
       cancellationByService: financials.cancellationByService,
       weekendWeekday: financials.weekendWeekday,
+      holidayImpact: financials.holidayImpact,
+      revenueByLocationOverTime: financials.revenueByLocationOverTime,
       mostSoldProducts: financials.mostSoldProducts,
       leastSoldProducts: financials.leastSoldProducts,
       revenueBySegment: financials.revenueBySegment,
@@ -574,7 +579,7 @@ export default function AdminFinancialsPage() {
     );
   }
 
-  const { kpis, orders, paymentMethods, paymentAnalytics, orderStatus, orderFunnel, barberEarnings, refunds, recentTransactions, charts, customers, topServices, leastOrderedServices, preferredPaymentMethods, bookingNoShowRate, bookingNoShowCount, bookingTotal, avgBookingLeadTimeDays, sameDayBookingsCount, cancellationByTimeBefore, revenueBySegment, clvBySegment, serviceVsProductRevenue, revenueByLocation, serviceCategories, productCategories, peakBookingTimes, bookingHeatmap, revenueForecast, weekendWeekday, seasonalRevenueByMonth, demographics, serviceDemandByLocation, partialPayments, priorYearSamePeriod, peakTimesByLocation, cancellationByService } = financials || {};
+  const { kpis, orders, paymentMethods, paymentAnalytics, orderStatus, orderFunnel, barberEarnings, refunds, recentTransactions, charts, customers, topServices, leastOrderedServices, mostSoldProducts, leastSoldProducts, preferredPaymentMethods, bookingNoShowRate, bookingNoShowCount, bookingTotal, avgBookingLeadTimeDays, sameDayBookingsCount, cancellationByTimeBefore, revenueBySegment, clvBySegment, serviceVsProductRevenue, revenueByLocation, revenueByLocationOverTime, serviceCategories, productCategories, productRevenueByMonth, peakBookingTimes, bookingHeatmap, revenueForecast, weekendWeekday, seasonalRevenueByMonth, demographics, serviceDemandByLocation, partialPayments, priorYearSamePeriod, peakTimesByLocation, cancellationByService, holidayImpact } = financials || {};
 
   const priorYearYoYPct = priorYearSamePeriod && (priorYearSamePeriod.revenue ?? 0) > 0
     ? (((kpis?.filteredRevenue ?? 0) - (priorYearSamePeriod.revenue ?? 0)) / (priorYearSamePeriod.revenue ?? 1)) * 100
@@ -834,7 +839,7 @@ export default function AdminFinancialsPage() {
                     <p className={styles.kpiValue}>{formatCurrency(customers?.avgOrderValuePerCustomer ?? 0)}</p>
                     <span className={styles.kpiSubtext}>
                       Median: {formatCurrency(customers?.medianRevenuePerCustomer ?? 0)}
-                      {revenueBySegment && (clvBySegment?.vip ?? 0) > 0 ? ' · Top 10%: ' + formatCurrency(clvBySegment?.vip ?? 0) : ''}
+                      {(customers?.revenueTop10Percent ?? 0) > 0 ? ' · Top 10%: ' + formatCurrency(customers.revenueTop10Percent) + (customers?.revenueTop10PercentOfTotal != null ? ' (' + customers.revenueTop10PercentOfTotal.toFixed(1) + '% of revenue)' : '') : revenueBySegment && (clvBySegment?.vip ?? 0) > 0 ? ' · Top 10% CLV: ' + formatCurrency(clvBySegment?.vip ?? 0) : ''}
                     </span>
                   </div>
                 </div>
@@ -854,7 +859,7 @@ export default function AdminFinancialsPage() {
               {revenueForecast && (revenueForecast.nextMonth > 0 || revenueForecast.nextThreeMonths > 0) && (
                 <div className={styles.kpiCard}>
                   <div className={styles.kpiHeader}>
-                    <div className={styles.kpiIcon} style={{ background: 'rgba(23, 162, 184, 0.15)' }}><LineChart size={20} aria-hidden /></div>
+                    <div className={styles.kpiIcon} style={{ background: 'rgba(23, 162, 184, 0.15)' }}><LineChartIcon size={20} aria-hidden /></div>
                     <div className={styles.kpiContent}>
                       <h3 className={styles.kpiLabel}>Revenue Forecast</h3>
                       <p className={styles.kpiValue}>{formatCurrency(revenueForecast.nextMonth || 0)}</p>
@@ -908,6 +913,46 @@ export default function AdminFinancialsPage() {
                 ))}
               </div>
             </section>
+
+            {/* Holiday impact (§11) — revenue on Nigerian public holidays vs avg daily in month */}
+            {holidayImpact?.holidayDays?.length > 0 && (
+              <section className={styles.chartCard} style={{ marginBottom: 16 }}>
+                <h2 className={styles.chartTitle}>Holiday Impact</h2>
+                <p className={styles.sectionSubtext}>Revenue on Nigerian public holidays vs average daily revenue in same month (last 12 months)</p>
+                <div className={styles.summaryGrid} style={{ marginBottom: 12 }}>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Total revenue on holidays</span>
+                    <span className={styles.summaryValue}>{formatCurrency(holidayImpact.totalHolidayRevenue ?? 0)}</span>
+                  </div>
+                </div>
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Holiday</th>
+                        <th>Revenue</th>
+                        <th>Avg daily (month)</th>
+                        <th>Impact</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {holidayImpact.holidayDays.map((h: any, i: number) => (
+                        <tr key={i}>
+                          <td>{h.date}</td>
+                          <td>{h.name}</td>
+                          <td>{formatCurrency(h.revenue ?? 0)}</td>
+                          <td>{formatCurrency(h.avgDailyInMonth ?? 0)}</td>
+                          <td style={{ color: (h.impactPercent ?? 0) >= 0 ? '#46B450' : '#dc3232' }}>
+                            {(h.impactPercent ?? 0) >= 0 ? '+' : ''}{(h.impactPercent ?? 0).toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
 
             {isAdmin() && (
               <section className={styles.chartsSection} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
@@ -1037,6 +1082,8 @@ export default function AdminFinancialsPage() {
                         <th>Barber</th>
                         <th>Revenue</th>
                         <th>Orders</th>
+                        <th>Services</th>
+                        <th>Growth</th>
                         <th>Cancellation Rate</th>
                         <th>Retention</th>
                       </tr>
@@ -1047,11 +1094,13 @@ export default function AdminFinancialsPage() {
                           <td style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setFilterBarber(b.barberId)} title="Click to filter by this barber">{b.barberName}</td>
                           <td>{formatCurrency(b.totalRevenue)}</td>
                           <td>{b.ordersCount}</td>
+                          <td>{b.servicesCompleted ?? 0}</td>
+                          <td style={{ color: b.earningsGrowth != null ? (b.earningsGrowth >= 0 ? '#46B450' : '#dc3232') : undefined }}>{b.earningsGrowth != null ? (b.earningsGrowth >= 0 ? '+' : '') + b.earningsGrowth.toFixed(1) + '%' : '—'}</td>
                           <td>{b.cancellationRate != null ? b.cancellationRate.toFixed(1) + '%' : '—'}</td>
                           <td>{b.retentionRate != null ? b.retentionRate.toFixed(1) + '%' : '—'}</td>
                         </tr>
                       )) : (
-                        <tr><td colSpan={5} className={styles.emptyState}>No data</td></tr>
+                        <tr><td colSpan={7} className={styles.emptyState}>No data</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -1196,7 +1245,7 @@ export default function AdminFinancialsPage() {
           </div>
           <div className={styles.kpiCard}>
             <div className={styles.kpiHeader}>
-              <div className={styles.kpiIcon} style={{ background: 'rgba(255, 193, 7, 0.1)' }}><LineChart size={20} aria-hidden /></div>
+              <div className={styles.kpiIcon} style={{ background: 'rgba(255, 193, 7, 0.1)' }}><LineChartIcon size={20} aria-hidden /></div>
               <div className={styles.kpiContent}>
                 <h3 className={styles.kpiLabel}>QoQ Growth</h3>
                 <p className={styles.kpiValue}>
@@ -1218,7 +1267,7 @@ export default function AdminFinancialsPage() {
           </div>
           <div className={styles.kpiCard}>
             <div className={styles.kpiHeader}>
-              <div className={styles.kpiIcon} style={{ background: 'rgba(255, 193, 7, 0.1)' }}><LineChart size={20} aria-hidden /></div>
+              <div className={styles.kpiIcon} style={{ background: 'rgba(255, 193, 7, 0.1)' }}><LineChartIcon size={20} aria-hidden /></div>
               <div className={styles.kpiContent}>
                 <h3 className={styles.kpiLabel}>MoM Growth</h3>
                 <p className={styles.kpiValue}>
@@ -1531,6 +1580,46 @@ export default function AdminFinancialsPage() {
             </div>
           )}
 
+          {/* Location-specific trends over time (§10) */}
+          {revenueByLocationOverTime?.length > 0 && (() => {
+            const top = revenueByLocationOverTime.slice(0, 4);
+            const labelsSet = new Set<string>();
+            top.forEach((c: any) => (c.monthly || []).forEach((m: any) => labelsSet.add(m.label)));
+            const labels = [...labelsSet].sort((a, b) => {
+              const [ma, ya] = a.split(' '); const [mb, yb] = b.split(' ');
+              const o: Record<string, number> = { Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12 };
+              if (ya !== yb) return Number(ya) - Number(yb);
+              return (o[ma] || 0) - (o[mb] || 0);
+            });
+            const series: { label: string; [k: string]: any }[] = labels.map((label) => {
+              const row: { label: string; [k: string]: any } = { label };
+              top.forEach((c: any) => {
+                const m = (c.monthly || []).find((x: any) => x.label === label);
+                row[c.city] = m?.revenue ?? 0;
+              });
+              return row;
+            });
+            const lineColors = ['#46B450', '#17A2B8', '#39413f', '#DCB2CC'];
+            return (
+              <div className={styles.chartCard}>
+                <h2 className={styles.chartTitle}>Revenue by Location Over Time</h2>
+                <p className={styles.sectionSubtext}>Monthly revenue per city, last 12 months</p>
+                <ResponsiveContainer width="100%" height={280} className={styles.chartContainer}>
+                  <LineChart data={series} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="#6c757d" />
+                    <YAxis tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`} stroke="#6c757d" />
+                    <Tooltip formatter={(v: any) => formatCurrency(v)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e5e5', borderRadius: '8px' }} />
+                    <Legend />
+                    {top.map((c: any, i: number) => (
+                      <Line key={c.city} type="monotone" dataKey={c.city} stroke={lineColors[i % lineColors.length]} strokeWidth={2} dot={{ r: 3 }} name={c.city} />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            );
+          })()}
+
           {/* Revenue per Service */}
           {topServices?.length > 0 && (
             <div className={styles.chartCard}>
@@ -1693,6 +1782,8 @@ export default function AdminFinancialsPage() {
                       <th>Commission Rate</th>
                       <th>Earnings</th>
                       <th>Orders</th>
+                      <th>Services</th>
+                      <th>Growth</th>
                       <th>Cancellation Rate</th>
                       <th>Retention</th>
                     </tr>
@@ -1705,6 +1796,8 @@ export default function AdminFinancialsPage() {
                         <td>{((barber.commissionRate ?? 0) * 100).toFixed(0)}%</td>
                         <td>{formatCurrency(barber.barberEarning)}</td>
                         <td>{barber.ordersCount}</td>
+                        <td>{barber.servicesCompleted ?? 0}</td>
+                        <td style={{ color: barber.earningsGrowth != null ? (barber.earningsGrowth >= 0 ? '#46B450' : '#dc3232') : undefined }}>{barber.earningsGrowth != null ? (barber.earningsGrowth >= 0 ? '+' : '') + barber.earningsGrowth.toFixed(1) + '%' : '—'}</td>
                         <td>{barber.cancellationRate != null ? barber.cancellationRate.toFixed(1) + '%' : '—'}</td>
                         <td>{barber.retentionRate != null ? barber.retentionRate.toFixed(1) + '%' : '—'}</td>
                       </tr>
@@ -1961,6 +2054,18 @@ export default function AdminFinancialsPage() {
                     <span className={styles.summaryLabel}>Median Revenue per Customer</span>
                     <span className={styles.summaryValue}>{formatCurrency(customers?.medianRevenuePerCustomer ?? 0)}</span>
                   </div>
+                  {(customers?.revenueTop10Percent ?? 0) > 0 && (
+                    <>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryLabel}>Revenue from Top 10%</span>
+                        <span className={styles.summaryValue}>{formatCurrency(customers?.revenueTop10Percent ?? 0)}</span>
+                      </div>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryLabel}>Top 10% of Total Revenue</span>
+                        <span className={styles.summaryValue}>{customers?.revenueTop10PercentOfTotal != null ? customers.revenueTop10PercentOfTotal.toFixed(1) + '%' : '—'}</span>
+                      </div>
+                    </>
+                  )}
                   <div className={styles.summaryItem}>
                     <span className={styles.summaryLabel}>Purchase Frequency</span>
                     <span className={styles.summaryValue}>{customers?.purchaseFrequency != null ? customers.purchaseFrequency.toFixed(2) : '0'} orders/customer</span>
@@ -2021,7 +2126,7 @@ export default function AdminFinancialsPage() {
                           {Object.entries(demographics.gender).map(([g, n]) => (
                             <div key={g} className={styles.summaryItem}>
                               <span className={styles.summaryLabel}>{g}</span>
-                              <span className={styles.summaryValue}>{n}</span>
+                              <span className={styles.summaryValue}>{String(n)}</span>
                             </div>
                           ))}
                         </div>
@@ -2537,12 +2642,31 @@ export default function AdminFinancialsPage() {
               </section>
             )}
 
+            {/* Product seasonality (§4.3) — product revenue by month, last 12 months */}
+            {productRevenueByMonth && productRevenueByMonth.length > 0 && (
+              <section className={styles.summarySection}>
+                <div className={styles.chartCard}>
+                  <h2 className={styles.chartTitle}>Product Revenue by Month</h2>
+                  <p className={styles.sectionSubtext}>Product sales (order items) over the last 12 months</p>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={productRevenueByMonth} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                      <YAxis tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`} />
+                      <Tooltip formatter={(v: any) => formatCurrency(v)} />
+                      <Bar dataKey="revenue" fill="#17A2B8" name="Product revenue" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+            )}
+
             {/* Peak Booking Times */}
             {peakBookingTimes && (
               <section className={styles.summarySection}>
                 <div className={styles.summaryCard}>
                   <h2 className={styles.sectionTitle}>Peak Booking Times</h2>
-                  <p className={styles.sectionSubtext}>Bookings by hour, day of week, and month (paid bookings in selected period)</p>
+                  <p className={styles.sectionSubtext}>Bookings by hour, day of week, month, and quarter (paid bookings in selected period)</p>
                   <div className={styles.chartGrid}>
                     {peakBookingTimes.hourly && peakBookingTimes.hourly.length > 0 && (
                       <div className={styles.chartCard}>
@@ -2582,6 +2706,20 @@ export default function AdminFinancialsPage() {
                             <YAxis allowDecimals={false} />
                             <Tooltip />
                             <Bar dataKey="bookings" fill="#46B450" name="Bookings" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                    {peakBookingTimes.quarterly && peakBookingTimes.quarterly.length > 0 && (
+                      <div className={styles.chartCard}>
+                        <h3 className={styles.chartTitle}>By Quarter (Season)</h3>
+                        <ResponsiveContainer width="100%" height={240}>
+                          <BarChart data={peakBookingTimes.quarterly} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip />
+                            <Bar dataKey="bookings" fill="#DCB2CC" name="Bookings" radius={[4, 4, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>

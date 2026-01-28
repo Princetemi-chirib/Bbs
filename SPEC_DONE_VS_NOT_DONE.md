@@ -31,7 +31,7 @@
 | Discounts given (total, % of revenue) | ❌ No discount tracking in schema |
 | Refunds (total amount, refund rate) | ✅ |
 | Outstanding payments / accounts receivable | ✅ Pending orders count |
-| Revenue per customer (avg, median, top 10%) | ⚠️ Top 10% on customer analytics page only |
+| Revenue per customer (avg, median, top 10%) | ✅ Avg, median, top 10% (revenue + % of total) on Financials |
 | Revenue per order (AOV) | ✅ |
 | Revenue per visit | ✅ Revenue / paid bookings |
 
@@ -185,9 +185,9 @@ Requires analytics/tracking schema and instrumentation.
 | Spec Item | Status |
 |-----------|--------|
 | Most / least sold products | ✅ |
-| Product revenue, profit margins | ❌ |
+| Product revenue, profit margins | ⚠️ Product revenue via categories & productRevenueByMonth; profit margins ❌ |
 | Inventory turnover, out‑of‑stock, return rate | ❌ |
-| Product sales by category, seasonality | ⚠️ Product categories (revenue/orders) only |
+| Product sales by category, seasonality | ✅ Product categories (revenue/orders); product revenue by month (last 12 mo) |
 
 ### 4.4 Booking Analytics
 
@@ -222,11 +222,11 @@ Requires analytics/tracking schema and instrumentation.
 
 | Spec Item | Status |
 |-----------|--------|
-| Hours worked, services completed | ❌ |
+| Hours worked, services completed | ⚠️ Services completed ✅ (completed paid bookings per barber); hours worked ❌ |
 | Online/offline status | ✅ Barbers online/offline counts; isOnline per barber |
 | Peak performance times, productivity | ❌ |
 | Commission earned | ✅ |
-| Earnings trends, by service type, payout history | ❌ |
+| Earnings trends, by service type, payout history | ⚠️ Earnings trend vs prior period (growth %) ✅; by service type, payout history ❌ |
 
 ---
 
@@ -271,7 +271,7 @@ No inventory schema or product‑level analytics.
 | Revenue/orders per branch | ✅ By city; customers per city in table |
 | Customers per branch, utilization, profitability, growth | ❌ |
 | Service demand by location, customer distribution | ✅ Service demand by location (top services per barber city) |
-| Peak times by location, location‑specific trends | ⚠️ Peak times by location (hourly per city) ✅; location-specific trends over time ❌ |
+| Peak times by location, location‑specific trends | ✅ Peak times by location (hourly per city); revenue by city by month (last 12 mo) |
 
 ---
 
@@ -282,7 +282,7 @@ No inventory schema or product‑level analytics.
 | Hourly patterns | ✅ Peak booking hours |
 | Daily / weekly / monthly patterns | ✅ Revenue trend, peak times |
 | Seasonal patterns | ✅ Revenue by month (Jan–Dec, all-time) |
-| Holiday impact | ❌ |
+| Holiday impact | ✅ Nigerian public holidays vs avg daily in month (last 12 mo) |
 | Weekend vs weekday trends | ✅ |
 
 ### 11.2 Trend Analysis
@@ -336,7 +336,7 @@ No inventory schema or product‑level analytics.
 | Drilldown | ✅ Set filters from location, service, category, barber tables; Revenue bar click-to-filter |
 | Export options | ✅ CSV, Excel, PDF, JSON |
 | Custom report builder | ❌ |
-| Saved views / bookmarks | ❌ |
+| Saved views / bookmarks | ✅ Save/Load filters in localStorage (Financials) |
 
 ### 14.3 Data Export
 
@@ -355,7 +355,7 @@ No inventory schema or product‑level analytics.
 | Spec Item | Status |
 |-----------|--------|
 | Manual send: “Send weekly report” button | ✅ Sends to requester’s email (Admin/Rep) |
-| Scheduled / automated weekly send | ❌ Requires cron (e.g. Vercel Cron, worker) to call `POST /api/v1/admin/reports/weekly-email` |
+| Scheduled / automated weekly send | ✅ `GET /api/v1/admin/reports/weekly-email-cron`; Vercel Cron Mon 9am (works on Hobby/free, hourly precision); set `CRON_SECRET`, `WEEKLY_REPORT_EMAILS` |
 | Report content: revenue, orders, new customers, top items, top barbers, WoW % | ✅ |
 
 ---
@@ -410,8 +410,8 @@ No inventory schema or product‑level analytics.
 
 ## Summary
 
-- **Done (or partial):** §1 (most financial, payment, transactions, export), §3 (core customer metrics), §4 (orders, services, bookings, peak times), §5 (barber performance & rankings), §8 (reviews), §11 (hourly/daily/monthly, weekend vs weekday), §12 (DoD/WoW/MoM/YoY), §14 (charts, filters, export), §20 (admin/rep roles).
-- **Not done:** §2 (Site/Traffic), §6 (Operations), §7 (Marketing), §9 (Inventory), §10 (full Location/Branch), §13 (Predictive), §15 (Weekly reports), §16 (Real‑time), §17 (Retention), §19 (Integrations), plus many deeper items in §1, §3, §4, §5, §8.
+- **Done (or partial):** §1 (most financial, payment, transactions, export, revenue per customer top 10%), §3 (core customer metrics), §4 (orders, services, bookings, peak times), §5 (barber performance & rankings), §8 (reviews), §10 (location trends over time), §11 (hourly/daily/monthly, weekend vs weekday, holiday impact), §12 (DoD/WoW/MoM/YoY), §14 (charts, filters, export, saved views), §15 (manual + cron weekly email), §20 (admin/rep roles).
+- **Not done:** §2 (Site/Traffic), §6 (Operations), §7 (Marketing), §9 (Inventory), §10 (customers per branch, utilization, etc.), §13 (Predictive), §16 (Real‑time), §17 (Retention), §19 (Integrations), plus deeper items in §1, §3, §4, §5, §8.
 
-**Rough completion:** ~**55%** of the full spec (for items feasible with current schema and data).  
-*Recent adds: drilldown (location, service, category, barber, Revenue bar); active filters indicator; weekly email report (manual send, API ready for cron); SPEC §14.2 Drilldown, §10 peak times by location, §15 partial.*
+**Rough completion:** ~**60%** of the full spec (for items feasible with current schema and data).  
+*Recent adds: revenue per customer (avg, median, top 10%); scheduled weekly email (GET /api/v1/admin/reports/weekly-email-cron, Vercel Cron, CRON_SECRET, WEEKLY_REPORT_EMAILS); holiday impact (Nigerian holidays vs avg daily in month); revenue by location over time (last 12 mo); §14.2 saved views; exportToJSON includes holidayImpact, revenueByLocationOverTime.*

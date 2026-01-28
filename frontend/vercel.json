@@ -4,6 +4,12 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["iad1"],
+  "crons": [
+    {
+      "path": "/api/v1/admin/reports/weekly-email-cron",
+      "schedule": "0 9 * * 1"
+    }
+  ],
   "functions": {
     "app/api/v1/**/*.ts": {
       "maxDuration": 30
