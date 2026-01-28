@@ -81,14 +81,15 @@ export async function GET(request: NextRequest) {
     const activeBarbers = barbers.filter(b => b.status === 'ACTIVE').length;
     const inactiveBarbers = barbers.filter(b => b.status === 'INACTIVE').length;
     const suspendedBarbers = barbers.filter(b => b.status === 'SUSPENDED').length;
+    const barbersOnline = barbers.filter(b => b.isOnline === true).length;
+    const barbersOffline = totalBarbers - barbersOnline;
 
-    // Barbers working today (have orders today or are online)
+    // Barbers working today (have orders today)
     const barbersWorkingToday = barbers.filter(barber => {
-      const hasOrderToday = barber.assignedOrders.some(order => {
+      return barber.assignedOrders.some(order => {
         const orderDate = new Date(order.createdAt);
         return orderDate >= today && orderDate < tomorrow;
       });
-      return hasOrderToday || barber.isOnline;
     }).length;
 
     // Calculate average rating
@@ -146,9 +147,7 @@ export async function GET(request: NextRequest) {
         avatarUrl: barber.user.avatarUrl,
         status: barber.status,
         isOnline: barber.isOnline,
-        state: barber.state,
-        city: barber.city,
-        address: barber.address,
+        location: barber.location || barber.city || null,
         specialties: barber.specialties,
         ratingAvg: Number(barber.ratingAvg),
         totalReviews: barber.totalReviews,
@@ -172,6 +171,8 @@ export async function GET(request: NextRequest) {
           activeBarbers,
           inactiveBarbers,
           suspendedBarbers,
+          barbersOnline,
+          barbersOffline,
           barbersWorkingToday,
           averageRating: Number(averageRating.toFixed(2)),
           totalRevenue: Number(totalRevenue.toFixed(2)),

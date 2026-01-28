@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Scissors, Package, Wallet, Star } from 'lucide-react';
 import { fetchAuth } from '@/lib/auth';
 import styles from './admin.module.css';
 
@@ -64,7 +65,7 @@ export default function AdminDashboard() {
           <div className={styles.statCard}>
             <div className={styles.statCardHeader}>
               <div className={styles.statIcon} style={{ background: 'rgba(70, 180, 80, 0.1)' }}>
-                <span>✂️</span>
+                <Scissors size={24} aria-hidden />
               </div>
               <div className={styles.statCardContent}>
                 <h3 className={styles.statLabel}>Total Barbers</h3>
@@ -79,7 +80,7 @@ export default function AdminDashboard() {
           <div className={styles.statCard}>
             <div className={styles.statCardHeader}>
               <div className={styles.statIcon} style={{ background: 'rgba(57, 65, 63, 0.1)' }}>
-                <span>📦</span>
+                <Package size={24} aria-hidden />
               </div>
               <div className={styles.statCardContent}>
                 <h3 className={styles.statLabel}>Total Orders</h3>
@@ -107,7 +108,7 @@ export default function AdminDashboard() {
           <div className={styles.statCard}>
             <div className={styles.statCardHeader}>
               <div className={styles.statIcon} style={{ background: 'rgba(255, 193, 7, 0.1)' }}>
-                <span>⭐</span>
+                <Star size={24} aria-hidden />
               </div>
               <div className={styles.statCardContent}>
                 <h3 className={styles.statLabel}>Average Rating</h3>

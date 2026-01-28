@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Calendar, Phone, Scissors } from 'lucide-react';
 import styles from './not-found.module.css';
 
 export default function NotFound() {
@@ -61,15 +62,15 @@ export default function NotFound() {
           <p className={styles.helpfulTitle}>You might be looking for:</p>
           <div className={styles.linksGrid}>
             <Link href="/book" className={styles.linkCard}>
-              <div className={styles.linkIcon}>📅</div>
+              <div className={styles.linkIcon}><Calendar size={24} aria-hidden /></div>
               <div className={styles.linkText}>Book Service</div>
             </Link>
             <Link href="/contact" className={styles.linkCard}>
-              <div className={styles.linkIcon}>📞</div>
+              <div className={styles.linkIcon}><Phone size={24} aria-hidden /></div>
               <div className={styles.linkText}>Contact Us</div>
             </Link>
             <Link href="/barber-recruit" className={styles.linkCard}>
-              <div className={styles.linkIcon}>✂️</div>
+              <div className={styles.linkIcon}><Scissors size={24} aria-hidden /></div>
               <div className={styles.linkText}>Join as Barber</div>
             </Link>
           </div>

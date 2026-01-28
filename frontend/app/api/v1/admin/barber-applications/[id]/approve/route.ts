@@ -105,19 +105,19 @@ export async function POST(
       );
     }
 
-    // Check if user already exists
-    let user = await prisma.user.findUnique({
-      where: { email: application.email.toLowerCase() },
-    });
+    // Construct full name from firstName and lastName
+    const fullName = `${application.firstName} ${application.lastName}${application.otherName ? ' ' + application.otherName : ''}`;
 
-    // Create user account if doesn't exist with password reset token
+    // Check if user already exists (from invitation)
+    let user = application.userId 
+      ? await prisma.user.findUnique({ where: { id: application.userId } })
+      : await prisma.user.findUnique({ where: { email: application.email.toLowerCase() } });
+
+    // Create or update user account
     if (!user) {
       // Generate secure password reset token
       const resetToken = crypto.randomBytes(32).toString('hex');
       const resetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
-
-      // Construct full name from firstName and lastName
-      const fullName = `${application.firstName} ${application.lastName}${application.otherName ? ' ' + application.otherName : ''}`;
 
       user = await prisma.user.create({
         data: {
@@ -131,13 +131,46 @@ export async function POST(
           passwordResetExpires: resetExpires,
         },
       });
+    } else {
+      // User exists (from invitation) - activate account and update details
+      const resetToken = user.password ? null : crypto.randomBytes(32).toString('hex');
+      const resetExpires = user.password ? null : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-      // Send welcome email with password reset link
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          name: fullName,
+          phone: application.phone,
+          role: 'BARBER',
+          isActive: true,
+          ...(resetToken && {
+            passwordResetToken: resetToken,
+            passwordResetExpires: resetExpires,
+          }),
+        },
+      });
+    }
+
+    // Send welcome email with password reset link (if password not set)
+    if (!user.password) {
       try {
+        const resetToken = user.passwordResetToken || crypto.randomBytes(32).toString('hex');
+        const resetExpires = user.passwordResetExpires || new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        // Update token if not already set
+        if (!user.passwordResetToken) {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              passwordResetToken: resetToken,
+              passwordResetExpires: resetExpires,
+            },
+          });
+        }
+
         // Ensure base URL has proper format
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
         const cleanBaseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
-        // URL encode the token to ensure it works properly in email links
         const encodedToken = encodeURIComponent(resetToken);
         const resetUrl = `${cleanBaseUrl}/reset-password?token=${encodedToken}`;
         

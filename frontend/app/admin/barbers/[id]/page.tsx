@@ -243,10 +243,11 @@ export default function BarberDetailPage() {
 
         {/* Skills & Services */}
         <section className={styles.section}>
-          <h2>Skills & Services</h2>
+          <h2>Skills / Services</h2>
           <div className={styles.skillsSection}>
             <div className={styles.skillsCard}>
-              <h3>Specialties</h3>
+              <h3>Skills / Services</h3>
+              <p className={styles.skillsDescription}>Skills selected during application (includes barbering, nail tech, makeup, etc.)</p>
               {detail.barber.specialties.length > 0 ? (
                 <div className={styles.specialtiesList}>
                   {detail.barber.specialties.map((spec, idx) => (
@@ -254,7 +255,7 @@ export default function BarberDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className={styles.noData}>No specialties listed</p>
+                <p className={styles.noData}>No skills listed</p>
               )}
             </div>
             <div className={styles.skillsCard}>

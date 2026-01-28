@@ -126,7 +126,8 @@ export async function POST(request: NextRequest) {
       portfolioUrl,
       whyJoinNetwork, 
       applicationLetterUrl,
-      cvUrl
+      cvUrl,
+      invitationToken
     } = body;
 
     if (!firstName || !lastName || !email || !phone || !address || !ninNumber || !gender || !whyJoinNetwork || !applicationLetterUrl || !cvUrl) {
@@ -136,18 +137,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if application already exists for this email
-    // Use select to avoid errors if city column doesn't exist yet (before migration)
-    const existing = await prisma.barberApplication.findFirst({
-      where: { email: email.toLowerCase(), status: 'PENDING' },
-      select: { id: true, email: true, status: true }, // Only select fields we need
-    });
+    // If invitation token is provided, verify it and get user ID
+    let userId: string | null = null;
+    if (invitationToken) {
+      const user = await prisma.user.findFirst({
+        where: {
+          email: email.toLowerCase(),
+          passwordResetToken: invitationToken,
+          passwordResetExpires: {
+            gte: new Date(), // Token not expired
+          },
+        },
+        select: { id: true },
+      });
 
-    if (existing) {
-      return NextResponse.json(
-        { success: false, error: { message: 'You already have a pending application' } },
-        { status: 400 }
-      );
+      if (!user) {
+        return NextResponse.json(
+          { success: false, error: { message: 'Invalid or expired invitation token' } },
+          { status: 400 }
+        );
+      }
+
+      userId = user.id;
+
+      // Check if user already has a pending application
+      const existingUserApp = await prisma.barberApplication.findFirst({
+        where: { userId: user.id, status: 'PENDING' },
+      });
+
+      if (existingUserApp) {
+        return NextResponse.json(
+          { success: false, error: { message: 'You already have a pending application' } },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Check if application already exists for this email (public applications)
+      const existing = await prisma.barberApplication.findFirst({
+        where: { email: email.toLowerCase(), status: 'PENDING' },
+        select: { id: true, email: true, status: true },
+      });
+
+      if (existing) {
+        return NextResponse.json(
+          { success: false, error: { message: 'You already have a pending application' } },
+          { status: 400 }
+        );
+      }
     }
 
     // Create application
@@ -175,6 +211,7 @@ export async function POST(request: NextRequest) {
       applicationLetterUrl: applicationLetterUrl || null,
       cvUrl: cvUrl || null,
       status: 'PENDING',
+      userId: userId || null, // Link to user account if invitation token was provided
     };
     
     const application = await prisma.barberApplication.create({

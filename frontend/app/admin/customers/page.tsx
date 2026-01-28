@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BarChart2, Users, Calendar, RefreshCw, Check, Pause, Wallet, RotateCcw, Star } from 'lucide-react';
 import { fetchAuth } from '@/lib/auth';
 import styles from './customers.module.css';
 import Link from 'next/link';
@@ -205,8 +206,8 @@ export default function AdminCustomersPage() {
           <p className={styles.pageSubtitle}>Manage and track all your customers</p>
         </div>
         <div>
-          <Link href="/admin/customers/analytics" className={styles.primaryButton} style={{ textDecoration: 'none', display: 'inline-block' }}>
-            📊 View Analytics
+          <Link href="/admin/customers/analytics" className={styles.primaryButton} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <BarChart2 size={18} aria-hidden /> View Analytics
           </Link>
         </div>
       </header>
@@ -256,7 +257,7 @@ export default function AdminCustomersPage() {
             <div className={styles.summaryGrid}>
               <div className={styles.summaryCard}>
                 <div className={styles.summaryIcon} style={{ background: 'rgba(70, 180, 80, 0.1)' }}>
-                  👥
+                  <Users size={22} aria-hidden />
                 </div>
                 <div className={styles.summaryContent}>
                   <h3 className={styles.summaryLabel}>Total Customers</h3>
@@ -266,7 +267,7 @@ export default function AdminCustomersPage() {
 
               <div className={styles.summaryCard}>
                 <div className={styles.summaryIcon} style={{ background: 'rgba(57, 65, 63, 0.1)' }}>
-                  📅
+                  <Calendar size={22} aria-hidden />
                 </div>
                 <div className={styles.summaryContent}>
                   <h3 className={styles.summaryLabel}>{summary.newCustomers !== undefined ? 'New Customers' : 'New This Month'}</h3>
@@ -276,7 +277,7 @@ export default function AdminCustomersPage() {
 
               <div className={styles.summaryCard}>
                 <div className={styles.summaryIcon} style={{ background: 'rgba(33, 150, 243, 0.1)' }}>
-                  🔄
+                  <RefreshCw size={22} aria-hidden />
                 </div>
                 <div className={styles.summaryContent}>
                   <h3 className={styles.summaryLabel}>Returning Customers</h3>
@@ -286,7 +287,7 @@ export default function AdminCustomersPage() {
 
               <div className={styles.summaryCard}>
                 <div className={styles.summaryIcon} style={{ background: 'rgba(76, 175, 80, 0.1)' }}>
-                  ✓
+                  <Check size={22} aria-hidden />
                 </div>
                 <div className={styles.summaryContent}>
                   <h3 className={styles.summaryLabel}>Active Customers</h3>
@@ -296,7 +297,7 @@ export default function AdminCustomersPage() {
 
               <div className={styles.summaryCard}>
                 <div className={styles.summaryIcon} style={{ background: 'rgba(158, 158, 158, 0.1)' }}>
-                  ⏸
+                  <Pause size={22} aria-hidden />
                 </div>
                 <div className={styles.summaryContent}>
                   <h3 className={styles.summaryLabel}>Inactive Customers</h3>
@@ -306,7 +307,7 @@ export default function AdminCustomersPage() {
 
               <div className={styles.summaryCard}>
                 <div className={styles.summaryIcon} style={{ background: 'rgba(255, 193, 7, 0.1)' }}>
-                  💰
+                  <Wallet size={22} aria-hidden />
                 </div>
                 <div className={styles.summaryContent}>
                   <h3 className={styles.summaryLabel}>Avg Customer Lifetime Value</h3>
@@ -316,7 +317,7 @@ export default function AdminCustomersPage() {
 
               <div className={styles.summaryCard}>
                 <div className={styles.summaryIcon} style={{ background: 'rgba(244, 67, 54, 0.1)' }}>
-                  ↩️
+                  <RotateCcw size={22} aria-hidden />
                 </div>
                 <div className={styles.summaryContent}>
                   <h3 className={styles.summaryLabel}>Refund Rate</h3>
@@ -326,7 +327,7 @@ export default function AdminCustomersPage() {
 
               <div className={styles.summaryCard}>
                 <div className={styles.summaryIcon} style={{ background: 'rgba(220, 210, 204, 0.3)' }}>
-                  ⭐
+                  <Star size={22} aria-hidden />
                 </div>
                 <div className={styles.summaryContent}>
                   <h3 className={styles.summaryLabel}>Premium Members</h3>

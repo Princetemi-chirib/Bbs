@@ -71,13 +71,6 @@ export default function AdminBarbersPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
-    state: '',
-    city: '',
-    address: '',
-    bio: '',
-    specialties: [] as string[],
-    experienceYears: '',
   });
 
   useEffect(() => {
@@ -147,32 +140,32 @@ export default function AdminBarbersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const method = editingBarber ? 'PUT' : 'POST';
-      const url = editingBarber 
-        ? `/api/v1/admin/barbers/${editingBarber}`
-        : '/api/v1/admin/barbers';
+    
+    if (!formData.name || !formData.email) {
+      alert('Please fill in all required fields');
+      return;
+    }
 
-      const response = await fetchAuth(url, {
-        method,
+    try {
+      const response = await fetchAuth('/api/v1/admin/barbers/invite', {
+        method: 'POST',
         body: JSON.stringify({
-          ...formData,
-          experienceYears: formData.experienceYears ? parseInt(formData.experienceYears) : null,
+          name: formData.name,
+          email: formData.email,
         }),
       });
 
       const data = await response.json();
       if (data.success) {
-        alert(editingBarber ? 'Barber updated successfully' : 'Barber created successfully');
+        alert('Invitation sent successfully! The staff member will receive an email with a link to complete their application.');
         setShowAddForm(false);
-        setEditingBarber(null);
-        resetForm();
+        setFormData({ name: '', email: '' });
         loadMetrics();
       } else {
-        alert(data.error?.message || 'Failed to save barber');
+        alert(data.error?.message || 'Failed to send invitation');
       }
     } catch (err: any) {
-      alert(err.message || 'An error occurred');
+      alert(err.message || 'An error occurred while sending invitation');
     }
   };
 
@@ -180,13 +173,6 @@ export default function AdminBarbersPage() {
     setFormData({
       name: '',
       email: '',
-      phone: '',
-      state: '',
-      city: '',
-      address: '',
-      bio: '',
-      specialties: [],
-      experienceYears: '',
     });
   };
 
@@ -314,7 +300,7 @@ export default function AdminBarbersPage() {
           </div>
           {isAdmin() && (
             <button onClick={() => setShowAddForm(!showAddForm)} className={styles.addButton}>
-              {showAddForm ? 'Cancel' : '+ Add Barber'}
+              {showAddForm ? 'Cancel' : '+ Add Staff'}
             </button>
           )}
         </div>
@@ -543,14 +529,11 @@ export default function AdminBarbersPage() {
                     <td>
                       <div className={styles.specialties}>
                         {barber.specialties.length > 0 ? (
-                          barber.specialties.slice(0, 2).map((spec, idx) => (
+                          barber.specialties.map((spec, idx) => (
                             <span key={idx} className={styles.specialtyTag}>{spec}</span>
                           ))
                         ) : (
-                          <span className={styles.noSpecialties}>No specialties</span>
-                        )}
-                        {barber.specialties.length > 2 && (
-                          <span className={styles.moreSpecialties}>+{barber.specialties.length - 2}</span>
+                          <span className={styles.noSpecialties}>No skills listed</span>
                         )}
                       </div>
                     </td>
@@ -685,77 +668,46 @@ export default function AdminBarbersPage() {
         </div>
       )}
 
-      {/* Add Barber Form (existing code) */}
+      {/* Add Staff Form */}
       {showAddForm && isAdmin() && (
         <section className={styles.formSection}>
-          <h2>{editingBarber ? 'Edit Barber' : 'Add New Barber'}</h2>
+          <h2>Add New Staff</h2>
+          <p style={{ marginBottom: '24px', color: '#6c757d' }}>
+            Enter the staff member's name and email. They will receive an invitation email with a link to complete their application.
+          </p>
           <form onSubmit={handleSubmit} className={styles.form}>
-            {/* Form fields remain the same */}
             <div className={styles.formGrid}>
               <div className={styles.formGroup}>
-                <label>Name *</label>
+                <label>Full Name *</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter full name"
                   required
                 />
               </div>
               <div className={styles.formGroup}>
-                <label>Email *</label>
+                <label>Email Address *</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Phone *</label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>State *</label>
-                <input
-                  type="text"
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>City *</label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Address *</label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="Enter email address"
                   required
                 />
               </div>
             </div>
             <div className={styles.formActions}>
               <button type="submit" className={styles.submitButton}>
-                {editingBarber ? 'Update Barber' : 'Create Barber'}
+                Send Invitation
               </button>
               <button
                 type="button"
                 onClick={() => {
                   setShowAddForm(false);
                   setEditingBarber(null);
+                  setFormData({ name: '', email: '' });
                 }}
                 className={styles.cancelButton}
               >

@@ -718,12 +718,14 @@
   font-weight: 600;
 }
 
-/* Specialties */
+/* Specialties / Skills */
 .specialties {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  max-width: 300px;
+  min-width: 150px;
 }
 
 .specialtyTag {
@@ -734,6 +736,7 @@
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .noSpecialties {

@@ -4,7 +4,19 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { getUserData, isAdmin } from '@/lib/auth';
+import {
+  LayoutDashboard,
+  Package,
+  Users,
+  Scissors,
+  Sparkles,
+  Star,
+  Wallet,
+  UsersRound,
+  LogOut,
+  type LucideIcon,
+} from 'lucide-react';
+import { getUserData } from '@/lib/auth';
 import styles from './AdminSidebar.module.css';
 
 interface AdminSidebarProps {
@@ -30,15 +42,15 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
   }, [pathname]);
 
   // All menu items
-  const allMenuItems = [
-    { href: '/admin', label: 'Dashboard', icon: '📊', roles: ['ADMIN', 'REP'] },
-    { href: '/admin/orders', label: 'Orders', icon: '📦', roles: ['ADMIN', 'REP'] },
-    { href: '/admin/customers', label: 'Customers', icon: '👥', roles: ['ADMIN', 'REP'] },
-    { href: '/admin/barbers', label: 'Barbers', icon: '✂️', roles: ['ADMIN', 'REP'] },
-    { href: '/admin/services', label: 'Services', icon: '💇', roles: ['ADMIN', 'REP'] },
-    { href: '/admin/reviews', label: 'Reviews', icon: '⭐', roles: ['ADMIN', 'REP'] },
-    { href: '/admin/financials', label: 'Financials', icon: '💰', roles: ['ADMIN', 'REP'] },
-    { href: '/admin/team', label: 'Team', icon: '👔', roles: ['ADMIN'] },
+  const allMenuItems: { href: string; label: string; Icon: LucideIcon; roles: ('ADMIN' | 'REP')[] }[] = [
+    { href: '/admin', label: 'Dashboard', Icon: LayoutDashboard, roles: ['ADMIN', 'REP'] },
+    { href: '/admin/orders', label: 'Orders', Icon: Package, roles: ['ADMIN', 'REP'] },
+    { href: '/admin/customers', label: 'Customers', Icon: Users, roles: ['ADMIN', 'REP'] },
+    { href: '/admin/barbers', label: 'Barbers', Icon: Scissors, roles: ['ADMIN', 'REP'] },
+    { href: '/admin/services', label: 'Services', Icon: Sparkles, roles: ['ADMIN', 'REP'] },
+    { href: '/admin/reviews', label: 'Reviews', Icon: Star, roles: ['ADMIN', 'REP'] },
+    { href: '/admin/financials', label: 'Financials', Icon: Wallet, roles: ['ADMIN', 'REP'] },
+    { href: '/admin/team', label: 'Team', Icon: UsersRound, roles: ['ADMIN'] },
   ];
 
   // Filter menu items based on user role
@@ -111,7 +123,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
           {/* Logout Button */}
           <div className={styles.sidebarFooter}>
             <button onClick={onLogout} className={styles.logoutButton}>
-              <span className={styles.navIcon}>🚪</span>
+              <LogOut size={20} className={styles.navIcon} aria-hidden />
               <span className={styles.navLabel}>Logout</span>
             </button>
           </div>

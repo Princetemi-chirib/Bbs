@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { Wallet, Calendar, Package, Star } from 'lucide-react';
 import { fetchAuth } from '@/lib/auth';
 import styles from '../customers.module.css';
 import Link from 'next/link';
@@ -381,7 +382,7 @@ export default function CustomerDetailPage() {
           <section className={styles.statsGrid}>
             <div className={styles.statCard}>
               <div className={styles.statIcon} style={{ background: 'rgba(70, 180, 80, 0.1)' }}>
-                💰
+                <Wallet size={22} aria-hidden />
               </div>
               <div className={styles.statContent}>
                 <h3 className={styles.statLabel}>Total Spent</h3>
@@ -394,7 +395,7 @@ export default function CustomerDetailPage() {
 
             <div className={styles.statCard}>
               <div className={styles.statIcon} style={{ background: 'rgba(57, 65, 63, 0.1)' }}>
-                📅
+                <Calendar size={22} aria-hidden />
               </div>
               <div className={styles.statContent}>
                 <h3 className={styles.statLabel}>Total Bookings</h3>
@@ -407,7 +408,7 @@ export default function CustomerDetailPage() {
 
             <div className={styles.statCard}>
               <div className={styles.statIcon} style={{ background: 'rgba(220, 210, 204, 0.3)' }}>
-                📦
+                <Package size={22} aria-hidden />
               </div>
               <div className={styles.statContent}>
                 <h3 className={styles.statLabel}>Total Orders</h3>
@@ -417,7 +418,7 @@ export default function CustomerDetailPage() {
 
             <div className={styles.statCard}>
               <div className={styles.statIcon} style={{ background: 'rgba(255, 193, 7, 0.1)' }}>
-                ⭐
+                <Star size={22} aria-hidden />
               </div>
               <div className={styles.statContent}>
                 <h3 className={styles.statLabel}>Average Rating</h3>
@@ -443,7 +444,7 @@ export default function CustomerDetailPage() {
               className={`${styles.tab} ${activeTab === 'bookings' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('bookings')}
             >
-              📅 Bookings ({bookings.length})
+              <Calendar size={16} aria-hidden /> Bookings ({bookings.length})
             </button>
             <button
               className={`${styles.tab} ${activeTab === 'orders' ? styles.tabActive : ''}`}
@@ -461,13 +462,13 @@ export default function CustomerDetailPage() {
               className={`${styles.tab} ${activeTab === 'reviews' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('reviews')}
             >
-              ⭐ Reviews ({reviews.length})
+              <Star size={16} aria-hidden /> Reviews ({reviews.length})
             </button>
             <button
               className={`${styles.tab} ${activeTab === 'financial' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('financial')}
             >
-              💰 Financial
+              <Wallet size={16} aria-hidden /> Financial
             </button>
             <button
               className={`${styles.tab} ${activeTab === 'preferences' ? styles.tabActive : ''}`}
@@ -905,7 +906,7 @@ export default function CustomerDetailPage() {
                               <div className={styles.reviewService}>{review.serviceName}</div>
                             </div>
                             <div className={styles.rating}>
-                              {'⭐'.repeat(review.rating)}
+                              {Array.from({ length: review.rating }, (_, i) => <Star key={i} size={14} aria-hidden />)}
                               <span className={styles.ratingNumber}>{review.rating}/5</span>
                             </div>
                           </div>

@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
-export default function BarberRecruitPage() {
+function BarberRecruitPageContent() {
   return (
     <>
       {/* Hero Section */}
@@ -89,7 +90,7 @@ export default function BarberRecruitPage() {
             
             <div className={styles.formContainer}>
               <div className={styles.formHeader}>
-                <h3>Barber Application/Nail Tech/Makeup Artist</h3>
+                <h3>Barbers/Nail Tech/make-up artist Application form</h3>
                 <p>Submit your details, experience, and portfolio to join our elite team of master barbers</p>
               </div>
               
@@ -137,6 +138,12 @@ export default function BarberRecruitPage() {
 
 // Barber Application Form Component
 function BarberApplicationForm() {
+  const searchParams = useSearchParams();
+  const [invitationToken, setInvitationToken] = useState<string | null>(null);
+  const [invitationEmail, setInvitationEmail] = useState<string | null>(null);
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  const [verifyingToken, setVerifyingToken] = useState(true);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -169,6 +176,53 @@ function BarberApplicationForm() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Check for invitation token and email in URL
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const email = searchParams.get('email');
+    
+    if (token && email) {
+      setInvitationToken(token);
+      setInvitationEmail(email);
+      setFormData(prev => ({ ...prev, email }));
+      
+      // Verify token
+      verifyInvitationToken(token, email);
+    } else {
+      setVerifyingToken(false);
+      setTokenValid(true); // Allow public applications
+    }
+  }, [searchParams]);
+
+  const verifyInvitationToken = async (token: string, email: string) => {
+    try {
+      const response = await fetch(`/api/v1/admin/barbers/verify-invitation?token=${token}&email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setTokenValid(true);
+        // Pre-fill name if available
+        if (data.data.name) {
+          const nameParts = data.data.name.split(' ');
+          setFormData(prev => ({
+            ...prev,
+            firstName: nameParts[0] || '',
+            lastName: nameParts.slice(1).join(' ') || '',
+            email: email,
+          }));
+        }
+      } else {
+        setTokenValid(false);
+        setError('Invalid or expired invitation link. Please contact the administrator.');
+      }
+    } catch (err) {
+      setTokenValid(false);
+      setError('Failed to verify invitation. Please try again or contact the administrator.');
+    } finally {
+      setVerifyingToken(false);
+    }
+  };
 
   const handleFileUpload = async (file: File, type: 'letter' | 'cv'): Promise<string | null> => {
     if (type === 'letter') {
@@ -300,6 +354,7 @@ function BarberApplicationForm() {
           whyJoinNetwork: formData.whyJoinNetwork || undefined,
           applicationLetterUrl,
           cvUrl,
+          invitationToken: invitationToken || undefined, // Include token if present
         }),
       });
 
@@ -355,8 +410,48 @@ function BarberApplicationForm() {
     });
   };
 
+  // Show loading state while verifying token
+  if (verifyingToken) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px' }}>
+        <p>Verifying invitation...</p>
+      </div>
+    );
+  }
+
+  // Show error if token is invalid
+  if (tokenValid === false) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px' }}>
+        <div style={{ background: '#fee', color: '#c33', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
+          <h3>Invalid Invitation Link</h3>
+          <p>{error || 'This invitation link is invalid or has expired.'}</p>
+          <p>Please contact the administrator for a new invitation link.</p>
+        </div>
+        <Link href="/" className={styles.btnPrimary}>
+          Return to Home
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className={styles.barberForm}>
+      {invitationToken && (
+        <div style={{ 
+          background: '#e8f5e9', 
+          color: '#2e7d32', 
+          padding: '12px 16px', 
+          borderRadius: '8px', 
+          marginBottom: '20px',
+          border: '1px solid #4caf50'
+        }}>
+          <strong>✓ Invitation Verified</strong>
+          <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>
+            You're completing your application as an invited staff member. Please fill out all required fields below.
+          </p>
+        </div>
+      )}
       {/* 1. First name last name */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
         <div className={styles.formGroup}>
@@ -725,5 +820,13 @@ function BarberApplicationForm() {
         </div>
       )}
     </form>
+  );
+}
+
+export default function BarberRecruitPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>}>
+      <BarberRecruitPageContent />
+    </Suspense>
   );
 }

@@ -164,9 +164,8 @@
 }
 
 .navIcon {
-  font-size: 1.2rem;
-  width: 24px;
-  text-align: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
