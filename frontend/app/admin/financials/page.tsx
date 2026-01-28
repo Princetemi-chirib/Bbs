@@ -3721,6 +3721,7 @@ export default function AdminFinancialsPage() {
                     </div>
                   </div>
                 </section>
+                
 
                 {(!trafficData || trafficData.totalPageViews === 0) ? (
                   <div className={styles.chartCard} style={{ textAlign: 'center', padding: 48 }}>
@@ -3798,6 +3799,49 @@ export default function AdminFinancialsPage() {
             )}
           </>
         )}
+        const anomalies = useMemo(() => {
+  const data = charts?.revenueTrend || [];
+  if (!data.length) return [];
+  const values = data.map(d => d.revenue);
+  const mean = values.reduce((s, v) => s + v, 0) / values.length;
+  const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length;
+  const std = Math.sqrt(variance);
+  return data.filter(d => Math.abs(d.revenue - mean) > 2 * std)
+    .map(d => ({ ...d, deviation: d.revenue - mean }));
+}, [charts?.revenueTrend]);
+
+// then inside the charts section:
+{isAdmin() && (
+  <div className={styles.chartCard}>
+    <h2 className={styles.chartTitle}>Revenue Anomalies</h2>
+    <p className={styles.sectionSubtext}>
+      Dates where revenue deviates by more than two standard deviations from the mean.
+    </p>
+    {anomalies.length > 0 ? (
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
+            <tr><th>Date</th><th>Revenue</th><th>Deviation</th></tr>
+          </thead>
+          <tbody>
+            {anomalies.map((a, i) => (
+              <tr key={i}>
+                <td>{formatDate(a.date)}</td>
+                <td>{formatCurrency(a.revenue)}</td>
+                <td style={{ color: a.deviation > 0 ? '#46B450' : '#dc3232' }}>
+                  {a.deviation > 0 ? '+' : ''}{formatCurrency(Math.abs(a.deviation))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p>No anomalies detected.</p>
+    )}
+  </div>
+)}
+
       </main>
     </div>
   );
