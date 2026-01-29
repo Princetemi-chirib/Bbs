@@ -72,6 +72,20 @@ enum JobStatus {
   DECLINED
 }
 
+enum ReviewStatus {
+  NEW
+  RESPONDED
+  ESCALATED
+  RESOLVED
+  IGNORED
+}
+
+enum ReviewSource {
+  APP
+  GOOGLE
+  WALK_IN
+}
+
 model User {
   id                    String    @id @default(uuid())
   email                 String    @unique
@@ -92,6 +106,8 @@ model User {
   notifications Notification[]
   barberApplication BarberApplication?
   sessions      Session[]
+  assignedReviews  Review[]         @relation("ReviewAssignee")
+  reviewAuditLogs  ReviewAuditLog[]
 
   @@map("users")
   @@index([email])
@@ -277,22 +293,34 @@ model BarberAvailability {
 }
 
 model Review {
-  id              String    @id @default(uuid())
-  orderId         String    @unique @map("order_id") // Link to Order instead of Booking
-  customerId      String    @map("customer_id")
-  barberId        String    @map("barber_id")
-  rating          Int       // 1-5
-  comment         String?   @db.Text
-  barberResponse  String?   @db.Text @map("barber_response")
-  barberResponseAt DateTime? @map("barber_response_at")
-  isVerified      Boolean   @default(true) @map("is_verified")
-  isVisible       Boolean   @default(true) @map("is_visible")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id                String        @id @default(uuid())
+  orderId           String        @unique @map("order_id")
+  customerId        String        @map("customer_id")
+  barberId          String        @map("barber_id")
+  rating            Int           // 1-5
+  comment           String?       @db.Text
+  barberResponse    String?       @db.Text @map("barber_response")
+  barberResponseAt  DateTime?     @map("barber_response_at")
+  isVerified        Boolean       @default(true) @map("is_verified")
+  isVisible         Boolean       @default(true) @map("is_visible")
+  status            ReviewStatus  @default(NEW)
+  source            ReviewSource  @default(APP) @map("review_source")
+  assignedToId      String?       @map("assigned_to_id")
+  adminResponse     String?       @db.Text @map("admin_response")
+  adminResponseAt   DateTime?     @map("admin_response_at")
+  internalNotes     String?       @db.Text @map("internal_notes")
+  escalatedAt       DateTime?     @map("escalated_at")
+  resolvedAt        DateTime?     @map("resolved_at")
+  resolutionOutcome String?       @map("resolution_outcome") // refund, apology, no_action
+  slaDueAt          DateTime?     @map("sla_due_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
-  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  customer        Customer  @relation(fields: [customerId], references: [id])
-  barber          Barber    @relation(fields: [barberId], references: [id])
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer    Customer @relation(fields: [customerId], references: [id])
+  barber      Barber   @relation(fields: [barberId], references: [id])
+  assignedTo  User?    @relation("ReviewAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  auditLogs   ReviewAuditLog[]
 
   @@map("reviews")
   @@index([customerId])
@@ -300,6 +328,27 @@ model Review {
   @@index([rating])
   @@index([isVisible])
   @@index([orderId])
+  @@index([status])
+  @@index([assignedToId])
+  @@index([createdAt])
+}
+
+model ReviewAuditLog {
+  id          String   @id @default(uuid())
+  reviewId    String   @map("review_id")
+  performedBy String   @map("performed_by")
+  action      String   // VIEW, ASSIGN, ESCALATE, RESOLVE, HIDE, UNHIDE, NOTE, RESPOND, etc.
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  review      Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [performedBy], references: [id], onDelete: Cascade)
+
+  @@map("review_audit_logs")
+  @@index([reviewId])
+  @@index([performedBy])
+  @@index([action])
+  @@index([createdAt])
 }
 
 model Payment {

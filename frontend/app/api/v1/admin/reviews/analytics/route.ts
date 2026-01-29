@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdminOrRep } from '@/app/api/v1/utils/auth';
+import { verifyAdminOrRep } from '../../utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,12 +60,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get all reviews with related data (Review links to Order, not Booking; use order.items[].product as service proxy)
+    const baseWhere = { ...dateFilter } as Record<string, unknown>;
+    const visibleWhere = { ...baseWhere, isVisible: true };
+
+    // Overlay metrics: all-time total, new in period, unresolved negative (1–2 star, not resolved/ignored)
+    const [allTimeTotal, newInPeriod, unresolvedNegative] = await Promise.all([
+      prisma.review.count({ where: { isVisible: true } }),
+      Object.keys(dateFilter).length
+        ? prisma.review.count({ where: visibleWhere })
+        : Promise.resolve(0),
+      prisma.review.count({
+        where: {
+          rating: { lte: 2 },
+          status: { notIn: ['RESOLVED', 'IGNORED'] },
+          ...(Object.keys(dateFilter).length ? dateFilter : {}),
+        },
+      }),
+    ]);
+
+    // Get all reviews in scope (visible) with related data
     const reviews = await prisma.review.findMany({
-      where: {
-        ...dateFilter,
-        isVisible: true,
-      },
+      where: visibleWhere,
       include: {
         order: {
           include: {
@@ -103,15 +118,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Total reviews
     const totalReviews = reviews.length;
-
-    // Average rating
     const avgRating = totalReviews > 0
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
       : 0;
 
-    // Rating distribution (1-5 stars)
     const ratingDistribution = [1, 2, 3, 4, 5].map(rating => ({
       rating,
       count: reviews.filter(r => r.rating === rating).length,
@@ -120,9 +131,33 @@ export async function GET(request: NextRequest) {
         : 0,
     }));
 
-    // Reviews with responses (response rate)
-    const reviewsWithResponse = reviews.filter(r => r.barberResponse != null).length;
+    const c5 = reviews.filter(r => r.rating === 5).length;
+    const c12 = reviews.filter(r => r.rating === 1 || r.rating === 2).length;
+    const fiveStarVsOneTwoRatio = c12 > 0 ? Number((c5 / c12).toFixed(2)) : (c5 > 0 ? 999 : 0);
+
+    const reviewsWithResponse = reviews.filter(
+      r => (r as { barberResponse?: string | null; adminResponse?: string | null }).barberResponse != null ||
+           (r as { barberResponse?: string | null; adminResponse?: string | null }).adminResponse != null
+    ).length;
     const responseRate = totalReviews > 0 ? (reviewsWithResponse / totalReviews) * 100 : 0;
+
+    const withResponseTime = reviews.filter(r => {
+      const br = (r as { barberResponseAt?: Date | null }).barberResponseAt;
+      const ar = (r as { adminResponseAt?: Date | null }).adminResponseAt;
+      return br != null || ar != null;
+    });
+    const responseTimesMs = withResponseTime.map(r => {
+      const created = new Date(r.createdAt).getTime();
+      const br = (r as { barberResponseAt?: Date | null }).barberResponseAt;
+      const ar = (r as { adminResponseAt?: Date | null }).adminResponseAt;
+      let first = Infinity;
+      if (br) first = Math.min(first, new Date(br).getTime());
+      if (ar) first = Math.min(first, new Date(ar).getTime());
+      return first === Infinity ? 0 : first - created;
+    }).filter(Boolean);
+    const avgResponseTimeHours = responseTimesMs.length > 0
+      ? responseTimesMs.reduce((a, b) => a + b, 0) / responseTimesMs.length / (1000 * 60 * 60)
+      : null;
 
     // Reviews by barber
     const byBarber = new Map<string, {
@@ -235,24 +270,29 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        totalReviews,
+        totalReviews: allTimeTotal,
+        totalInPeriod: totalReviews,
+        newInPeriod: Object.keys(dateFilter).length ? newInPeriod : allTimeTotal,
         avgRating: Number(avgRating.toFixed(2)),
-        ratingDistribution,
+        fiveStarVsOneTwoRatio,
+        unresolvedNegative,
         responseRate: Number(responseRate.toFixed(1)),
         reviewsWithResponse,
+        avgResponseTimeHours: avgResponseTimeHours != null ? Number(avgResponseTimeHours.toFixed(2)) : null,
+        ratingDistribution,
         reviewsByBarber: reviewsByBarber.slice(0, 20),
         reviewsByService: reviewsByService.slice(0, 20),
         reviewsByCategory,
         recentReviews,
       },
     });
-  } catch (error: any) {
-    console.error('Get reviews analytics error:', error);
+  } catch (e: unknown) {
+    console.error('Get reviews analytics error:', e);
     return NextResponse.json(
       {
         success: false,
         error: {
-          message: error.message || 'Failed to fetch reviews analytics',
+          message: e instanceof Error ? e.message : 'Failed to fetch reviews analytics',
         },
       },
       { status: 500 }
