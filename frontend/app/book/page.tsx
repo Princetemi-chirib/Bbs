@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCartStore, OrderItem } from '@/lib/store/cartStore';
 import { productApi } from '@/lib/api';
@@ -21,65 +20,65 @@ interface Service {
 function BeforeAfterSlider({ beforeImage, afterImage }: { beforeImage: string; afterImage: string }) {
   const [splitPosition, setSplitPosition] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
+  const update = (clientX: number) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    let x = clientX - rect.left;
+    if (x < 0) x = 0;
+    if (x > rect.width) x = rect.width;
+    const pct = rect.width > 0 ? (x / rect.width) * 100 : 50;
+    setSplitPosition(pct);
+  };
+
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-      setSplitPosition(percentage);
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      update(e.clientX);
     };
-
-    const handleMouseUp = () => {
+    const onMouseUp = () => {
       isDragging.current = false;
     };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging.current || !containerRef.current) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isDragging.current) return;
       e.preventDefault();
-      const touch = e.touches[0];
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-      setSplitPosition(percentage);
+      update(e.touches[0].clientX);
     };
-
-    const handleTouchEnd = () => {
+    const onTouchEnd = () => {
       isDragging.current = false;
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
     };
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const onHandleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     isDragging.current = true;
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const onHandleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
     isDragging.current = true;
   };
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget || (e.target as HTMLElement).closest('.ba-handle')) return;
+  const onContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as Node;
+    if (handleRef.current && (target === handleRef.current || handleRef.current.contains(target))) return;
     if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    setSplitPosition(percentage);
+    update(e.clientX);
   };
 
   return (
@@ -87,29 +86,22 @@ function BeforeAfterSlider({ beforeImage, afterImage }: { beforeImage: string; a
       ref={containerRef}
       className={styles.baContainer}
       style={{ '--split-position': `${splitPosition}%` } as React.CSSProperties}
-      onClick={handleClick}
+      onClick={onContainerClick}
     >
       <div className={`${styles.baLayer} ${styles.baBefore}`}>
-        <Image src={beforeImage} alt="Before" fill className={styles.baImage} sizes="(max-width: 768px) 100vw, 50vw" />
+        <img src={beforeImage} alt="Before" className={styles.baImage} loading="lazy" />
       </div>
       <div className={`${styles.baLayer} ${styles.baAfter}`}>
-        <Image src={afterImage} alt="After" fill className={styles.baImage} sizes="(max-width: 768px) 100vw, 50vw" />
+        <img src={afterImage} alt="After" className={styles.baImage} loading="lazy" />
       </div>
+      <div className={styles.baSliderLine} aria-hidden="true" />
       <div
-        className={styles.baSliderLine}
-        style={{ left: `${splitPosition}%` }}
-      />
-      <div
+        ref={handleRef}
         className={styles.baHandle}
-        style={{ left: `${splitPosition}%` }}
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
+        onMouseDown={onHandleMouseDown}
+        onTouchStart={onHandleTouchStart}
         aria-label="Slide to compare"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M8 12h8M12 8l4 4-4 4" />
-        </svg>
-      </div>
+      />
       <div className={`${styles.baLabel} ${styles.beforeLabel}`}>Before</div>
       <div className={`${styles.baLabel} ${styles.afterLabel}`}>After</div>
     </div>

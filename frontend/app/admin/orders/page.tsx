@@ -228,14 +228,17 @@ export default function AdminOrdersPage() {
 
   // Filter orders based on filters
   const filteredOrders = orders.filter((order) => {
-    // Date range filter
+    // Date range filter: Start = local start-of-day, End = local end-of-day
     if (dateRange.start || dateRange.end) {
       const orderDate = new Date(order.createdAt);
-      if (dateRange.start && orderDate < new Date(dateRange.start)) return false;
+      if (orderDate.toString() === 'Invalid Date') return false;
+      if (dateRange.start) {
+        const start = new Date(dateRange.start + 'T00:00:00');
+        if (!isNaN(start.getTime()) && orderDate < start) return false;
+      }
       if (dateRange.end) {
-        const endDate = new Date(dateRange.end);
-        endDate.setHours(23, 59, 59, 999);
-        if (orderDate > endDate) return false;
+        const end = new Date(dateRange.end + 'T23:59:59.999');
+        if (!isNaN(end.getTime()) && orderDate > end) return false;
       }
     }
     
