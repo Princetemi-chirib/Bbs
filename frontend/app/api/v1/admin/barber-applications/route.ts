@@ -130,9 +130,9 @@ export async function POST(request: NextRequest) {
       invitationToken
     } = body;
 
-    if (!firstName || !lastName || !email || !phone || !address || !ninNumber || !gender || !whyJoinNetwork || !applicationLetterUrl || !cvUrl) {
+    if (!firstName || !lastName || !email || !phone || !address || !ninNumber || !gender || !whyJoinNetwork || !applicationLetterUrl) {
       return NextResponse.json(
-        { success: false, error: { message: 'First name, last name, email, phone, address, NIN number, gender, why join network, application letter, and CV are required' } },
+        { success: false, error: { message: 'First name, last name, email, phone, address, NIN number, gender, why join network, and application letter are required' } },
         { status: 400 }
       );
     }

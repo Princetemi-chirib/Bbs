@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styles from './page.module.css';
 
 export default function BecomeBarberPage() {
@@ -89,8 +89,8 @@ export default function BecomeBarberPage() {
             
             <div className={styles.formContainer}>
               <div className={styles.formHeader}>
-                <h3>Become a trained professional barbers application</h3>
-                <p>Thank you for your interest in becoming a professional barber. Please complete the application form below.</p>
+                <h3>Become a Barber Application</h3>
+                <p>Thank you for your interest in becoming a professional barber. Please complete the form below.</p>
               </div>
               
               <BarberApplicationForm />
@@ -138,112 +138,235 @@ export default function BecomeBarberPage() {
 // Barber Application Form Component
 function BarberApplicationForm() {
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
+    otherName: '',
+    dateOfBirth: '',
     email: '',
+    maritalStatus: '',
     phone: '',
-    experience: '',
-    portfolio: '',
-    message: '',
+    address: '',
+    ninNumber: '',
+    gender: '',
+    whyJoinNetwork: '',
+    declarationAccepted: false,
   });
+  const [applicationLetterUrl, setApplicationLetterUrl] = useState('');
+  const [uploadingLetter, setUploadingLetter] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const t = e.target;
+    const value = t.type === 'checkbox' ? (t as HTMLInputElement).checked : t.value;
+    setFormData({ ...formData, [t.name]: value });
+  };
+
+  const uploadLetter = async (file: File): Promise<string | null> => {
+    setUploadingLetter(true);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/v1/admin/barber-applications/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error?.message || 'Upload failed');
+      return data.data?.url ?? null;
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+      return null;
+    } finally {
+      setUploadingLetter(false);
+    }
+  };
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg'];
+    if (!allowed.includes(file.type)) {
+      setError('Only PDF and JPG files are allowed');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File must be under 10MB');
+      return;
+    }
+    const url = await uploadLetter(file);
+    if (url) setApplicationLetterUrl(url);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Integrate with backend API
-    console.log('Form submitted:', formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setError('');
+    if (!formData.declarationAccepted) {
+      setError('You must accept the declaration to submit.');
+      return;
+    }
+    if (!applicationLetterUrl) {
+      setError('Please upload your application letter (PDF or JPG).');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/admin/barber-applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          otherName: formData.otherName || undefined,
+          dateOfBirth: formData.dateOfBirth || undefined,
+          email: formData.email,
+          maritalStatus: formData.maritalStatus || undefined,
+          phone: formData.phone,
+          address: formData.address,
+          ninNumber: formData.ninNumber || undefined,
+          gender: formData.gender || undefined,
+          whyJoinNetwork: formData.whyJoinNetwork || undefined,
+          applicationLetterUrl,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error?.message || 'Submission failed');
+      setSubmitted(true);
+      setFormData({
+        firstName: '',
+        lastName: '',
+        otherName: '',
+        dateOfBirth: '',
+        email: '',
+        maritalStatus: '',
+        phone: '',
+        address: '',
+        ninNumber: '',
+        gender: '',
+        whyJoinNetwork: '',
+        declarationAccepted: false,
+      });
+      setApplicationLetterUrl('');
+      fileInputRef.current && (fileInputRef.current.value = '');
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className={styles.barberForm}>
-      <div className={styles.formGroup}>
-        <label htmlFor="name">Full Name *</label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
+      <div className={styles.formRow}>
+        <div className={styles.formGroup}>
+          <label htmlFor="firstName">First name *</label>
+          <input type="text" id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} required />
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor="lastName">Last name *</label>
+          <input type="text" id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} required />
+        </div>
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="email">Email Address *</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
+        <label htmlFor="otherName">Other name *</label>
+        <input type="text" id="otherName" name="otherName" value={formData.otherName} onChange={handleChange} required />
+      </div>
+      
+      <div className={styles.formGroup}>
+        <label htmlFor="dateOfBirth">Date of birth *</label>
+        <input type="date" id="dateOfBirth" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} required />
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="phone">Phone Number *</label>
-        <input
-          type="tel"
-          id="phone"
-          name="phone"
-          value={formData.phone}
-          onChange={handleChange}
-          required
-        />
+        <label htmlFor="email">Email *</label>
+        <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required />
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="experience">Years of Experience *</label>
-        <select
-          id="experience"
-          name="experience"
-          value={formData.experience}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select experience</option>
-          <option value="0-1">0-1 years</option>
-          <option value="2-5">2-5 years</option>
-          <option value="6-10">6-10 years</option>
-          <option value="10+">10+ years</option>
+        <label htmlFor="maritalStatus">Marital status *</label>
+        <select id="maritalStatus" name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} required>
+          <option value="">Select</option>
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+          <option value="Divorced">Divorced</option>
+          <option value="Widowed">Widowed</option>
         </select>
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="portfolio">Portfolio URL (Optional)</label>
-        <input
-          type="url"
-          id="portfolio"
-          name="portfolio"
-          value={formData.portfolio}
+        <label htmlFor="phone">Phone number *</label>
+        <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} required />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="address">Location / Address *</label>
+        <input type="text" id="address" name="address" value={formData.address} onChange={handleChange} required placeholder="Full address" />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="ninNumber">NIN number *</label>
+        <input type="text" id="ninNumber" name="ninNumber" value={formData.ninNumber} onChange={handleChange} required />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="gender">Gender *</label>
+        <select id="gender" name="gender" value={formData.gender} onChange={handleChange} required>
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="whyJoinNetwork">Why do you want to join our network? *</label>
+        <textarea
+          id="whyJoinNetwork"
+          name="whyJoinNetwork"
+          value={formData.whyJoinNetwork}
           onChange={handleChange}
-          placeholder="https://yourportfolio.com"
+          rows={5}
+          required
+          placeholder="Tell us why you want to become a professional barber..."
         />
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="message">Tell us about yourself *</label>
-        <textarea
-          id="message"
-          name="message"
-          value={formData.message}
-          onChange={handleChange}
-          rows={6}
-          required
-          placeholder="Share your experience, specialties, and why you want to become a professional barber..."
+        <label>Upload application letter (requesting to become a professional barber) *</label>
+        <p className={styles.fieldHint}>PDF or JPG, max 10MB</p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.jpg,.jpeg"
+          onChange={onFileChange}
+          disabled={uploadingLetter}
+          className={styles.fileInput}
         />
+        {applicationLetterUrl && <span className={styles.fileOk}>✓ File uploaded</span>}
+        {uploadingLetter && <span className={styles.fileUploading}>Uploading…</span>}
       </div>
 
-      <button type="submit" className={styles.btnSubmit}>
-        Submit Application
+      <div className={styles.formGroup}>
+        <label className={styles.declarationLabel}>
+          <input
+            type="checkbox"
+            name="declarationAccepted"
+            checked={formData.declarationAccepted}
+            onChange={handleChange}
+          />
+          <span>Declaration *</span>
+        </label>
+        <p className={styles.declarationText}>
+          I declare that the information I have provided is true, accurate, and complete. I understand that any false or misleading information may result in my application being rejected.
+        </p>
+      </div>
+
+      {error && <div className={styles.formError}>{error}</div>}
+
+      <button type="submit" className={styles.btnSubmit} disabled={submitting}>
+        {submitting ? 'Submitting…' : 'Submit Application'}
       </button>
 
       {submitted && (

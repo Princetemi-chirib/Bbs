@@ -73,6 +73,20 @@ body {
     background: #39413f !important;
 }
 
+/* Glass header (home): ensure nav and hamburger are visible on light bg */
+.main-header-bar:not(.solid-header) a,
+.main-header-bar:not(.solid-header) button {
+    color: #39413f;
+}
+.main-header-bar:not(.solid-header) a:hover,
+.main-header-bar:not(.solid-header) button:hover {
+    color: #2d3432;
+}
+
+.main-header-bar {
+    overflow: visible;
+}
+
 /* Mobile Responsive Adjustments */
 @media (max-width: 768px) {
     .main-header-bar {
