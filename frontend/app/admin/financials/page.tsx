@@ -3721,7 +3721,6 @@ export default function AdminFinancialsPage() {
                     </div>
                   </div>
                 </section>
-                
 
                 {(!trafficData || trafficData.totalPageViews === 0) ? (
                   <div className={styles.chartCard} style={{ textAlign: 'center', padding: 48 }}>
@@ -3760,9 +3759,9 @@ export default function AdminFinancialsPage() {
                               </tbody>
                             </table>
                           </div>
-                        </div>
+                        </div> 
                       )}
-                      {trafficData.byReferrer && trafficData.byReferrer.length > 0 && (
+                      {trafficData.byReferrer && trafficData.byReferrer.length > 0 && ( 
                         <div className={styles.chartCard}>
                           <h2 className={styles.chartTitle}>Top Referrers</h2>
                           <div className={styles.tableWrap}>
@@ -3799,7 +3798,6 @@ export default function AdminFinancialsPage() {
             )}
           </>
         )}
-        
       </main>
     </div>
   );

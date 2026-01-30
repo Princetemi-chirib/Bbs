@@ -1,8 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost'],
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'localhost',
+      },
       {
         protocol: 'https',
         hostname: '**.amazonaws.com',
@@ -13,7 +16,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'bbslimited.online',
+        hostname: 'whitesmoke-jackal-101083.hostingersite.com',
       },
     ],
   },

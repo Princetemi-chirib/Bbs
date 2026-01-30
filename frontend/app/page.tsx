@@ -40,11 +40,11 @@ const REVIEWS = [
   { name: 'Emeka Nwosu', avatar: '/images/efffa01b942bd74e.jpeg', rating: 5, text: "I was nervous about getting hair fibre replacement, but BBS made the whole process comfortable and painless. The results look completely natural – even my family couldn't tell! Worth every investment.", time: '1 week ago' },
 ];
 
-const HERO_VIDEO = 'https://bbslimited.online/wp-content/uploads/2025/07/WhatsApp-Video-2025-07-30-at-10.39.46_f8c76c0c.mp4';
+const HERO_VIDEO = 'https://whitesmoke-jackal-101083.hostingersite.com/wp-content/uploads/2025/07/WhatsApp-Video-2025-07-30-at-10.39.46_f8c76c0c.mp4';
 const FEATURE_VIDEOS = [
-  'https://bbslimited.online/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_ddqyje96w0duyldas6cq8a-1.mp4',
-  'https://bbslimited.online/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_qwsk893v42c62vhgzrruj5-1.mp4',
-  'https://bbslimited.online/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_4zu8nyz8y9gs5oi1gg8tfl.mp4',
+  'https://whitesmoke-jackal-101083.hostingersite.com/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_ddqyje96w0duyldas6cq8a-1.mp4',
+  'https://whitesmoke-jackal-101083.hostingersite.com/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_qwsk893v42c62vhgzrruj5-1.mp4',
+  'https://whitesmoke-jackal-101083.hostingersite.com/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_4zu8nyz8y9gs5oi1gg8tfl.mp4',
 ];
 
 export default function Home() {
@@ -203,7 +203,7 @@ export default function Home() {
             onClick={(e) => !isDragging && handleSliderMove(e.clientX)}
           >
             <div className={styles.beforeWrap} style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}>
-              <Image src="C:\Users\adeni\OneDrive\Desktop\Bbs project\frontend\public\images\bfr.jpeg" alt="Before" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" />
+              <Image src="/images/bfr.jpeg" alt="Before" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" />
             </div>
             <div className={styles.afterWrap} style={{ clipPath: `polygon(${sliderPosition}% 0, 100% 0, 100% 100%, ${sliderPosition}% 100%)` }}>
               <Image src="/images/aft.jpeg" alt="After" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" />
