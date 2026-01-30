@@ -5,52 +5,66 @@ import Link from 'next/link';
 import Image from 'next/image';
 import styles from './page.module.css';
 
+const MEDIA = 'https://whitesmoke-jackal-101083.hostingersite.com';
+
 const SERVICE_IMAGES = [
-  { src: '/images/Buzz cut.jpg', caption: 'Buzz Cut' },
-  { src: '/images/Hair braiding service.jpg', caption: 'Braiding' },
-  { src: '/images/hair tinting.jpg', caption: 'Hair Tinting' },
-  { src: '/images/hair treatment.jpg', caption: 'Hair Treatment' },
-  { src: '/images/locks1.jpg', caption: 'Locks' },
-  { src: '/images/nailcut service.jpg', caption: 'Nailcut' },
+  { src: `${MEDIA}/wp-content/uploads/2025/10/2e7349e0-2da2-4462-a63f-0f39f9adafeb-871x1024.jpeg`, caption: 'Hair Dye' },
+  { src: `${MEDIA}/wp-content/uploads/2025/10/5fbc6405-88de-4f61-a8c1-bb3636a2d27e-863x1024.jpeg`, caption: 'Tapper Fade' },
+  { src: `${MEDIA}/wp-content/uploads/2025/10/a7e754ff-e7b7-4e0f-a40c-69f2a8f15527-1024x988.jpeg`, caption: 'Round Cut' },
+  { src: `${MEDIA}/wp-content/uploads/2025/10/e1d33e39-ab4c-40fb-a699-e4711235d343-936x1024.jpeg`, caption: 'Locks' },
+  { src: `${MEDIA}/wp-content/uploads/2025/10/c6175c55-424d-4864-beb2-01028a3b30d9-944x1024.jpeg`, caption: 'High Tapper' },
+  { src: `${MEDIA}/wp-content/uploads/2025/10/e50c2ed2-3d1b-41e3-b766-8c65deccff67.jpeg`, caption: 'Braids' },
 ];
 
-const GALLERY_IMAGES = [
-  '/images/278a2b3cf825ba6c793eb3dc2b0374b3.jpg',
-  '/images/65e434238ac0822f965117a26bb6951d.jpg',
-  '/images/7c1bf4e32515b68e3c4ac9815314f561.jpg',
-  '/images/948b11e05545c9d37cfd9068465b3fe6.jpg',
-  '/images/1745850448156.jpeg',
-  '/images/WhatsApp Image 2025-11-16 at 16.02.44_c168ed1b.jpg',
-  '/images/WhatsApp Image 2025-11-16 at 13.31.13_98036f65.jpg',
+const GALLERY_CAROUSEL = [
+  `${MEDIA}/wp-content/uploads/2025/10/c6175c55-424d-4864-beb2-01028a3b30d9-276x300.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/e25fb414-4c63-47fa-8584-d577356e5da9-300x290.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/e1d33e39-ab4c-40fb-a699-e4711235d343-274x300.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/4925501c-2e21-41b6-b943-7be70428cd97-300x294.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/3ba511bc-2d3d-4cb3-9ee2-1500d1f7771c-269x300.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/f4d0215e-a42b-4a7a-a102-7f8f771ea25f-255x300.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/fb38aac4-11c0-41cb-bace-6430b45387a6-275x300.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/e7c29c32-b537-4a97-b15e-4a0bbf6ef82d-257x300.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/9574667e-e7e3-4c54-baa1-3fe85a175adf-274x300.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/67e08b01-213b-4c65-82c9-11c93244021f-258x300.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/10/e50c2ed2-3d1b-41e3-b766-8c65deccff67-300x300.jpeg`,
 ];
 
 const PARTNERS = [
-  '/images/Airtel_logo-01.png',
-  '/images/ke-scbk-logo-min.png',
-  '/images/Moniepoint Logo_White on Blue.webp',
-  '/images/securepay-removebg-preview (1).png',
+  `${MEDIA}/wp-content/uploads/2025/09/IMG_0375.png`,
+  `${MEDIA}/wp-content/uploads/2025/09/fbd1ba7b-3928-41c9-b92a-bcc172e174d9.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/09/IMG_0376.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/09/images-1.png`,
+  `${MEDIA}/wp-content/uploads/2025/09/Zenith-Bank-logo.png`,
+  `${MEDIA}/wp-content/uploads/2025/09/1hOeKxzZ_400x400.jpg`,
+  `${MEDIA}/wp-content/uploads/2025/10/IMG_1842.png`,
+  `${MEDIA}/wp-content/uploads/2025/10/IMG_1839.png`,
+  `${MEDIA}/wp-content/uploads/2025/10/images-2.png`,
+  `${MEDIA}/wp-content/uploads/2025/10/Airtel_logo-01.png`,
 ];
 
 const REVIEWS = [
-  { name: 'David Adekunle', avatar: '/images/images (1).jpeg', rating: 5, text: "Got the cleanest fade I've had in Benin City. BBS barbers are true professionals. The attention to detail is absolutely unmatched. Worth every penny.", time: '2 weeks ago' },
-  { name: 'Wale Ibrahim', avatar: '/images/images (2).jpeg', rating: 5, text: 'The service quality in Benin City is outstanding. From the moment I walked in, I was treated like royalty. My haircut was perfect, and the studio has a premium feel. Will definitely be back!', time: '1 month ago' },
-  { name: 'Chinedu Okafor', avatar: '/images/images (4).jpeg', rating: 4.5, text: 'Professional service from start to finish. The barbers really know their craft and take their time to get everything perfect. Best haircut experience in Benin City by far.', time: '3 weeks ago' },
-  { name: 'Tunde Balogun', avatar: '/images/images (5).jpeg', rating: 5, text: "The hair treatment service changed my hair completely! I've struggled with dryness and breakage for years. After their deep conditioning treatment, my hair feels healthier and looks shinier than ever.", time: '5 days ago' },
-  { name: 'Hammed Bello', avatar: '/images/images (3).jpeg', rating: 5, text: 'The hair fibre replacement procedure exceeded all my expectations. Natural-looking results and the team was so professional throughout. My confidence has returned completely. Highly recommend BBS!', time: '2 months ago' },
-  { name: 'Emeka Nwosu', avatar: '/images/efffa01b942bd74e.jpeg', rating: 5, text: "I was nervous about getting hair fibre replacement, but BBS made the whole process comfortable and painless. The results look completely natural – even my family couldn't tell! Worth every investment.", time: '1 week ago' },
+  { name: 'David Adekunle', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-1.jpeg`, rating: 5, text: "Got the cleanest fade I've had in Benin City. BBS barbers are true professionals. The attention to detail is absolutely unmatched. Worth every penny.", time: '2 weeks ago' },
+  { name: 'wale Ibrahim', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-2.jpeg`, rating: 5, text: 'The service quality in Benin City is outstanding. From the moment I walked in, I was treated like royalty. My haircut was perfect, and the haircut studio has a premium feel. Will definitely be back!', time: '1 month ago' },
+  { name: 'Chinedu Okafor', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-4.jpeg`, rating: 4.5, text: 'Professional service from start to finish. The barbers really know their craft and take their time to get everything perfect. Best haircut experience in Benin City by far.', time: '3 weeks ago' },
+  { name: 'Tunde Balogun', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-5.jpeg`, rating: 5, text: "The hair treatment service changed my hair completely! I've struggled with dryness and breakage for years. After their deep conditioning treatment, my hair feels healthier and looks shinier than ever before.", time: '5 days ago' },
+  { name: 'Hammed Bello', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-3.jpeg`, rating: 5, text: 'The hair fibre replacement procedure exceeded all my expectations. Natural-looking results and the team was so professional throughout. My confidence has returned completely. Highly recommend BBS for this service!', time: '2 months ago' },
+  { name: 'Emeka Nwosu', avatar: `${MEDIA}/wp-content/uploads/2025/10/efffa01b942bd74e.jpeg`, rating: 5, text: "I was nervous about getting hair fibre replacement, but BBS made the whole process comfortable and painless. The results look completely natural – even my family couldn't tell! Worth every investment.", time: '1 week ago' },
 ];
 
-const HERO_VIDEO = 'https://whitesmoke-jackal-101083.hostingersite.com/wp-content/uploads/2025/07/WhatsApp-Video-2025-07-30-at-10.39.46_f8c76c0c.mp4';
+const HERO_VIDEO = `${MEDIA}/wp-content/uploads/2025/07/WhatsApp-Video-2025-07-30-at-10.39.46_f8c76c0c.mp4`;
 const FEATURE_VIDEOS = [
-  'https://whitesmoke-jackal-101083.hostingersite.com/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_ddqyje96w0duyldas6cq8a-1.mp4',
-  'https://whitesmoke-jackal-101083.hostingersite.com/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_qwsk893v42c62vhgzrruj5-1.mp4',
-  'https://whitesmoke-jackal-101083.hostingersite.com/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_4zu8nyz8y9gs5oi1gg8tfl.mp4',
+  `${MEDIA}/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_ddqyje96w0duyldas6cq8a-1.mp4`,
+  `${MEDIA}/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_qwsk893v42c62vhgzrruj5-1.mp4`,
+  `${MEDIA}/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_4zu8nyz8y9gs5oi1gg8tfl.mp4`,
 ];
+
+const BEFORE_IMG = `${MEDIA}/wp-content/uploads/2025/09/bfr.jpeg`;
+const AFTER_IMG = `${MEDIA}/wp-content/uploads/2025/09/aft.jpeg`;
 
 export default function Home() {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
-  const sliderRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
   const [counters, setCounters] = useState({ clients: 0, barbers: 0, satisfaction: 0, appointments: 0 });
@@ -101,9 +115,26 @@ export default function Home() {
   const onDown = () => setIsDragging(true);
   const onUp = () => setIsDragging(false);
 
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e: MouseEvent) => handleSliderMove(e.clientX);
+    const onTouch = (e: TouchEvent) => e.touches[0] && handleSliderMove(e.touches[0].clientX);
+    const onEnd = () => onUp();
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchmove', onTouch, { passive: false });
+    window.addEventListener('touchend', onEnd);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onEnd);
+      window.removeEventListener('touchmove', onTouch);
+      window.removeEventListener('touchend', onEnd);
+    };
+  }, [isDragging]);
+
   return (
     <div className={styles.home}>
-      {/* Hero */}
+      {/* Hero - exact copy from current site */}
       <section className={styles.hero}>
         <div className={styles.heroVideo}>
           <video autoPlay loop muted playsInline>
@@ -112,17 +143,17 @@ export default function Home() {
         </div>
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>
-          <p className={styles.heroPrefix}>Need a haircut?</p>
+          <h5 className={styles.heroPrefix}>NEED A HAIRCUT ?</h5>
           <h1 className={styles.heroTitle}>The Art of the Perfect Cut.</h1>
-          <Link href="/book" className={styles.ctaBtn}>Book now</Link>
+          <Link href="/book" className={styles.ctaBtn}>BOOK NOW</Link>
         </div>
       </section>
 
-      {/* Service intro */}
+      {/* The Barber Comes to You + gallery */}
       <section className={styles.serviceIntro}>
         <div className={styles.serviceIntroInner}>
           <div className={styles.serviceIntroText}>
-            <h2 className={styles.sectionTitle}>The barber comes to you</h2>
+            <h3 className={styles.sectionTitle}>The Barber Comes to You.</h3>
             <p className={styles.sectionLead}>
               Enjoy a premium studio experience from the comfort of your home. Our expert barbers bring their skills and equipment directly to your door.
             </p>
@@ -130,7 +161,7 @@ export default function Home() {
           <div className={styles.serviceGrid}>
             {SERVICE_IMAGES.map((img, i) => (
               <div key={i} className={styles.serviceCard}>
-                <Image src={img.src} alt={img.caption} width={360} height={480} className={styles.serviceImg} />
+                <Image src={img.src} alt={img.caption} width={360} height={480} className={styles.serviceImg} unoptimized />
                 <span className={styles.serviceCaption}>{img.caption}</span>
               </div>
             ))}
@@ -141,11 +172,11 @@ export default function Home() {
       {/* What we do */}
       <section className={styles.whatWeDo}>
         <div className={styles.whatWeDoInner}>
-          <h2 className={styles.sectionTitle}>What we do</h2>
+          <h2 className={styles.whatWeDoHeading}><strong>What we do</strong></h2>
           <div className={styles.sep} />
-          <p className={styles.whatWeDoP}>
+          <h5 className={styles.whatWeDoP}>
             BBS Limited brings the full studio experience directly to you. Our skilled professionals provide premium haircuts and grooming services at your home or office, on your schedule.
-          </p>
+          </h5>
         </div>
       </section>
 
@@ -159,8 +190,9 @@ export default function Home() {
               </video>
             </div>
             <div className={styles.featureContent}>
-              <h3 className={styles.featureTitle}>Masterful craftsmanship</h3>
-              <p>We meticulously select and train only the most skilled and passionate barbers. Each professional is dedicated to perfecting their craft and delivering a flawless look.</p>
+              <h3 className={styles.featureTitle}>Masterful Craftsmanship.</h3>
+              <p className={styles.featureDesc}>We meticulously select and train only the most skilled and passionate barbers. Each professional on our team is dedicated to perfecting their craft and delivering a flawless look.</p>
+              <div className={styles.featureSep} />
             </div>
           </div>
           <div className={styles.featureCard}>
@@ -170,8 +202,9 @@ export default function Home() {
               </video>
             </div>
             <div className={styles.featureContent}>
-              <h3 className={styles.featureTitle}>Unmatched convenience</h3>
-              <p>We bring the complete barbershop experience directly to you. Enjoy a premium service at your home or office, saving you time and the hassle of travel and waiting.</p>
+              <h3 className={styles.featureTitle}><strong>Unmatched Convenience</strong></h3>
+              <p className={styles.featureDesc}>We bring the complete barbershop experience directly to you. Enjoy a premium service at your home or office, saving you time and the hassle of travel and waiting.</p>
+              <div className={styles.featureSep} />
             </div>
           </div>
           <div className={styles.featureCard}>
@@ -181,17 +214,19 @@ export default function Home() {
               </video>
             </div>
             <div className={styles.featureContent}>
-              <h3 className={styles.featureTitle}>A full suite of services</h3>
-              <p>Beyond the cut, we offer a comprehensive range of grooming services. From detailed beard trims to nourishing haircare treatments, we cater to all your styling needs.</p>
+              <h3 className={styles.featureTitle}>A Full Suite of Services</h3>
+              <p className={styles.featureDesc}>Beyond the cut, we offer a comprehensive range of grooming services. From detailed beard trims to nourishing haircare treatments, we cater to all your styling needs.</p>
+              <div className={styles.featureSep} />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Before / After */}
+      {/* See the Real Difference + Before/After */}
       <section className={styles.beforeAfter}>
         <div className={styles.beforeAfterInner}>
-          <h2 className={styles.sectionTitle}>See the real difference up close</h2>
+          <h2 className={styles.sectionTitle}>See the Real Difference up Close.</h2>
+          <h2 className={styles.beforeAfterSubtitle}>Advanced Hair Replacement</h2>
           <div
             ref={containerRef}
             className={styles.sliderWrap}
@@ -203,13 +238,13 @@ export default function Home() {
             onClick={(e) => !isDragging && handleSliderMove(e.clientX)}
           >
             <div className={styles.beforeWrap} style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}>
-              <Image src="/images/bfr.jpeg" alt="Before" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" />
+              <Image src={BEFORE_IMG} alt="Before" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" unoptimized />
             </div>
             <div className={styles.afterWrap} style={{ clipPath: `polygon(${sliderPosition}% 0, 100% 0, 100% 100%, ${sliderPosition}% 100%)` }}>
-              <Image src="/images/aft.jpeg" alt="After" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" />
+              <Image src={AFTER_IMG} alt="After" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" unoptimized />
             </div>
             <div className={styles.sliderLine} style={{ left: `${sliderPosition}%` }} />
-            <div ref={sliderRef} className={styles.sliderHandle} style={{ left: `${sliderPosition}%` }} onMouseDown={onDown} onTouchStart={onDown}>
+            <div className={styles.sliderHandle} style={{ left: `${sliderPosition}%` }} onMouseDown={onDown} onTouchStart={onDown}>
               <span className={styles.sliderIcon} aria-hidden>↔</span>
             </div>
             <span className={styles.beforeLabel}>Before</span>
@@ -218,58 +253,67 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Our Record of Excellence */}
       <section id="stats-section" className={styles.stats}>
         <div className={styles.statsInner}>
-          <h2 className={styles.sectionTitle}>Our record of excellence</h2>
-          <p className={styles.statsSub}>Our commitment to quality and service is reflected in our growing community of satisfied clients.</p>
+          <div className={styles.statsIntro}>
+            <h2 className={styles.sectionTitle}>Our Record of Excellence</h2>
+            <p className={styles.statsSub}>Our commitment to quality and service is reflected in our growing community of satisfied clients. Here are the numbers that show our dedication.</p>
+          </div>
           <div className={styles.statsGrid}>
             <div className={styles.statCard}>
-              <span className={styles.statNum}>{counters.clients}+</span>
-              <span className={styles.statLabel}>Happy clients</span>
+              <span className={styles.statNum}>{counters.clients}<span className={styles.statSuffix}>+</span></span>
+              <span className={styles.statLabel}>Happy Clients</span>
             </div>
             <div className={styles.statCard}>
-              <span className={styles.statNum}>{counters.barbers}+</span>
-              <span className={styles.statLabel}>Expert barbers</span>
+              <span className={styles.statNum}>{counters.barbers}<span className={styles.statSuffix}>+</span></span>
+              <span className={styles.statLabel}>Expert Barbers</span>
             </div>
             <div className={styles.statCard}>
-              <span className={styles.statNum}>{counters.satisfaction}%</span>
-              <span className={styles.statLabel}>Satisfaction rate</span>
+              <span className={styles.statNum}>{counters.satisfaction}<span className={styles.statSuffix}>%</span></span>
+              <span className={styles.statLabel}><strong>Satisfaction Rate</strong></span>
             </div>
             <div className={styles.statCard}>
-              <span className={styles.statNum}>{counters.appointments}+</span>
-              <span className={styles.statLabel}>Appointments booked</span>
+              <span className={styles.statNum}>{counters.appointments}<span className={styles.statSuffix}>s</span></span>
+              <span className={styles.statLabel}>Appointments Booked</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Gallery */}
+      {/* Gallery carousel */}
       <section className={styles.gallery}>
         <div ref={galleryRef} className={styles.galleryTrack}>
-          {GALLERY_IMAGES.map((src, i) => (
+          {GALLERY_CAROUSEL.map((src, i) => (
             <div key={i} className={styles.galleryItem}>
-              <Image src={src} alt={`Gallery ${i + 1}`} width={320} height={400} className={styles.galleryImg} />
+              <Image src={src} alt={`Gallery ${i + 1}`} width={276} height={300} className={styles.galleryImg} unoptimized />
             </div>
           ))}
         </div>
       </section>
 
-      {/* Partners */}
+      {/* OUR PARTNERS */}
       <section className={styles.partners}>
         <div className={styles.partnersInner}>
-          <p className={styles.partnersTitle}>Our partners</p>
+          <h6 className={styles.partnersTitle}>OUR PARTNERS</h6>
           <div className={styles.partnersGrid}>
             {PARTNERS.map((logo, i) => (
               <div key={i} className={styles.partnerLogo}>
-                <Image src={logo} alt={`Partner ${i + 1}`} width={120} height={60} className={styles.partnerImg} />
+                <Image src={logo} alt={`Partner ${i + 1}`} width={120} height={60} className={styles.partnerImg} unoptimized />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Reviews */}
+      {/* READY FOR A NEW LOOK? */}
+      <section className={styles.finalCta}>
+        <span className={styles.ctaPrefix}>READY FOR A NEW LOOK?</span>
+        <h2 className={styles.ctaTitle}>Book an appointment with us and experience the ultimate in convenience and style.</h2>
+        <Link href="/book" className={styles.ctaBtn}>BOOK NOW</Link>
+      </section>
+
+      {/* Customer Reviews - Google style */}
       <section className={styles.reviews}>
         <div className={styles.reviewsInner}>
           <div className={styles.reviewsHead}>
@@ -293,9 +337,9 @@ export default function Home() {
               <article key={i} className={styles.reviewCard}>
                 <div className={styles.reviewHead}>
                   <div className={styles.reviewAvatar}>
-                    <Image src={r.avatar} alt="" width={40} height={40} className={styles.avatarImg} />
+                    <Image src={r.avatar} alt="" width={40} height={40} className={styles.avatarImg} unoptimized />
                   </div>
-                  <div>
+                  <div className={styles.reviewHeadText}>
                     <div className={styles.reviewName}>{r.name}</div>
                     <div className={styles.reviewStarsSmall}>
                       {[1, 2, 3, 4, 5].map((j) => (
@@ -307,19 +351,13 @@ export default function Home() {
                 <p className={styles.reviewText}>{r.text}</p>
                 <div className={styles.reviewMeta}>
                   <span>{r.time}</span>
-                  <span className={styles.verified}>✓ Verified</span>
+                  <span>•</span>
+                  <span className={styles.verified}>Verified</span>
                 </div>
               </article>
             ))}
           </div>
         </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className={styles.finalCta}>
-        <p className={styles.ctaPrefix}>Ready for a new look?</p>
-        <h2 className={styles.ctaTitle}>Book an appointment and experience the ultimate in convenience and style.</h2>
-        <Link href="/book" className={styles.ctaBtn}>Book now</Link>
       </section>
     </div>
   );

@@ -1,4 +1,5 @@
-/* Home – simplistic, classy. Colors: #39413f, #dcd2cc, #c9a227, #2d3432, #4a4a4a */
+/* Landing page – exact design match to current site (Astra/theme).
+   Colors: #39413f, #dcd2cc, #c9a227 / #b88a1e, #4a4a4a. Fonts: Poppins (headings), Source Sans Pro (body). */
 
 .home {
   width: 100%;
@@ -46,62 +47,69 @@
 }
 
 .heroPrefix {
+  font-family: 'Poppins', sans-serif;
   font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: 0.2em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-bottom: 1rem;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .heroTitle {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 600;
-  line-height: 1.15;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.5rem, 5.3vw, 5.3rem);
+  line-height: 1.2;
   margin-bottom: 2rem;
-  font-family: 'Playfair Display', Georgia, serif;
 }
 
 .ctaBtn {
   display: inline-block;
-  padding: 0.875rem 2rem;
-  background: #39413f;
-  color: #fff;
+  padding: 17px 35px;
+  background: #c9a227;
+  color: #000000;
   text-decoration: none;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  transition: background 0.25s ease, transform 0.2s ease;
+  border: none;
+  border-radius: 0;
+  line-height: 1em;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
 }
 
 .ctaBtn:hover {
-  background: #2d3432;
+  background: #dcd2cc;
+  color: #000;
   transform: translateY(-1px);
 }
 
-/* ----- Service intro ----- */
+/* ----- Service intro (The Barber Comes to You) ----- */
 .serviceIntro {
-  padding: clamp(4rem, 8vw, 6rem) 1.5rem;
-  background: #fff;
+  padding: clamp(3em, 6vw, 5em) 1.5rem;
+  background: #dcd2cc;
 }
 
 .serviceIntroInner {
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
 .serviceIntroText {
-  margin-bottom: 3rem;
-  max-width: 520px;
+  margin-bottom: 2.5rem;
+  max-width: 640px;
 }
 
 .sectionTitle {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 600;
-  color: #39413f;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.75rem, 2.2rem, 2.06rem);
+  line-height: 1.3;
+  color: #4a4a4a;
   margin-bottom: 1rem;
-  font-family: 'Playfair Display', Georgia, serif;
 }
 
 .sectionLead {
@@ -112,7 +120,7 @@
 
 .serviceGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 
@@ -135,7 +143,7 @@
   left: 0;
   right: 0;
   padding: 1rem 1.25rem;
-  background: linear-gradient(to top, rgba(57, 65, 63, 0.85), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
   color: #fff;
   font-size: 0.875rem;
   font-weight: 600;
@@ -144,14 +152,22 @@
 
 /* ----- What we do ----- */
 .whatWeDo {
-  padding: clamp(4rem, 8vw, 6rem) 1.5rem;
-  background: #f5f2ef;
+  padding: clamp(3em, 6vw, 5em) 1.5rem;
+  background: #dcd2cc;
   text-align: center;
 }
 
 .whatWeDoInner {
   max-width: 720px;
   margin: 0 auto;
+}
+
+.whatWeDoHeading {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2rem, 2.2rem);
+  color: #4a4a4a;
+  margin-bottom: 1rem;
 }
 
 .sep {
@@ -165,20 +181,21 @@
   font-size: 1.0625rem;
   line-height: 1.75;
   color: #4a4a4a;
+  font-weight: 400;
 }
 
 /* ----- Features ----- */
 .features {
-  padding: clamp(4rem, 8vw, 6rem) 1.5rem;
-  background: #fff;
+  padding: clamp(3em, 6vw, 5em) 1.5rem;
+  background: #dcd2cc;
 }
 
 .featuresInner {
-  max-width: 1100px;
+  max-width: 1240px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  gap: 2.5rem;
 }
 
 .featureCard {
@@ -211,23 +228,31 @@
 }
 
 .featureTitle {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.25rem, 1.5rem, 2.06rem);
+  line-height: 1.3;
   margin-bottom: 0.5rem;
-  font-family: 'Playfair Display', Georgia, serif;
 }
 
-.featureContent p {
+.featureDesc {
   font-size: 0.9375rem;
   line-height: 1.6;
   opacity: 0.95;
   max-width: 480px;
 }
 
+.featureSep {
+  margin-top: 1rem;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.3);
+  max-width: 60px;
+}
+
 /* ----- Before / After ----- */
 .beforeAfter {
-  padding: clamp(4rem, 8vw, 6rem) 1.5rem;
-  background: #f5f2ef;
+  padding: clamp(3em, 6vw, 5em) 1.5rem;
+  background: #dcd2cc;
   text-align: center;
 }
 
@@ -237,19 +262,29 @@
 }
 
 .beforeAfter .sectionTitle {
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.beforeAfterSubtitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1.5rem;
 }
 
 .sliderWrap {
   position: relative;
-  width: 100%;
+  width: 90vw;
+  max-width: 420px;
   height: 320px;
-  border-radius: 4px;
+  margin: 0 auto;
+  border-radius: 20px;
   overflow: hidden;
   cursor: ew-resize;
   touch-action: none;
   user-select: none;
-  box-shadow: 0 8px 32px rgba(57, 65, 63, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .beforeWrap,
@@ -266,12 +301,12 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 2px;
+  width: 3px;
   background: #fff;
   z-index: 10;
   transform: translateX(-50%);
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .sliderHandle {
@@ -280,7 +315,7 @@
   width: 40px;
   height: 40px;
   background: #fff;
-  border: 2px solid #39413f;
+  border: 3px solid #333;
   border-radius: 50%;
   cursor: ew-resize;
   z-index: 15;
@@ -288,52 +323,57 @@
   align-items: center;
   justify-content: center;
   transform: translate(-50%, -50%);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-  transition: transform 0.15s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease;
 }
 
 .sliderHandle:hover {
-  transform: translate(-50%, -50%) scale(1.06);
+  transform: translate(-50%, -50%) scale(1.1);
 }
 
 .sliderIcon {
-  font-size: 1rem;
-  color: #39413f;
-  font-weight: 700;
+  font-size: 20px;
+  color: #333;
+  font-weight: bold;
 }
 
 .beforeLabel,
 .afterLabel {
   position: absolute;
-  top: 1rem;
-  padding: 0.4rem 0.75rem;
-  background: rgba(57, 65, 63, 0.75);
+  top: 20px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.7);
   color: #fff;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 25px;
   z-index: 12;
+  backdrop-filter: blur(10px);
 }
 
 .beforeLabel {
-  left: 1rem;
+  left: 20px;
 }
 
 .afterLabel {
-  right: 1rem;
+  right: 20px;
 }
 
-/* ----- Stats ----- */
+/* ----- Stats (Our Record of Excellence) ----- */
 .stats {
-  padding: clamp(4rem, 8vw, 6rem) 1.5rem;
+  padding: clamp(3em, 6vw, 5em) 1.5rem;
   background: #39413f;
   color: #fff;
   text-align: center;
 }
 
 .statsInner {
-  max-width: 900px;
+  max-width: 1240px;
   margin: 0 auto;
+}
+
+.statsIntro {
+  margin-bottom: 2.5rem;
 }
 
 .stats .sectionTitle {
@@ -344,14 +384,16 @@
 .statsSub {
   font-size: 1rem;
   line-height: 1.6;
-  opacity: 0.88;
-  margin-bottom: 2.5rem;
+  opacity: 0.9;
+  max-width: 640px;
+  margin: 0 auto;
 }
 
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
+  align-items: start;
 }
 
 .statCard {
@@ -361,9 +403,14 @@
 }
 
 .statNum {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
   font-size: clamp(2rem, 4vw, 2.75rem);
-  font-weight: 600;
-  font-family: 'Playfair Display', Georgia, serif;
+  line-height: 1.2;
+}
+
+.statSuffix {
+  font-family: inherit;
 }
 
 .statLabel {
@@ -372,11 +419,11 @@
   letter-spacing: 0.02em;
 }
 
-/* ----- Gallery ----- */
+/* ----- Gallery carousel ----- */
 .gallery {
   padding: 3rem 0;
   overflow: hidden;
-  background: #fff;
+  background: #dcd2cc;
 }
 
 .galleryTrack {
@@ -395,7 +442,7 @@
 
 .galleryItem {
   flex-shrink: 0;
-  width: 280px;
+  width: 276px;
   scroll-snap-align: start;
   border-radius: 4px;
   overflow: hidden;
@@ -405,33 +452,34 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 276 / 300;
 }
 
 /* ----- Partners ----- */
 .partners {
   padding: clamp(3rem, 6vw, 4rem) 1.5rem;
-  background: #f5f2ef;
+  background: #dcd2cc;
   text-align: center;
 }
 
 .partnersInner {
-  max-width: 900px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
 .partnersTitle {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 0.941176rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #39413f;
+  color: #4a4a4a;
   margin-bottom: 2rem;
 }
 
 .partnersGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 2rem;
   align-items: center;
   justify-items: center;
@@ -447,10 +495,10 @@
 .partnerImg {
   width: 100%;
   height: auto;
-  max-height: 48px;
+  max-height: 60px;
   object-fit: contain;
-  filter: grayscale(1);
-  opacity: 0.6;
+  filter: grayscale(0.3);
+  opacity: 0.85;
   transition: filter 0.25s ease, opacity 0.25s ease;
 }
 
@@ -459,14 +507,51 @@
   opacity: 1;
 }
 
-/* ----- Reviews ----- */
-.reviews {
-  padding: clamp(4rem, 8vw, 6rem) 1.5rem;
+/* ----- Final CTA ----- */
+.finalCta {
+  padding: clamp(3em, 6vw, 5em) 1.5rem;
+  text-align: center;
+  background: #39413f;
+  color: #fff;
+}
+
+.ctaPrefix {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  opacity: 0.95;
+}
+
+.ctaTitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2rem, 2.25rem);
+  line-height: 1.3;
+  max-width: 640px;
+  margin: 0 auto 2rem;
+}
+
+.finalCta .ctaBtn {
   background: #fff;
+  color: #39413f;
+}
+
+.finalCta .ctaBtn:hover {
+  background: #dcd2cc;
+  color: #39413f;
+}
+
+/* ----- Reviews (Google style) ----- */
+.reviews {
+  padding: clamp(3em, 6vw, 5em) 1.5rem;
+  background: #ffffff;
 }
 
 .reviewsInner {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -478,70 +563,69 @@
 .reviewsBrand {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 8px;
+  margin-bottom: 1.5rem;
 }
 
 .googleIcon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
 }
 
 .reviewsBrandText {
-  font-size: 1.25rem;
-  color: #4a4a4a;
-  font-weight: 500;
+  font-size: 24px;
+  color: #5f6368;
+  font-weight: 400;
 }
 
 .ratingNum {
-  font-size: 2.5rem;
-  font-weight: 500;
-  color: #39413f;
-  margin-bottom: 0.25rem;
-  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 48px;
+  font-weight: 400;
+  color: #202124;
+  margin-bottom: 0.5rem;
 }
 
 .ratingStars {
   display: flex;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 4px;
   margin-bottom: 0.5rem;
 }
 
 .star {
-  color: #c9a227;
-  font-size: 1.25rem;
+  color: #fbbc04;
+  font-size: 24px;
 }
 
 .reviewCount {
-  font-size: 0.875rem;
-  color: #4a4a4a;
+  font-size: 14px;
+  color: #5f6368;
 }
 
 .reviewsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+  gap: 16px;
+  margin-top: 2rem;
 }
 
 .reviewCard {
-  padding: 1.5rem;
-  background: #faf9f8;
-  border: 1px solid rgba(57, 65, 63, 0.08);
-  border-radius: 4px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease;
 }
 
 .reviewCard:hover {
-  border-color: rgba(57, 65, 63, 0.15);
-  box-shadow: 0 4px 20px rgba(57, 65, 63, 0.06);
+  box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
 }
 
 .reviewHead {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .reviewAvatar {
@@ -558,94 +642,66 @@
   object-fit: cover;
 }
 
+.reviewHeadText {
+  flex: 1;
+  min-width: 0;
+}
+
 .reviewName {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #39413f;
-  margin-bottom: 0.15rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: #202124;
+  margin-bottom: 2px;
 }
 
 .reviewStarsSmall {
   display: flex;
-  gap: 0.1rem;
+  gap: 2px;
 }
 
 .starFilled {
-  color: #c9a227;
-  font-size: 0.75rem;
+  color: #fbbc04;
+  font-size: 12px;
 }
 
 .starEmpty {
-  color: #ccc;
-  font-size: 0.75rem;
+  color: #dadce0;
+  font-size: 12px;
 }
 
 .reviewText {
-  font-size: 0.9375rem;
+  font-size: 14px;
   line-height: 1.6;
-  color: #4a4a4a;
-  margin-bottom: 1rem;
+  color: #3c4043;
+  margin-bottom: 12px;
 }
 
 .reviewMeta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: #4a4a4a;
-  opacity: 0.85;
+  gap: 8px;
+  font-size: 12px;
+  color: #5f6368;
 }
 
 .verified {
   font-weight: 500;
-  color: #39413f;
-}
-
-/* ----- Final CTA ----- */
-.finalCta {
-  padding: clamp(4rem, 8vw, 6rem) 1.5rem;
-  text-align: center;
-  background: linear-gradient(180deg, #39413f 0%, #2d3432 100%);
-  color: #fff;
-}
-
-.ctaPrefix {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-  opacity: 0.9;
-}
-
-.ctaTitle {
-  font-size: clamp(1.5rem, 3vw, 2.25rem);
-  font-weight: 600;
-  line-height: 1.3;
-  max-width: 640px;
-  margin: 0 auto 2rem;
-  font-family: 'Playfair Display', Georgia, serif;
-}
-
-.finalCta .ctaBtn {
-  background: #fff;
-  color: #39413f;
-}
-
-.finalCta .ctaBtn:hover {
-  background: #dcd2cc;
-  color: #39413f;
+  color: #1a73e8;
 }
 
 /* ----- Responsive ----- */
 @media (max-width: 1024px) {
+  .serviceGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
   }
 
   .partnersGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .reviewsGrid {
@@ -654,6 +710,14 @@
 }
 
 @media (max-width: 768px) {
+  .heroTitle {
+    font-size: 60px;
+  }
+
+  .sectionTitle {
+    font-size: 30px;
+  }
+
   .serviceGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
@@ -679,25 +743,58 @@
   .galleryItem {
     width: 240px;
   }
+
+  .partnersGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 650px) {
+  .sliderWrap {
+    height: 280px;
+  }
+
+  .beforeLabel,
+  .afterLabel {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+
+  .sliderHandle {
+    width: 35px;
+    height: 35px;
+  }
+
+  .sliderIcon {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 544px) {
+  .heroTitle {
+    font-size: 50px;
+  }
+
+  .sectionTitle {
+    font-size: 28px;
+  }
+
   .serviceGrid {
     grid-template-columns: 1fr;
   }
 
   .sliderWrap {
-    height: 260px;
+    height: 280px;
   }
 
   .sliderHandle {
-    width: 36px;
-    height: 36px;
+    width: 35px;
+    height: 35px;
   }
 
   .beforeLabel,
   .afterLabel {
-    font-size: 0.6875rem;
-    padding: 0.35rem 0.6rem;
+    font-size: 14px;
+    padding: 6px 12px;
   }
 }
