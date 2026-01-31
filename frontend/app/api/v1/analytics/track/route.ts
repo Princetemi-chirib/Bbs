@@ -19,6 +19,11 @@ export async function POST(request: NextRequest) {
       ? body.device.toLowerCase()
       : null;
     const sessionId = typeof body.sessionId === 'string' ? body.sessionId.trim().slice(0, 256) : null;
+    // §2 Geography: use body if provided, else Vercel geo headers (from client IP)
+    const country = typeof body.country === 'string' ? body.country.trim().slice(0, 100)
+      : (request.headers.get('x-vercel-ip-country') || '').trim().slice(0, 100) || null;
+    const city = typeof body.city === 'string' ? body.city.trim().slice(0, 100)
+      : (request.headers.get('x-vercel-ip-city') || '').trim().slice(0, 100) || null;
 
     await prisma.trafficEvent.create({
       data: {
@@ -26,6 +31,8 @@ export async function POST(request: NextRequest) {
         referrer: referrer || undefined,
         device: device || undefined,
         sessionId: sessionId || undefined,
+        country: country || undefined,
+        city: city || undefined,
       },
     });
 

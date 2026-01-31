@@ -33,14 +33,14 @@ export default function AuthGuard({
         let authorized = false;
 
         if (requiredRole === 'ADMIN_OR_REP') {
-          authorized = user?.role === 'ADMIN' || user?.role === 'REP';
+          authorized = user?.role === 'ADMIN' || user?.role === 'REP' || user?.role === 'MANAGER' || user?.role === 'VIEWER';
         } else {
           authorized = hasRole(requiredRole);
         }
 
         if (!authorized) {
           // Redirect based on user role
-          if (user?.role === 'ADMIN' || user?.role === 'REP') {
+          if (user?.role === 'ADMIN' || user?.role === 'REP' || user?.role === 'MANAGER' || user?.role === 'VIEWER') {
             router.push('/admin');
           } else if (user?.role === 'BARBER') {
             router.push('/barber');

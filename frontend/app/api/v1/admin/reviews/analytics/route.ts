@@ -267,6 +267,40 @@ export async function GET(request: NextRequest) {
         createdAt: r.createdAt,
       }));
 
+    // §8.1 Sentiment analysis: simple keyword-based (positive/negative word counts)
+    const positiveWords = ['great', 'excellent', 'amazing', 'love', 'best', 'happy', 'recommend', 'perfect', 'wonderful', 'fantastic', 'good', 'nice', 'friendly', 'professional', 'clean', 'fast', 'satisfied'];
+    const negativeWords = ['bad', 'terrible', 'worst', 'slow', 'rude', 'dirty', 'disappointed', 'poor', 'never', 'unprofessional', 'late', 'messy', 'awful', 'horrible', 'waste', 'complaint'];
+    const toTokens = (text: string | null) => (text || '').toLowerCase().replace(/\s+/g, ' ').split(' ').filter(Boolean);
+    let positiveCount = 0;
+    let negativeCount = 0;
+    const themeCounts: Record<string, number> = {};
+    for (const r of reviews) {
+      const comment = (r.comment || '').toLowerCase();
+      const tokens = toTokens(r.comment);
+      for (const w of positiveWords) {
+        if (comment.includes(w)) positiveCount++;
+      }
+      for (const w of negativeWords) {
+        if (comment.includes(w)) negativeCount++;
+      }
+      // Simple themes: map keywords to theme labels
+      if (comment.includes('wait') || comment.includes('time')) themeCounts['Wait time'] = (themeCounts['Wait time'] ?? 0) + 1;
+      if (comment.includes('price') || comment.includes('cost') || comment.includes('expensive')) themeCounts['Pricing'] = (themeCounts['Pricing'] ?? 0) + 1;
+      if (comment.includes('quality') || comment.includes('result') || comment.includes('haircut') || comment.includes('style')) themeCounts['Service quality'] = (themeCounts['Service quality'] ?? 0) + 1;
+      if (comment.includes('staff') || comment.includes('barber') || comment.includes('friendly') || comment.includes('rude')) themeCounts['Staff/Barber'] = (themeCounts['Staff/Barber'] ?? 0) + 1;
+      if (comment.includes('clean') || comment.includes('hygiene') || comment.includes('dirty')) themeCounts['Cleanliness'] = (themeCounts['Cleanliness'] ?? 0) + 1;
+      if (comment.includes('book') || comment.includes('appointment') || comment.includes('easy')) themeCounts['Booking experience'] = (themeCounts['Booking experience'] ?? 0) + 1;
+    }
+    const sentimentSummary = {
+      positiveMentions: positiveCount,
+      negativeMentions: negativeCount,
+      sentimentRatio: negativeCount > 0 ? Number((positiveCount / negativeCount).toFixed(2)) : (positiveCount > 0 ? 999 : 0),
+    };
+    const feedbackThemes = Object.entries(themeCounts)
+      .map(([theme, count]) => ({ theme, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15);
+
     return NextResponse.json({
       success: true,
       data: {
@@ -284,6 +318,8 @@ export async function GET(request: NextRequest) {
         reviewsByService: reviewsByService.slice(0, 20),
         reviewsByCategory,
         recentReviews,
+        sentimentSummary,
+        feedbackThemes,
       },
     });
   } catch (e: unknown) {
@@ -299,4 +335,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+
 

@@ -134,7 +134,6 @@ export async function POST(
           customerName: updatedOrder.customerName,
           orderNumber: updatedOrder.orderNumber,
           barberName: updatedOrder.assignedBarber.user.name,
-          barberPhone: updatedOrder.assignedBarber.user.phone || undefined,
           city: updatedOrder.city,
           location: updatedOrder.location,
           estimatedArrival: '10 minutes', // Default estimate

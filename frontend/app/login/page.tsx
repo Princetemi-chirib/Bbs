@@ -39,7 +39,7 @@ export default function LoginPage() {
       setUserData(data.data.user);
 
       // Redirect based on role
-      if (data.data.user.role === 'ADMIN' || data.data.user.role === 'REP') {
+      if (data.data.user.role === 'ADMIN' || data.data.user.role === 'REP' || data.data.user.role === 'MANAGER' || data.data.user.role === 'VIEWER') {
         router.push('/admin');
       } else if (data.data.user.role === 'BARBER') {
         router.push('/barber');

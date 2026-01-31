@@ -47,47 +47,55 @@ body {
   }
 }
 
-/* Floating Glass Header for Astra Theme - Ultra Slim Version */
+/* Floating Glass Header – home: dark glass + white links; other pages: solid dark */
 .main-header-bar {
-    background: rgba(255, 255, 255, 0.6); /* White with transparency */
-    backdrop-filter: blur(12px); /* Frosted glass blur */
-    -webkit-backdrop-filter: blur(12px); /* Safari support */
-    border-radius: 30px; /* Rounded edges */
-    padding: 2px 12px; /* Ultra slim padding */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    margin: 5px auto; /* Floating look */
-    width: 100%; /* Full width */
-    transition: all 0.3s ease; /* Smooth animation on scroll */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 30px;
+    padding: 2px 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    margin: 5px auto;
+    max-width: 95%;
+    width: 100%;
+    transition: all 0.3s ease;
     position: sticky;
     top: 5px;
     z-index: 1000;
 }
 
-/* Sticky Header Effect */
-.main-header-bar.ast-fixed-header {
-    background: rgba(255, 255, 255, 0.75); /* Slightly more solid on scroll */
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+/* Home: dark semi-transparent glass, white nav links (matches hero headline section) */
+.main-header-bar:not(.solid-header) {
+    background: rgba(57, 65, 63, 0.75);
+}
+.main-header-bar:not(.solid-header).ast-fixed-header {
+    background: rgba(57, 65, 63, 0.85);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+}
+.main-header-bar:not(.solid-header) a,
+.main-header-bar:not(.solid-header) button {
+    color: #ffffff;
+}
+.main-header-bar:not(.solid-header) a:hover,
+.main-header-bar:not(.solid-header) button:hover {
+    color: #f5f5f5;
 }
 
-/* Solid header background for non-home pages */
+/* Solid header for non-home pages */
 .main-header-bar.solid-header {
     background: #39413f !important;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
-
 .main-header-bar.solid-header.ast-fixed-header {
     background: #39413f !important;
 }
-
-/* Glass header (home): ensure nav and hamburger are visible on light bg */
-.main-header-bar:not(.solid-header) a,
-.main-header-bar:not(.solid-header) button {
-    color: #39413f;
+.main-header-bar.solid-header a,
+.main-header-bar.solid-header button {
+    color: #ffffff;
 }
-.main-header-bar:not(.solid-header) a:hover,
-.main-header-bar:not(.solid-header) button:hover {
-    color: #2d3432;
+.main-header-bar.solid-header a:hover,
+.main-header-bar.solid-header button:hover {
+    color: #f5f5f5;
 }
 
 .main-header-bar {

@@ -151,7 +151,6 @@ export async function POST(
     if (updatedOrder.customerEmail && updatedOrder.assignedBarber) {
       try {
         const barberName = updatedOrder.assignedBarber.user.name;
-        const barberPhone = updatedOrder.assignedBarber.user.phone || undefined;
         let emailHtml: string | undefined;
         let emailSubject: string | undefined;
         let emailText: string | undefined;
@@ -161,7 +160,6 @@ export async function POST(
             customerName: updatedOrder.customerName,
             orderNumber: updatedOrder.orderNumber,
             barberName,
-            barberPhone,
             estimatedArrival: '10 minutes', // Could be calculated based on distance
             city: updatedOrder.city,
             location: updatedOrder.location,
@@ -173,7 +171,6 @@ export async function POST(
             customerName: updatedOrder.customerName,
             orderNumber: updatedOrder.orderNumber,
             barberName,
-            barberPhone,
           });
           emailSubject = `Your Barber Has Arrived - ${updatedOrder.orderNumber}`;
           emailText = `Hello ${updatedOrder.customerName},\n\nYour barber ${barberName} has arrived at your location and is ready to provide your service!\n\nOrder Number: ${updatedOrder.orderNumber}\n\nEnjoy your service!\n\nBest regards,\nBBS Limited Team`;
@@ -181,7 +178,7 @@ export async function POST(
           const env = {
             BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
           };
-          const reviewLink = `${env.BASE_URL}/orders/${updatedOrder.id}/review`;
+          const reviewLink = `${env.BASE_URL}/review/${updatedOrder.id}`;
 
           emailHtml = emailTemplates.serviceComplete({
             customerName: updatedOrder.customerName,

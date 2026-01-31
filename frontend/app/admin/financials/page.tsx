@@ -28,9 +28,13 @@ import {
   Mail,
   BookmarkPlus,
   Bookmark,
+  Activity,
+  Megaphone,
+  Layers,
+  Settings,
   type LucideIcon,
 } from 'lucide-react';
-import { fetchAuth, isAdmin } from '@/lib/auth';
+import { fetchAuth, isAdmin, isViewOnly } from '@/lib/auth';
 import styles from './financials.module.css';
 import {
   AreaChart,
@@ -52,7 +56,7 @@ import {
 
 const COLORS = ['#46B450', '#39413f', '#DCB2CC', '#FFC107', '#17A2B8', '#FF6B6B'];
 
-type TabId = 'overview' | 'financial' | 'customers' | 'orders' | 'barbers' | 'reviews' | 'traffic';
+type TabId = 'overview' | 'financial' | 'customers' | 'orders' | 'barbers' | 'reviews' | 'traffic' | 'operations' | 'marketing' | 'inventory' | 'settings';
 
 const TABS: { id: TabId; label: string; Icon: LucideIcon }[] = [
   { id: 'overview', label: 'Overview', Icon: LayoutDashboard },
@@ -62,6 +66,10 @@ const TABS: { id: TabId; label: string; Icon: LucideIcon }[] = [
   { id: 'barbers', label: 'Barbers', Icon: Scissors },
   { id: 'reviews', label: 'Reviews & Feedback', Icon: Star },
   { id: 'traffic', label: 'Site Traffic', Icon: Globe },
+  { id: 'operations', label: 'Operations', Icon: Activity },
+  { id: 'marketing', label: 'Marketing', Icon: Megaphone },
+  { id: 'inventory', label: 'Inventory', Icon: Layers },
+  { id: 'settings', label: 'Settings', Icon: Settings },
 ];
 
 export default function AdminFinancialsPage() {
@@ -95,8 +103,21 @@ export default function AdminFinancialsPage() {
   const [weeklyReportMessage, setWeeklyReportMessage] = useState('');
   const [savedViews, setSavedViews] = useState<{ id: string; name: string; filters: { period: string; startDate: string; endDate: string; filterBarber: string; filterLocation: string; filterCategory: string; filterService: string } }[]>([]);
   const [savedViewSelect, setSavedViewSelect] = useState('');
-  const [trafficData, setTrafficData] = useState<{ totalPageViews: number; uniqueVisitors?: number; byPage: { url: string; count: number }[]; byReferrer: { referrer: string; count: number }[]; byDevice: { device: string; count: number }[]; overTime: { date: string; count: number }[] } | null>(null);
+  const [trafficData, setTrafficData] = useState<{ totalPageViews: number; uniqueVisitors?: number; byPage: { url: string; count: number }[]; byReferrer: { referrer: string; count: number }[]; byDevice: { device: string; count: number }[]; byCountry?: { country: string; count: number }[]; byCity?: { city: string; count: number }[]; overTime: { date: string; count: number }[] } | null>(null);
   const [trafficLoading, setTrafficLoading] = useState(false);
+  const [operationsData, setOperationsData] = useState<any>(null);
+  const [operationsLoading, setOperationsLoading] = useState(false);
+  const [marketingData, setMarketingData] = useState<any>(null);
+  const [marketingLoading, setMarketingLoading] = useState(false);
+  const [inventoryData, setInventoryData] = useState<any>(null);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [realtimeData, setRealtimeData] = useState<any>(null);
+  const [dataRetentionPolicies, setDataRetentionPolicies] = useState<any[]>([]);
+  const [integrationsList, setIntegrationsList] = useState<any[]>([]);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [customReportMetrics, setCustomReportMetrics] = useState<string[]>(['kpis', 'orders', 'customers']);
+  const [customReportFormat, setCustomReportFormat] = useState<'json' | 'csv'>('json');
+  const viewOnly = isViewOnly();
 
   useEffect(() => {
     loadFinancials();
@@ -170,6 +191,106 @@ export default function AdminFinancialsPage() {
     if (activeTab !== 'traffic') return;
     loadTraffic();
   }, [activeTab, period, startDate, endDate]);
+
+  const loadOperations = async () => {
+    setOperationsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (period !== 'all') params.set('period', period === 'today' ? 'today' : period === 'week' ? 'week' : 'month');
+      const res = await fetchAuth(`/api/v1/admin/analytics/operations?${params}`);
+      const json = await res.json();
+      if (json.success && json.data) setOperationsData(json.data);
+      else setOperationsData(null);
+    } catch {
+      setOperationsData(null);
+    } finally {
+      setOperationsLoading(false);
+    }
+  };
+
+  const loadMarketing = async () => {
+    setMarketingLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (period !== 'all') params.set('period', period);
+      const res = await fetchAuth(`/api/v1/admin/analytics/marketing?${params}`);
+      const json = await res.json();
+      if (json.success && json.data) setMarketingData(json.data);
+      else setMarketingData(null);
+    } catch {
+      setMarketingData(null);
+    } finally {
+      setMarketingLoading(false);
+    }
+  };
+
+  const loadInventory = async () => {
+    setInventoryLoading(true);
+    try {
+      const res = await fetchAuth('/api/v1/admin/analytics/inventory');
+      const json = await res.json();
+      if (json.success && json.data) setInventoryData(json.data);
+      else setInventoryData(null);
+    } catch {
+      setInventoryData(null);
+    } finally {
+      setInventoryLoading(false);
+    }
+  };
+
+  const loadRealtime = async () => {
+    try {
+      const res = await fetchAuth('/api/v1/admin/analytics/realtime');
+      const json = await res.json();
+      if (json.success && json.data) setRealtimeData(json.data);
+      else setRealtimeData(null);
+    } catch {
+      setRealtimeData(null);
+    }
+  };
+
+  const loadSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const [retRes, intRes] = await Promise.all([
+        fetchAuth('/api/v1/admin/settings/data-retention'),
+        fetchAuth('/api/v1/admin/settings/integrations'),
+      ]);
+      const retJson = await retRes.json();
+      const intJson = await intRes.json();
+      if (retJson.success && retJson.data) setDataRetentionPolicies(retJson.data);
+      else setDataRetentionPolicies([]);
+      if (intJson.success && intJson.data) setIntegrationsList(intJson.data);
+      else setIntegrationsList([]);
+    } catch {
+      setDataRetentionPolicies([]);
+      setIntegrationsList([]);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'operations') loadOperations();
+  }, [activeTab, period]);
+
+  useEffect(() => {
+    if (activeTab === 'marketing') loadMarketing();
+  }, [activeTab, period]);
+
+  useEffect(() => {
+    if (activeTab === 'inventory') loadInventory();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'settings') loadSettings();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'overview') loadRealtime();
+    const interval = activeTab === 'overview' ? setInterval(loadRealtime, 60000) : undefined;
+    return () => { if (interval) clearInterval(interval); };
+  }, [activeTab]);
 
   const loadTraffic = async () => {
     setTrafficLoading(true);
@@ -622,7 +743,7 @@ export default function AdminFinancialsPage() {
     );
   }
 
-  const { kpis, orders, paymentMethods, paymentAnalytics, orderStatus, orderFunnel, barberEarnings, refunds, recentTransactions, charts, customers, topServices, leastOrderedServices, mostSoldProducts, leastSoldProducts, preferredPaymentMethods, bookingNoShowRate, bookingNoShowCount, bookingTotal, avgBookingLeadTimeDays, sameDayBookingsCount, cancellationByTimeBefore, revenueBySegment, clvBySegment, serviceVsProductRevenue, revenueByLocation, revenueByLocationOverTime, serviceCategories, productCategories, productRevenueByMonth, peakBookingTimes, bookingHeatmap, revenueForecast, weekendWeekday, seasonalRevenueByMonth, demographics, serviceDemandByLocation, partialPayments, priorYearSamePeriod, peakTimesByLocation, cancellationByService, holidayImpact, discounts, financialHealth, paymentProcessingFeesByMethod, paymentRetrySuccessRate, chargebacks, bookingChannels } = financials || {};
+  const { kpis, orders, paymentMethods, paymentAnalytics, orderStatus, orderFunnel, barberEarnings, refunds, recentTransactions, charts, customers, topServices, leastOrderedServices, mostSoldProducts, leastSoldProducts, preferredPaymentMethods, bookingNoShowRate, bookingNoShowCount, bookingTotal, avgBookingLeadTimeDays, sameDayBookingsCount, cancellationByTimeBefore, revenueBySegment, clvBySegment, serviceVsProductRevenue, revenueByLocation, revenueByLocationOverTime, serviceCategories, productCategories, productRevenueByMonth, peakBookingTimes, bookingHeatmap, revenueForecast, weekendWeekday, seasonalRevenueByMonth, demographics, serviceDemandByLocation, partialPayments, priorYearSamePeriod, peakTimesByLocation, cancellationByService, holidayImpact, discounts, financialHealth, paymentProcessingFeesByMethod, paymentRetrySuccessRate, chargebacks, bookingChannels, branchUtilization, branchProfitability, anomalyDetection, predictive } = financials || {};
 
   const priorYearYoYPct = priorYearSamePeriod && (priorYearSamePeriod.revenue ?? 0) > 0
     ? (((kpis?.filteredRevenue ?? 0) - (priorYearSamePeriod.revenue ?? 0)) / (priorYearSamePeriod.revenue ?? 1)) * 100
@@ -738,11 +859,13 @@ export default function AdminFinancialsPage() {
               ))}
             </select>
           </div>
+          {!viewOnly && (
           <div className={styles.filterGroup}>
             <button type="button" onClick={saveCurrentView} className={styles.tabBtn} title="Save current filters as a bookmark">
               <BookmarkPlus size={16} aria-hidden /> Save view
             </button>
           </div>
+          )}
 
           {period === 'custom' && (
             <div className={styles.dateRange}>
@@ -767,7 +890,7 @@ export default function AdminFinancialsPage() {
             </div>
           )}
 
-          {isAdmin() && (
+          {!viewOnly && isAdmin() && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button onClick={exportToCSV} className={styles.exportButton}>
                 <FileDown size={16} aria-hidden /> Export CSV
@@ -786,6 +909,7 @@ export default function AdminFinancialsPage() {
               </button>
             </div>
           )}
+          {!viewOnly && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: isAdmin() ? 8 : 0 }}>
             <button
               onClick={sendWeeklyReport}
@@ -801,6 +925,10 @@ export default function AdminFinancialsPage() {
               </span>
             )}
           </div>
+          )}
+          {viewOnly && (
+            <p className={styles.sectionSubtext} style={{ marginTop: 8, color: '#6c757d' }}>View-only: export and send report are disabled.</p>
+          )}
         </section>
 
         {/* Tab Navigation */}
@@ -821,6 +949,46 @@ export default function AdminFinancialsPage() {
         {/* Tab: Overview */}
         {activeTab === 'overview' && (
           <>
+            {/* Real-time strip (§16) */}
+            {realtimeData && (
+              <section className={styles.summarySection} style={{ marginBottom: 24 }}>
+                <div className={styles.summaryCard} style={{ background: 'linear-gradient(135deg, #39413f 0%, #2a312f 100%)', color: '#fff' }}>
+                  <h2 className={styles.sectionTitle} style={{ color: '#fff', marginBottom: 16 }}>
+                    <RefreshCw size={20} style={{ verticalAlign: 'middle', marginRight: 8 }} aria-hidden />
+                    Live Now
+                  </h2>
+                  <div className={styles.summaryGrid} style={{ gap: 24 }}>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Live Visitors</span>
+                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.liveVisitors ?? 0).toLocaleString()}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Orders Today</span>
+                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.ordersToday ?? 0).toLocaleString()}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Revenue Today</span>
+                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{formatCurrency(realtimeData.revenueToday ?? 0)}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Active Barbers</span>
+                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.activeBarbers ?? 0).toLocaleString()}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Bookings Today</span>
+                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.bookingsToday ?? 0).toLocaleString()}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Pending Orders</span>
+                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.pendingOrders ?? 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <p className={styles.sectionSubtext} style={{ marginTop: 12, color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
+                    Last updated: {realtimeData.lastUpdated ? new Date(realtimeData.lastUpdated).toLocaleTimeString() : '—'}
+                  </p>
+                </div>
+              </section>
+            )}
             <section className={styles.kpiGrid}>
               <div className={styles.kpiCard}>
                 <div className={styles.kpiHeader}>
@@ -922,6 +1090,30 @@ export default function AdminFinancialsPage() {
                         {priorYearSamePeriod.orders ?? 0} orders · benchmark
                         {priorYearYoYPct != null ? ' · YoY ' + (priorYearYoYPct >= 0 ? '+' : '') + priorYearYoYPct.toFixed(1) + '%' : ''}
                       </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {anomalyDetection && (anomalyDetection.anomalyDays?.length > 0 || anomalyDetection.mean > 0) && (
+                <div className={styles.kpiCard}>
+                  <div className={styles.kpiHeader}>
+                    <div className={styles.kpiIcon} style={{ background: 'rgba(255, 107, 107, 0.1)' }}><Activity size={20} aria-hidden /></div>
+                    <div className={styles.kpiContent}>
+                      <h3 className={styles.kpiLabel}>Anomaly Detection (§11.2)</h3>
+                      <p className={styles.kpiValue}>{anomalyDetection.anomalyDays?.length ?? 0} anomaly days</p>
+                      <span className={styles.kpiSubtext}>Last 30d · mean {formatCurrency(anomalyDetection.mean)} · ±2σ</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {predictive && (predictive.customerGrowthForecast > 0 || predictive.demandForecast > 0) && (
+                <div className={styles.kpiCard}>
+                  <div className={styles.kpiHeader}>
+                    <div className={styles.kpiIcon} style={{ background: 'rgba(23, 162, 184, 0.15)' }}><TrendingUp size={20} aria-hidden /></div>
+                    <div className={styles.kpiContent}>
+                      <h3 className={styles.kpiLabel}>Predictive (§13)</h3>
+                      <p className={styles.kpiValue}>{predictive.demandForecast ?? 0} orders / {predictive.customerGrowthForecast ?? 0} customers</p>
+                      <span className={styles.kpiSubtext}>Next period · {predictive.method ?? 'forecast'}</span>
                     </div>
                   </div>
                 </div>
@@ -1656,6 +1848,8 @@ export default function AdminFinancialsPage() {
                       <th>Revenue</th>
                       <th>Orders</th>
                       <th>Customers</th>
+                      <th>Utilization</th>
+                      <th>Commission</th>
                       <th>Growth (MoM %)</th>
                     </tr>
                   </thead>
@@ -1670,12 +1864,16 @@ export default function AdminFinancialsPage() {
                         if (prev > 0) mom = ((last - prev) / prev) * 100;
                         else if (last > 0) mom = 100;
                       }
+                      const util = branchUtilization?.find((u: any) => u.city === r.city);
+                      const prof = branchProfitability?.find((p: any) => p.city === r.city);
                       return (
                       <tr key={i}>
                         <td style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setFilterLocation(r.city || '')} title="Click to filter by this location">{r.city}</td>
                         <td>{formatCurrency(r.revenue ?? 0)}</td>
                         <td>{r.orders ?? 0}</td>
                         <td>{r.customers ?? 0}</td>
+                        <td>{util?.utilization != null ? Number(util.utilization).toFixed(1) + ' orders/barber' : '—'}</td>
+                        <td>{prof?.companyCommission != null ? formatCurrency(prof.companyCommission) : '—'}</td>
                         <td style={{ color: mom != null ? (mom >= 0 ? '#46B450' : '#dc3232') : undefined }}>{mom != null ? (mom >= 0 ? '+' : '') + mom.toFixed(1) + '%' : '—'}</td>
                       </tr>
                     ); })}
@@ -3516,6 +3714,52 @@ export default function AdminFinancialsPage() {
               </div>
             </section>
 
+            {/* Sentiment & Feedback Themes (§8) */}
+            {(reviewsAnalytics?.sentimentSummary || (reviewsAnalytics?.feedbackThemes?.length ?? 0) > 0) && (
+              <section className={styles.summarySection}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+                  {reviewsAnalytics.sentimentSummary && (
+                    <div className={styles.chartCard}>
+                      <h2 className={styles.chartTitle}>Sentiment Summary</h2>
+                      <p className={styles.sectionSubtext}>Keyword-based positive/negative mentions in comments.</p>
+                      <div className={styles.summaryGrid} style={{ marginTop: 12 }}>
+                        <div className={styles.summaryItem}>
+                          <span className={styles.summaryLabel}>Positive mentions</span>
+                          <span className={styles.summaryValue} style={{ color: '#46B450' }}>{reviewsAnalytics.sentimentSummary.positiveMentions ?? 0}</span>
+                        </div>
+                        <div className={styles.summaryItem}>
+                          <span className={styles.summaryLabel}>Negative mentions</span>
+                          <span className={styles.summaryValue} style={{ color: '#FF6B6B' }}>{reviewsAnalytics.sentimentSummary.negativeMentions ?? 0}</span>
+                        </div>
+                        <div className={styles.summaryItem}>
+                          <span className={styles.summaryLabel}>Sentiment ratio (pos/neg)</span>
+                          <span className={styles.summaryValue}>{(reviewsAnalytics.sentimentSummary.sentimentRatio ?? 0).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {reviewsAnalytics.feedbackThemes && reviewsAnalytics.feedbackThemes.length > 0 && (
+                    <div className={styles.chartCard}>
+                      <h2 className={styles.chartTitle}>Feedback Themes</h2>
+                      <p className={styles.sectionSubtext}>Common themes from review comments.</p>
+                      <div className={styles.tableWrap} style={{ marginTop: 12 }}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr><th>Theme</th><th>Mentions</th></tr>
+                          </thead>
+                          <tbody>
+                            {reviewsAnalytics.feedbackThemes.map((t: { theme: string; count: number }, i: number) => (
+                              <tr key={i}><td>{t.theme}</td><td>{t.count}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
             {/* Rating Distribution */}
             {reviewsAnalytics?.ratingDistribution && (
               <section className={styles.summarySection}>
@@ -3792,9 +4036,384 @@ export default function AdminFinancialsPage() {
                         </div>
                       )}
                     </div>
+                    {((trafficData.byCountry?.length ?? 0) > 0 || (trafficData.byCity?.length ?? 0) > 0) && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginTop: 24 }}>
+                        {trafficData.byCountry && trafficData.byCountry.length > 0 && (
+                          <div className={styles.chartCard}>
+                            <h2 className={styles.chartTitle}>Geography — By Country (§14.1)</h2>
+                            <p className={styles.sectionSubtext}>Country/city from Vercel geo headers when available.</p>
+                            <ResponsiveContainer width="100%" height={Math.min(280, (trafficData.byCountry?.length ?? 0) * 32)} className={styles.chartContainer}>
+                              <BarChart data={trafficData.byCountry.slice(0, 15)} margin={{ bottom: 60 }} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                                <XAxis type="number" tickFormatter={(v) => v.toLocaleString()} stroke="#6c757d" />
+                                <YAxis type="category" dataKey="country" width={80} stroke="#6c757d" tick={{ fontSize: 11 }} />
+                                <Tooltip formatter={(v: number | undefined) => (v ?? 0).toLocaleString()} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e5e5', borderRadius: '8px' }} />
+                                <Bar dataKey="count" fill="#17A2B8" radius={[0, 4, 4, 0]} name="Views" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                            <div className={styles.tableWrap} style={{ marginTop: 16 }}>
+                              <table className={styles.table}>
+                                <thead>
+                                  <tr><th>Country</th><th>Views</th></tr>
+                                </thead>
+                                <tbody>
+                                  {trafficData.byCountry.map((r: { country: string; count: number }, i: number) => (
+                                    <tr key={i}><td>{r.country}</td><td>{r.count.toLocaleString()}</td></tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                        {trafficData.byCity && trafficData.byCity.length > 0 && (
+                          <div className={styles.chartCard}>
+                            <h2 className={styles.chartTitle}>Geography — By City</h2>
+                            <div className={styles.tableWrap}>
+                              <table className={styles.table}>
+                                <thead>
+                                  <tr><th>City</th><th>Views</th></tr>
+                                </thead>
+                                <tbody>
+                                  {trafficData.byCity.map((r: { city: string; count: number }, i: number) => (
+                                    <tr key={i}><td>{r.city}</td><td>{r.count.toLocaleString()}</td></tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </>
+            )}
+          </>
+        )}
+
+        {/* Tab: Operations (§6) */}
+        {activeTab === 'operations' && (
+          <>
+            {operationsLoading ? (
+              <div className={styles.loadingContainer} style={{ padding: 40 }}>
+                <div className={styles.spinner} />
+                <p>Loading operations data...</p>
+              </div>
+            ) : (
+              <section className={styles.summarySection}>
+                <div className={styles.summaryCard}>
+                  <h2 className={styles.sectionTitle}>Operational Metrics</h2>
+                  <p className={styles.sectionSubtext}>Uptime, performance, support tickets. Configure a monitoring service to POST to OperationalMetric for live data.</p>
+                  {operationsData?.message && <p className={styles.sectionSubtext} style={{ color: '#6c757d', marginBottom: 16 }}>{operationsData.message}</p>}
+                  <div className={styles.summaryGrid} style={{ marginBottom: 24 }}>
+                    {operationsData?.uptime && (
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryLabel}>Uptime</span>
+                        <span className={styles.summaryValue}>{Number(operationsData.uptime.value).toFixed(2)}{operationsData.uptime.unit ?? '%'}</span>
+                      </div>
+                    )}
+                    {operationsData?.responseTime && (
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryLabel}>Response Time</span>
+                        <span className={styles.summaryValue}>{Number(operationsData.responseTime.value).toFixed(0)}{operationsData.responseTime.unit ?? 'ms'}</span>
+                      </div>
+                    )}
+                    {operationsData?.errorRate && (
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryLabel}>Error Rate</span>
+                        <span className={styles.summaryValue}>{Number(operationsData.errorRate.value).toFixed(2)}{operationsData.errorRate.unit ?? '%'}</span>
+                      </div>
+                    )}
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Active Sessions</span>
+                      <span className={styles.summaryValue}>{(operationsData?.activeSessions ?? 0).toLocaleString()}</span>
+                    </div>
+                    {operationsData?.supportTickets && (
+                      <>
+                        <div className={styles.summaryItem}>
+                          <span className={styles.summaryLabel}>Support Open</span>
+                          <span className={styles.summaryValue}>{operationsData.supportTickets.open ?? 0}</span>
+                        </div>
+                        <div className={styles.summaryItem}>
+                          <span className={styles.summaryLabel}>Resolution Rate</span>
+                          <span className={styles.summaryValue}>{(operationsData.supportTickets.resolutionRate ?? 0).toFixed(1)}%</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* Tab: Marketing (§7) */}
+        {activeTab === 'marketing' && (
+          <>
+            {marketingLoading ? (
+              <div className={styles.loadingContainer} style={{ padding: 40 }}>
+                <div className={styles.spinner} />
+                <p>Loading marketing data...</p>
+              </div>
+            ) : (
+              <section className={styles.summarySection}>
+                <div className={styles.summaryCard}>
+                  <h2 className={styles.sectionTitle}>Marketing Analytics</h2>
+                  <div className={styles.summaryGrid} style={{ marginBottom: 24 }}>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Total Campaigns (period)</span>
+                      <span className={styles.summaryValue}>{marketingData?.totalCampaigns ?? 0}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Total Spend</span>
+                      <span className={styles.summaryValue}>{formatCurrency(marketingData?.totalSpend ?? 0)}</span>
+                    </div>
+                    {marketingData?.communications && (
+                      <>
+                        <div className={styles.summaryItem}>
+                          <span className={styles.summaryLabel}>Communications Sent</span>
+                          <span className={styles.summaryValue}>{(marketingData.communications.totalSent ?? 0).toLocaleString()}</span>
+                        </div>
+                        <div className={styles.summaryItem}>
+                          <span className={styles.summaryLabel}>Delivery Rate</span>
+                          <span className={styles.summaryValue}>{(marketingData.communications.deliveryRate ?? 0).toFixed(1)}%</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {marketingData?.campaigns?.length > 0 && (
+                    <div className={styles.chartCard} style={{ marginTop: 24 }}>
+                      <h2 className={styles.chartTitle}>Campaigns</h2>
+                      <div className={styles.tableWrap}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr><th>Name</th><th>Type</th><th>Start</th><th>End</th><th>Spend</th></tr>
+                          </thead>
+                          <tbody>
+                            {marketingData.campaigns.map((c: any) => (
+                              <tr key={c.id}>
+                                <td>{c.name}</td>
+                                <td>{c.type}</td>
+                                <td>{c.startAt ? new Date(c.startAt).toLocaleDateString() : '—'}</td>
+                                <td>{c.endAt ? new Date(c.endAt).toLocaleDateString() : '—'}</td>
+                                <td>{c.spend != null ? formatCurrency(c.spend) : '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* Tab: Inventory (§9) */}
+        {activeTab === 'inventory' && (
+          <>
+            {inventoryLoading ? (
+              <div className={styles.loadingContainer} style={{ padding: 40 }}>
+                <div className={styles.spinner} />
+                <p>Loading inventory data...</p>
+              </div>
+            ) : (
+              <section className={styles.summarySection}>
+                <div className={styles.summaryCard}>
+                  <h2 className={styles.sectionTitle}>Inventory Analytics</h2>
+                  <div className={styles.summaryGrid} style={{ marginBottom: 24 }}>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Total Products</span>
+                      <span className={styles.summaryValue}>{inventoryData?.totalProducts ?? 0}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Low Stock Alerts</span>
+                      <span className={styles.summaryValue} style={{ color: (inventoryData?.lowStockAlerts ?? 0) > 0 ? '#FFC107' : undefined }}>{inventoryData?.lowStockAlerts ?? 0}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Out of Stock</span>
+                      <span className={styles.summaryValue} style={{ color: (inventoryData?.outOfStockCount ?? 0) > 0 ? '#FF6B6B' : undefined }}>{inventoryData?.outOfStockCount ?? 0}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Inventory Value</span>
+                      <span className={styles.summaryValue}>{formatCurrency(inventoryData?.inventoryValue?.total ?? 0)}</span>
+                    </div>
+                  </div>
+                  {inventoryData?.lowStock?.length > 0 && (
+                    <div className={styles.chartCard} style={{ marginTop: 24 }}>
+                      <h2 className={styles.chartTitle}>Low Stock</h2>
+                      <div className={styles.tableWrap}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr><th>Product</th><th>Category</th><th>Stock</th><th>Reorder Point</th></tr>
+                          </thead>
+                          <tbody>
+                            {inventoryData.lowStock.map((p: any) => (
+                              <tr key={p.id}><td>{p.title}</td><td>{p.category}</td><td>{p.stockQuantity}</td><td>{p.reorderPoint}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                  {inventoryData?.outOfStock?.length > 0 && (
+                    <div className={styles.chartCard} style={{ marginTop: 24 }}>
+                      <h2 className={styles.chartTitle}>Out of Stock</h2>
+                      <div className={styles.tableWrap}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr><th>Product</th><th>Category</th></tr>
+                          </thead>
+                          <tbody>
+                            {inventoryData.outOfStock.map((p: any) => (
+                              <tr key={p.id}><td>{p.title}</td><td>{p.category}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                  {inventoryData?.turnoverTop20?.length > 0 && (
+                    <div className={styles.chartCard} style={{ marginTop: 24 }}>
+                      <h2 className={styles.chartTitle}>Inventory Turnover (§4.3)</h2>
+                      <p className={styles.sectionSubtext}>Top 20 by turnover rate (sold last 30 days / avg stock)</p>
+                      <div className={styles.tableWrap}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr><th>Product</th><th>Sold (30d)</th><th>Avg Stock</th><th>Turnover Rate</th></tr>
+                          </thead>
+                          <tbody>
+                            {inventoryData.turnoverTop20.map((p: any) => (
+                              <tr key={p.productId}><td>{p.title}</td><td>{p.soldLast30Days ?? 0}</td><td>{p.avgStock ?? 0}</td><td>{Number(p.turnoverRate ?? 0).toFixed(2)}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* Tab: Settings (§17 Data retention, §19 Integrations) */}
+        {activeTab === 'settings' && (
+          <>
+            {settingsLoading ? (
+              <div className={styles.loadingContainer} style={{ padding: 40 }}>
+                <div className={styles.spinner} />
+                <p>Loading settings...</p>
+              </div>
+            ) : (
+              <section className={styles.summarySection}>
+                <div className={styles.summaryCard} style={{ marginBottom: 24 }}>
+                  <h2 className={styles.sectionTitle}>Data Retention Policies</h2>
+                  <p className={styles.sectionSubtext}>Configure retention (months) and archiving per entity. Admin only to edit.</p>
+                  {dataRetentionPolicies.length === 0 ? (
+                    <p className={styles.emptyState}>No retention policies configured.</p>
+                  ) : (
+                    <div className={styles.tableWrap}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr><th>Entity</th><th>Retention (months)</th><th>Archive</th></tr>
+                        </thead>
+                        <tbody>
+                          {dataRetentionPolicies.map((p: any) => (
+                            <tr key={p.id}><td>{p.entity}</td><td>{p.retentionMonths}</td><td>{p.archive ? 'Yes' : 'No'}</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+                <div className={styles.summaryCard}>
+                  <h2 className={styles.sectionTitle}>Integrations</h2>
+                  <p className={styles.sectionSubtext}>Third-party integrations (Google Analytics, Facebook Pixel, etc.). Config is not exposed here.</p>
+                  {integrationsList.length === 0 ? (
+                    <p className={styles.emptyState}>No integrations configured.</p>
+                  ) : (
+                    <div className={styles.tableWrap}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr><th>Name</th><th>Type</th><th>Active</th><th>Last Sync</th></tr>
+                        </thead>
+                        <tbody>
+                          {integrationsList.map((i: any) => (
+                            <tr key={i.id}>
+                              <td>{i.name}</td>
+                              <td>{i.type}</td>
+                              <td>{i.isActive ? 'Yes' : 'No'}</td>
+                              <td>{i.lastSyncAt ? new Date(i.lastSyncAt).toLocaleString() : '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+                <div className={styles.summaryCard} style={{ marginTop: 24 }}>
+                  <h2 className={styles.sectionTitle}>Custom Report Builder (§14.2)</h2>
+                  <p className={styles.sectionSubtext}>Select metrics and format, then generate a report from current dashboard data.</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+                    {['kpis', 'orders', 'customers', 'revenueByLocation', 'barberEarnings', 'topServices', 'revenueForecast'].map((key) => (
+                      <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={customReportMetrics.includes(key)} onChange={(e) => setCustomReportMetrics((prev) => e.target.checked ? [...prev, key] : prev.filter((k) => k !== key))} />
+                        <span>{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <label>
+                      Format:
+                      <select value={customReportFormat} onChange={(e) => setCustomReportFormat(e.target.value as 'json' | 'csv')} className={styles.select} style={{ marginLeft: 8 }}>
+                        <option value="json">JSON</option>
+                        <option value="csv">CSV</option>
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      style={{ padding: '8px 16px', cursor: 'pointer', background: '#46B450', color: '#fff', border: 'none', borderRadius: 8 }}
+                      onClick={() => {
+                        if (!financials) return;
+                        const payload: Record<string, unknown> = {};
+                        for (const key of customReportMetrics) {
+                          if (key in financials) payload[key] = (financials as any)[key];
+                        }
+                        if (customReportFormat === 'json') {
+                          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `custom-report-${new Date().toISOString().slice(0, 10)}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        } else {
+                          const rows: string[][] = [];
+                          for (const [k, v] of Object.entries(payload)) {
+                            if (v != null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)) {
+                              rows.push([k, JSON.stringify(v).slice(0, 200)]);
+                            } else {
+                              rows.push([k, String(v)]);
+                            }
+                          }
+                          const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+                          const blob = new Blob([csv], { type: 'text/csv' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `custom-report-${new Date().toISOString().slice(0, 10)}.csv`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }
+                      }}
+                    >
+                      Generate report
+                    </button>
+                  </div>
+                </div>
+              </section>
             )}
           </>
         )}

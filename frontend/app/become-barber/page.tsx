@@ -89,7 +89,7 @@ export default function BecomeBarberPage() {
             
             <div className={styles.formContainer}>
               <div className={styles.formHeader}>
-                <h3>Become a Barber Application</h3>
+                <h3>Become a Barber/Nail Tech/make-up artist Training Application form</h3>
                 <p>Thank you for your interest in becoming a professional barber. Please complete the form below.</p>
               </div>
               

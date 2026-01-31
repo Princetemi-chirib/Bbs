@@ -5,7 +5,7 @@ export interface User {
   email: string;
   name: string;
   phone?: string;
-  role: 'ADMIN' | 'BARBER' | 'CUSTOMER' | 'REP';
+  role: 'ADMIN' | 'BARBER' | 'CUSTOMER' | 'REP' | 'MANAGER' | 'VIEWER';
   avatarUrl?: string;
   barber?: {
     id: string;
@@ -68,7 +68,7 @@ export function isAuthenticated(): boolean {
 }
 
 // Check if user has specific role
-export function hasRole(role: 'ADMIN' | 'BARBER' | 'CUSTOMER' | 'REP'): boolean {
+export function hasRole(role: 'ADMIN' | 'BARBER' | 'CUSTOMER' | 'REP' | 'MANAGER' | 'VIEWER'): boolean {
   const user = getUserData();
   return user?.role === role;
 }
@@ -78,10 +78,16 @@ export function isAdmin(): boolean {
   return hasRole('ADMIN');
 }
 
-// Check if user is admin or rep (has admin dashboard access)
+// Check if user is admin, rep, manager, or viewer (has admin dashboard access)
 export function isAdminOrRep(): boolean {
   const user = getUserData();
-  return user?.role === 'ADMIN' || user?.role === 'REP';
+  return user?.role === 'ADMIN' || user?.role === 'REP' || user?.role === 'MANAGER' || user?.role === 'VIEWER';
+}
+
+// Check if user is view-only (no export, no send report, no write actions)
+export function isViewOnly(): boolean {
+  const user = getUserData();
+  return user?.role === 'VIEWER';
 }
 
 // Check if user has permission for an action (admin has all permissions)

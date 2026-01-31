@@ -179,10 +179,6 @@ export default function BarberAppointmentsPage() {
                     <span>{order.customerName}</span>
                   </div>
                   <div className={styles.detailRow}>
-                    <strong>Phone:</strong>
-                    <span>{order.customerPhone}</span>
-                  </div>
-                  <div className={styles.detailRow}>
                     <strong>Location:</strong>
                     <span>{order.city}, {order.location}</span>
                   </div>

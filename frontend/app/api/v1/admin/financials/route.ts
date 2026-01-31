@@ -1180,6 +1180,45 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    // §10 Branch utilization & profitability: barbers per city, orders per barber, company commission per city
+    const [barbersPerCityRows, barberIdToCityRows] = await Promise.all([
+      prisma.barber.groupBy({
+        by: ['city'],
+        where: { city: { not: null } },
+        _count: { id: true },
+      }),
+      prisma.barber.findMany({ select: { id: true, city: true } }),
+    ]);
+    const barbersPerCityMap = new Map<string, number>();
+    for (const row of barbersPerCityRows) {
+      const city = (row.city || '').trim() || 'Unknown';
+      barbersPerCityMap.set(city, row._count.id);
+    }
+    const barberIdToCityMap = new Map<string, string>();
+    for (const b of barberIdToCityRows) {
+      const city = (b.city || '').trim() || 'Unknown';
+      barberIdToCityMap.set(b.id, city);
+    }
+    const cityCommissionMap = new Map<string, number>();
+    if (user.role === 'ADMIN') {
+      for (const be of validBarberEarnings as { barberId: string; companyCommission: number }[]) {
+        const city = barberIdToCityMap.get(be.barberId) || 'Unknown';
+        cityCommissionMap.set(city, (cityCommissionMap.get(city) ?? 0) + be.companyCommission);
+      }
+    }
+    const branchUtilization = revenueByLocationList.map((r) => {
+      const barbersCount = barbersPerCityMap.get(r.city) ?? 0;
+      const utilization = barbersCount > 0 ? Number((r.orders / barbersCount).toFixed(2)) : null;
+      return { city: r.city, orders: r.orders, barbersCount, utilization, revenue: r.revenue, customers: r.customers };
+    });
+    const branchProfitability = revenueByLocationList.map((r) => ({
+      city: r.city,
+      revenue: r.revenue,
+      companyCommission: user.role === 'ADMIN' ? (cityCommissionMap.get(r.city) ?? 0) : null,
+      orders: r.orders,
+      customers: r.customers,
+    }));
+
     // Service category analytics (from bookings)
     const serviceCategoryMap = new Map<string, { revenue: number; orders: number }>();
     for (const booking of bookingsForCategories as any[]) {
@@ -1324,6 +1363,24 @@ export async function GET(request: NextRequest) {
       nextMonth: Number((avg3).toFixed(2)),
       nextThreeMonths: Number((avg3 * 3).toFixed(2)),
       method: '3-month average',
+    };
+
+    // §11.2 Anomaly detection: flag days where revenue > mean + 2*std or < mean - 2*std (last 30 days)
+    const trendRevenues = (revenueTrend as { date: string; revenue: number }[]).map((d) => d.revenue).filter((v) => typeof v === 'number');
+    const meanRev = trendRevenues.length > 0 ? trendRevenues.reduce((a, b) => a + b, 0) / trendRevenues.length : 0;
+    const variance = trendRevenues.length > 0 ? trendRevenues.reduce((a, v) => a + (v - meanRev) ** 2, 0) / trendRevenues.length : 0;
+    const stdRev = Math.sqrt(variance);
+    const anomalyThresholdHigh = meanRev + 2 * stdRev;
+    const anomalyThresholdLow = Math.max(0, meanRev - 2 * stdRev);
+    const anomalyDays = (revenueTrend as { date: string; revenue: number }[])
+      .filter((d) => d.revenue > anomalyThresholdHigh || d.revenue < anomalyThresholdLow)
+      .map((d) => ({ date: d.date, revenue: d.revenue, type: d.revenue > anomalyThresholdHigh ? 'high' : 'low' }));
+    const anomalyDetection = {
+      mean: Number(meanRev.toFixed(2)),
+      stdDev: Number(stdRev.toFixed(2)),
+      thresholdHigh: Number(anomalyThresholdHigh.toFixed(2)),
+      thresholdLow: Number(anomalyThresholdLow.toFixed(2)),
+      anomalyDays: anomalyDays.slice(-10),
     };
 
     // Service vs product revenue breakdown
@@ -1721,6 +1778,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // §13 Predictive: customer growth forecast, demand forecast (3‑month average)
+    const last3Customers = acquisitionTrends.slice(-3).map((c) => c.count);
+    const last3Orders = (monthlyRevenue as { orders: number }[]).slice(-3).map((m) => m.orders ?? 0);
+    const predictive = {
+      customerGrowthForecast: last3Customers.length > 0 ? Math.round(last3Customers.reduce((a, b) => a + b, 0) / last3Customers.length) : 0,
+      demandForecast: last3Orders.length > 0 ? Math.round(last3Orders.reduce((a, b) => a + b, 0) / last3Orders.length) : 0,
+      method: '3-month average',
+    };
+
     // Service popularity trends: this period vs previous period (when date filter exists)
     let topServicesWithTrends = topServices;
     if (dateFilter.createdAt) {
@@ -1998,6 +2064,16 @@ export async function GET(request: NextRequest) {
 
         // Revenue projections/forecasts (3‑month average)
         revenueForecast,
+
+        // §11.2 Anomaly detection (last 30 days)
+        anomalyDetection,
+
+        // §13 Predictive: customer growth & demand forecasts
+        predictive,
+
+        // §10 Branch utilization & profitability
+        branchUtilization,
+        branchProfitability,
 
         // CLV by segment (when period filter applied)
         ...(clvBySegment != null ? { clvBySegment } : {}),

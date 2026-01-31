@@ -26,13 +26,13 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [userRole, setUserRole] = useState<'ADMIN' | 'REP' | null>(null);
+  const [userRole, setUserRole] = useState<'ADMIN' | 'REP' | 'MANAGER' | 'VIEWER' | null>(null);
 
   // Get user role on mount
   useEffect(() => {
     const user = getUserData();
-    if (user?.role === 'ADMIN' || user?.role === 'REP') {
-      setUserRole(user.role);
+    if (user?.role === 'ADMIN' || user?.role === 'REP' || user?.role === 'MANAGER' || user?.role === 'VIEWER') {
+      setUserRole(user.role as 'ADMIN' | 'REP' | 'MANAGER' | 'VIEWER');
     }
   }, []);
 
@@ -41,15 +41,15 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
     setIsMobileOpen(false);
   }, [pathname]);
 
-  // All menu items
-  const allMenuItems: { href: string; label: string; Icon: LucideIcon; roles: ('ADMIN' | 'REP')[] }[] = [
-    { href: '/admin', label: 'Dashboard', Icon: LayoutDashboard, roles: ['ADMIN', 'REP'] },
-    { href: '/admin/orders', label: 'Orders', Icon: Package, roles: ['ADMIN', 'REP'] },
-    { href: '/admin/customers', label: 'Customers', Icon: Users, roles: ['ADMIN', 'REP'] },
-    { href: '/admin/barbers', label: 'Barbers', Icon: Scissors, roles: ['ADMIN', 'REP'] },
-    { href: '/admin/services', label: 'Services', Icon: Sparkles, roles: ['ADMIN', 'REP'] },
-    { href: '/admin/reviews', label: 'Reviews', Icon: Star, roles: ['ADMIN', 'REP'] },
-    { href: '/admin/financials', label: 'Financials', Icon: Wallet, roles: ['ADMIN', 'REP'] },
+  // All menu items (MANAGER/VIEWER have dashboard access; Team is Admin only)
+  const allMenuItems: { href: string; label: string; Icon: LucideIcon; roles: ('ADMIN' | 'REP' | 'MANAGER' | 'VIEWER')[] }[] = [
+    { href: '/admin', label: 'Dashboard', Icon: LayoutDashboard, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+    { href: '/admin/orders', label: 'Orders', Icon: Package, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+    { href: '/admin/customers', label: 'Customers', Icon: Users, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+    { href: '/admin/barbers', label: 'Barbers', Icon: Scissors, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+    { href: '/admin/services', label: 'Services', Icon: Sparkles, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+    { href: '/admin/reviews', label: 'Reviews', Icon: Star, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+    { href: '/admin/financials', label: 'Financials', Icon: Wallet, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
     { href: '/admin/team', label: 'Team', Icon: UsersRound, roles: ['ADMIN'] },
   ];
 
@@ -98,6 +98,12 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
             </Link>
             {userRole === 'REP' && (
               <span className={styles.roleBadge}>Customer Rep</span>
+            )}
+            {userRole === 'MANAGER' && (
+              <span className={styles.roleBadge}>Manager</span>
+            )}
+            {userRole === 'VIEWER' && (
+              <span className={styles.roleBadge}>View only</span>
             )}
           </div>
 

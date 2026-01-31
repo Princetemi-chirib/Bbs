@@ -7,14 +7,14 @@
   background: #dcd2cc;
 }
 
-/* ----- Hero ----- */
+/* ----- Hero (headline section – match uploaded image) ----- */
 .hero {
   position: relative;
   width: 100%;
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   overflow: hidden;
 }
 
@@ -34,15 +34,15 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(to bottom, rgba(57, 65, 63, 0.4) 0%, rgba(57, 65, 63, 0.6) 100%);
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
 }
 
 .heroContent {
   position: relative;
   z-index: 2;
-  text-align: center;
+  text-align: left;
   color: #fff;
-  padding: 2rem 1.5rem;
+  padding: clamp(6rem, 12vw, 8rem) clamp(1.5rem, 5vw, 3rem) 2rem;
   max-width: 720px;
 }
 
@@ -52,18 +52,45 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   opacity: 0.95;
 }
 
 .heroTitle {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  font-size: clamp(2.5rem, 5.3vw, 5.3rem);
+  font-size: clamp(2.25rem, 5vw, 4rem);
   line-height: 1.2;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
+/* Hero-only CTA: light background, dark text, rounded (per image) */
+.heroCtaBtn {
+  display: inline-block;
+  padding: 14px 28px;
+  background: #ffffff;
+  color: #111111;
+  text-decoration: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 8px;
+  line-height: 1em;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.heroCtaBtn:hover {
+  background: #f5f5f5;
+  color: #111111;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Global CTA (other sections) */
 .ctaBtn {
   display: inline-block;
   padding: 17px 35px;
@@ -87,20 +114,39 @@
   transform: translateY(-1px);
 }
 
-/* ----- Service intro (The Barber Comes to You) ----- */
+/* ----- Service intro (The Barber Comes to You) – two-column, dark bg, white text ----- */
 .serviceIntro {
-  padding: clamp(3em, 6vw, 5em) 1.5rem;
-  background: #dcd2cc;
+  padding: clamp(3em, 6vw, 5em) clamp(1.5rem, 4vw, 3rem);
+  background: #39413f;
 }
 
 .serviceIntroInner {
   max-width: 1240px;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: clamp(2rem, 4vw, 3rem);
+  align-items: center;
 }
 
 .serviceIntroText {
-  margin-bottom: 2.5rem;
-  max-width: 640px;
+  max-width: 100%;
+}
+
+/* White text in this section only */
+.serviceIntro .serviceIntroTitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.75rem, 2.2rem, 2.06rem);
+  line-height: 1.3;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.serviceIntro .serviceIntroLead {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #ffffff;
 }
 
 .sectionTitle {
@@ -121,12 +167,12 @@
 .serviceGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  grid-template-rows: repeat(2, 1fr);
+  gap: 0.5rem;
 }
 
 .serviceCard {
   position: relative;
-  border-radius: 4px;
   overflow: hidden;
   aspect-ratio: 3 / 4;
 }
@@ -135,6 +181,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .serviceCaption {
@@ -142,32 +189,62 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
   color: #fff;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
-/* ----- What we do ----- */
+/* ----- What we do (header + three feature cards) ----- */
 .whatWeDo {
-  padding: clamp(3em, 6vw, 5em) 1.5rem;
+  padding: clamp(3em, 6vw, 5em) clamp(1.5rem, 4vw, 3rem);
   background: #dcd2cc;
-  text-align: center;
 }
 
 .whatWeDoInner {
-  max-width: 720px;
+  max-width: 1240px;
   margin: 0 auto;
+}
+
+/* Two-column header: heading + separator left, paragraph right */
+.whatWeDoHeader {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: start;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.whatWeDoHeadLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .whatWeDoHeading {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
   font-size: clamp(1.5rem, 2rem, 2.2rem);
-  color: #4a4a4a;
-  margin-bottom: 1rem;
+  color: #202124;
+  margin: 0;
+}
+
+.whatWeDoSep {
+  width: 48px;
+  height: 2px;
+  background: #dadce0;
+  margin: 0;
+}
+
+.whatWeDoP {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #202124;
+  font-weight: 400;
+  margin: 0;
+  max-width: 52ch;
 }
 
 .sep {
@@ -177,76 +254,69 @@
   margin: 0 auto 1.5rem;
 }
 
-.whatWeDoP {
-  font-size: 1.0625rem;
-  line-height: 1.75;
-  color: #4a4a4a;
-  font-weight: 400;
-}
-
-/* ----- Features ----- */
-.features {
-  padding: clamp(3em, 6vw, 5em) 1.5rem;
-  background: #dcd2cc;
-}
-
-.featuresInner {
-  max-width: 1240px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
+/* Three feature cards in horizontal grid */
+.whatWeDoCards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
 }
 
 .featureCard {
   position: relative;
-  border-radius: 4px;
+  border-radius: 10px;
   overflow: hidden;
-  aspect-ratio: 16 / 9;
-  border: 1px solid rgba(57, 65, 63, 0.08);
+  aspect-ratio: 4 / 5;
+  min-height: 280px;
 }
 
-.featureVideoWrap {
+.featureMediaWrap {
   position: absolute;
   inset: 0;
 }
 
-.featureVideoWrap video {
+.featureMediaWrap video {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+}
+
+.featureOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 40%, transparent 70%);
+  pointer-events: none;
 }
 
 .featureContent {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
-  padding: 2rem 2rem 2.5rem;
-  background: linear-gradient(to top, rgba(57, 65, 63, 0.92), transparent 60%);
+  padding: 1.5rem 1.25rem 1.5rem;
   color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1;
 }
 
 .featureTitle {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  font-size: clamp(1.25rem, 1.5rem, 2.06rem);
-  line-height: 1.3;
-  margin-bottom: 0.5rem;
+  font-size: clamp(1.1rem, 1.35rem, 1.5rem);
+  line-height: 1.25;
+  margin: 0;
+  color: #ffffff;
 }
 
 .featureDesc {
-  font-size: 0.9375rem;
-  line-height: 1.6;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  margin: 0;
+  color: #ffffff;
   opacity: 0.95;
-  max-width: 480px;
-}
-
-.featureSep {
-  margin-top: 1rem;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.3);
-  max-width: 60px;
+  max-width: 100%;
 }
 
 /* ----- Before / After ----- */
@@ -691,7 +761,29 @@
 
 /* ----- Responsive ----- */
 @media (max-width: 1024px) {
+  .serviceIntroInner {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .serviceIntro .serviceIntroText {
+    order: 1;
+  }
+
+  .serviceIntro .serviceGrid {
+    order: 2;
+  }
+
   .serviceGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .whatWeDoHeader {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .whatWeDoCards {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -716,6 +808,11 @@
 
   .sectionTitle {
     font-size: 30px;
+  }
+
+  .serviceIntro .serviceGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
   }
 
   .serviceGrid {
@@ -746,6 +843,10 @@
 
   .partnersGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .whatWeDoCards {
+    grid-template-columns: 1fr;
   }
 }
 

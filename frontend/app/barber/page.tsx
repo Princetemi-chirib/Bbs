@@ -232,7 +232,6 @@ export default function BarberDashboard() {
                   <div className={styles.orderDetails}>
                     <p><strong>Customer:</strong> {order.customerName}</p>
                     <p><strong>Location:</strong> {order.city}, {order.location}</p>
-                    <p><strong>Phone:</strong> {order.customerPhone}</p>
                   </div>
                   <div className={styles.orderActions}>
                     <button

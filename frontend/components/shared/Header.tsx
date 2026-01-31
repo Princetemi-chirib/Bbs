@@ -31,17 +31,11 @@ export default function Header() {
     setMobileOpen(false);
   }, [pathname]);
 
-  const isLightHeader = isHomePage;
-  const linkClass = isLightHeader
-    ? 'font-medium text-[#39413f] hover:text-[#2d3432] transition-colors'
-    : 'font-medium text-white hover:text-yellow-400 transition-colors';
-  const btnClass = isLightHeader
-    ? 'md:hidden p-3 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-[#39413f] hover:text-[#2d3432] transition-colors touch-manipulation cursor-pointer'
-    : 'md:hidden p-3 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-yellow-400 transition-colors touch-manipulation cursor-pointer';
-  const mobileNavBorder = isLightHeader ? 'border-[#39413f]/15' : 'border-white/20';
-  const mobileNavLinkClass = isLightHeader
-    ? 'font-medium text-[#39413f] hover:text-[#2d3432] transition-colors py-2.5 px-1'
-    : 'font-medium text-white hover:text-yellow-400 transition-colors py-2.5 px-1';
+  /* Home: dark glass header with white links; other pages: solid dark with white links */
+  const linkClass = 'font-medium text-white hover:text-[#f5f5f5] transition-colors';
+  const btnClass = 'md:hidden p-3 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-[#f5f5f5] transition-colors touch-manipulation cursor-pointer';
+  const mobileNavBorder = 'border-white/20';
+  const mobileNavLinkClass = 'font-medium text-white hover:text-[#f5f5f5] transition-colors py-2.5 px-1';
 
   return (
     <header

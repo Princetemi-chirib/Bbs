@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     const where = Object.keys(dateFilter).length ? dateFilter : {};
     const w = where as { createdAt?: { gte?: Date; lte?: Date } };
 
-    const [total, uniqueVisitorsResult, byPage, byReferrer, byDevice, overTimeRows] = await Promise.all([
+    const [total, uniqueVisitorsResult, byPage, byReferrer, byDevice, byCountry, byCity, overTimeRows] = await Promise.all([
       prisma.trafficEvent.count({ where }),
       w?.createdAt?.gte != null && w?.createdAt?.lte != null
         ? prisma.$queryRaw<[{ count: bigint }]>(Prisma.sql`
@@ -79,6 +79,16 @@ export async function GET(request: NextRequest) {
         where: { ...where, device: { not: null } },
         _count: { id: true },
       }),
+      prisma.trafficEvent.groupBy({
+        by: ['country'],
+        where: { ...where, country: { not: null } },
+        _count: { id: true },
+      }).then((r) => r.sort((a, b) => b._count.id - a._count.id).slice(0, 20)),
+      prisma.trafficEvent.groupBy({
+        by: ['city'],
+        where: { ...where, city: { not: null } },
+        _count: { id: true },
+      }).then((r) => r.sort((a, b) => b._count.id - a._count.id).slice(0, 20)),
       (() => {
         if (w?.createdAt?.gte != null && w?.createdAt?.lte != null) {
           return prisma.$queryRaw<{ d: string; c: bigint }[]>(Prisma.sql`
@@ -109,6 +119,8 @@ export async function GET(request: NextRequest) {
         byPage: byPage.map((r) => ({ url: r.url || '(empty)', count: r._count.id })),
         byReferrer: byReferrer.map((r) => ({ referrer: r.referrer || '(direct)', count: r._count.id })),
         byDevice: byDevice.map((r) => ({ device: r.device || 'unknown', count: r._count.id })),
+        byCountry: byCountry.map((r) => ({ country: r.country || 'Unknown', count: r._count.id })),
+        byCity: byCity.map((r) => ({ city: r.city || 'Unknown', count: r._count.id })),
         overTime,
       },
     });

@@ -145,16 +145,16 @@ export default function Home() {
         <div className={styles.heroContent}>
           <h5 className={styles.heroPrefix}>NEED A HAIRCUT ?</h5>
           <h1 className={styles.heroTitle}>The Art of the Perfect Cut.</h1>
-          <Link href="/book" className={styles.ctaBtn}>BOOK NOW</Link>
+          <Link href="/book" className={styles.heroCtaBtn}>BOOK NOW</Link>
         </div>
       </section>
 
-      {/* The Barber Comes to You + gallery */}
+      {/* The Barber Comes to You – two-column: text left, 3×2 image grid right */}
       <section className={styles.serviceIntro}>
         <div className={styles.serviceIntroInner}>
           <div className={styles.serviceIntroText}>
-            <h3 className={styles.sectionTitle}>The Barber Comes to You.</h3>
-            <p className={styles.sectionLead}>
+            <h3 className={styles.serviceIntroTitle}>The Barber Comes to You.</h3>
+            <p className={styles.serviceIntroLead}>
               Enjoy a premium studio experience from the comfort of your home. Our expert barbers bring their skills and equipment directly to your door.
             </p>
           </div>
@@ -169,54 +169,54 @@ export default function Home() {
         </div>
       </section>
 
-      {/* What we do */}
+      {/* What we do – header row (heading + line | paragraph) + three image cards */}
       <section className={styles.whatWeDo}>
         <div className={styles.whatWeDoInner}>
-          <h2 className={styles.whatWeDoHeading}><strong>What we do</strong></h2>
-          <div className={styles.sep} />
-          <h5 className={styles.whatWeDoP}>
-            BBS Limited brings the full studio experience directly to you. Our skilled professionals provide premium haircuts and grooming services at your home or office, on your schedule.
-          </h5>
-        </div>
-      </section>
-
-      {/* Features + video */}
-      <section className={styles.features}>
-        <div className={styles.featuresInner}>
-          <div className={styles.featureCard}>
-            <div className={styles.featureVideoWrap}>
-              <video autoPlay loop muted playsInline>
-                <source src={FEATURE_VIDEOS[0]} type="video/mp4" />
-              </video>
+          <div className={styles.whatWeDoHeader}>
+            <div className={styles.whatWeDoHeadLeft}>
+              <h2 className={styles.whatWeDoHeading}>What we do</h2>
+              <div className={styles.whatWeDoSep} />
             </div>
-            <div className={styles.featureContent}>
-              <h3 className={styles.featureTitle}>Masterful Craftsmanship.</h3>
-              <p className={styles.featureDesc}>We meticulously select and train only the most skilled and passionate barbers. Each professional on our team is dedicated to perfecting their craft and delivering a flawless look.</p>
-              <div className={styles.featureSep} />
-            </div>
+            <p className={styles.whatWeDoP}>
+              BBS Limited brings the full studio experience directly to you. Our skilled professionals provide premium haircuts and grooming services at your home or office, on your schedule.
+            </p>
           </div>
-          <div className={styles.featureCard}>
-            <div className={styles.featureVideoWrap}>
-              <video autoPlay loop muted playsInline>
-                <source src={FEATURE_VIDEOS[1]} type="video/mp4" />
-              </video>
+          <div className={styles.whatWeDoCards}>
+            <div className={styles.featureCard}>
+              <div className={styles.featureMediaWrap}>
+                <video autoPlay loop muted playsInline>
+                  <source src={FEATURE_VIDEOS[0]} type="video/mp4" />
+                </video>
+                <div className={styles.featureOverlay} />
+              </div>
+              <div className={styles.featureContent}>
+                <h3 className={styles.featureTitle}>Masterful Craftsmanship.</h3>
+                <p className={styles.featureDesc}>We meticulously select and train only the most skilled and passionate barbers. Each professional on our team is dedicated to perfecting their craft and delivering a flawless look.</p>
+              </div>
             </div>
-            <div className={styles.featureContent}>
-              <h3 className={styles.featureTitle}><strong>Unmatched Convenience</strong></h3>
-              <p className={styles.featureDesc}>We bring the complete barbershop experience directly to you. Enjoy a premium service at your home or office, saving you time and the hassle of travel and waiting.</p>
-              <div className={styles.featureSep} />
+            <div className={styles.featureCard}>
+              <div className={styles.featureMediaWrap}>
+                <video autoPlay loop muted playsInline>
+                  <source src={FEATURE_VIDEOS[1]} type="video/mp4" />
+                </video>
+                <div className={styles.featureOverlay} />
+              </div>
+              <div className={styles.featureContent}>
+                <h3 className={styles.featureTitle}>Unmatched Convenience</h3>
+                <p className={styles.featureDesc}>We bring the complete barbershop experience directly to you. Enjoy a premium service at your home or office, saving you time and the hassle of travel and waiting.</p>
+              </div>
             </div>
-          </div>
-          <div className={styles.featureCard}>
-            <div className={styles.featureVideoWrap}>
-              <video autoPlay loop muted playsInline>
-                <source src={FEATURE_VIDEOS[2]} type="video/mp4" />
-              </video>
-            </div>
-            <div className={styles.featureContent}>
-              <h3 className={styles.featureTitle}>A Full Suite of Services</h3>
-              <p className={styles.featureDesc}>Beyond the cut, we offer a comprehensive range of grooming services. From detailed beard trims to nourishing haircare treatments, we cater to all your styling needs.</p>
-              <div className={styles.featureSep} />
+            <div className={styles.featureCard}>
+              <div className={styles.featureMediaWrap}>
+                <video autoPlay loop muted playsInline>
+                  <source src={FEATURE_VIDEOS[2]} type="video/mp4" />
+                </video>
+                <div className={styles.featureOverlay} />
+              </div>
+              <div className={styles.featureContent}>
+                <h3 className={styles.featureTitle}>A Full Suite of Services</h3>
+                <p className={styles.featureDesc}>Beyond the cut, we offer a comprehensive range of grooming services. From detailed beard trims to nourishing haircare treatments, we cater to all your styling needs.</p>
+              </div>
             </div>
           </div>
         </div>

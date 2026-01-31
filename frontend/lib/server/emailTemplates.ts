@@ -332,13 +332,12 @@ ${env.APP_NAME} Team
     `.trim();
   },
 
-  // Barber Assignment Email
+  // Barber Assignment Email (rider sees customer name and address only — no phone/email)
   barberAssignment: (data: {
     barberName: string;
     barberEmail: string;
     orderNumber: string;
     customerName: string;
-    customerPhone: string;
     city: string;
     location: string;
     address?: string;
@@ -369,10 +368,6 @@ ${env.APP_NAME} Team
           <tr>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Customer:</strong></td>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.customerName}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Phone:</strong></td>
-            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;"><a href="tel:${data.customerPhone}" style="color: ${BRAND_COLORS.primary}; text-decoration: none;">${data.customerPhone}</a></td>
           </tr>
           <tr>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Location:</strong></td>
@@ -421,7 +416,6 @@ ${env.APP_NAME} Team
     barberName: string;
     orderNumber: string;
     customerName: string;
-    customerPhone: string;
     city: string;
     location: string;
     items: Array<{ title: string; quantity: number }>;
@@ -438,7 +432,6 @@ A new order has been assigned to you. Please review and accept or decline.
 ORDER DETAILS:
 Order Number: ${data.orderNumber}
 Customer: ${data.customerName}
-Phone: ${data.customerPhone}
 Location: ${data.city}, ${data.location}
 Services: ${data.items.map(i => `${i.title} (x${i.quantity})`).join(', ')}
 Total: ₦${data.totalAmount.toLocaleString()}
@@ -450,12 +443,11 @@ ${env.APP_NAME} Team
     `.trim();
   },
 
-  // Barber Acceptance Email (to Customer)
+  // Barber Acceptance Email (to Customer — name and location only, no barber phone/email)
   barberAccepted: (data: {
     customerName: string;
     orderNumber: string;
     barberName: string;
-    barberPhone?: string;
     city: string;
     location: string;
     estimatedArrival?: string;
@@ -483,12 +475,6 @@ ${env.APP_NAME} Team
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Assigned Barber:</strong></td>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.barberName}</td>
           </tr>
-          ${data.barberPhone ? `
-          <tr>
-            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Barber Phone:</strong></td>
-            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;"><a href="tel:${data.barberPhone}" style="color: ${BRAND_COLORS.primary}; text-decoration: none;">${data.barberPhone}</a></td>
-          </tr>
-          ` : ''}
           <tr>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Service Location:</strong></td>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.city}, ${data.location}</td>
@@ -524,12 +510,11 @@ ${env.APP_NAME} Team
     return wrapEmail(content, 'Barber Accepted Your Order');
   },
 
-  // On The Way Email
+  // On The Way Email (customer sees barber name and location only)
   barberOnTheWay: (data: {
     customerName: string;
     orderNumber: string;
     barberName: string;
-    barberPhone?: string;
     estimatedArrival: string;
     city: string;
     location: string;
@@ -566,12 +551,6 @@ ${env.APP_NAME} Team
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Barber:</strong></td>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.barberName}</td>
           </tr>
-          ${data.barberPhone ? `
-          <tr>
-            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Contact:</strong></td>
-            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;"><a href="tel:${data.barberPhone}" style="color: ${BRAND_COLORS.primary}; text-decoration: none;">${data.barberPhone}</a></td>
-          </tr>
-          ` : ''}
           <tr>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Service Location:</strong></td>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.city}, ${data.location}</td>
@@ -583,7 +562,6 @@ ${env.APP_NAME} Team
         <h3 style="color: ${BRAND_COLORS.primary}; margin: 0 0 15px 0; font-size: 18px;">Please Be Ready</h3>
         <ul style="color: ${BRAND_COLORS.textSecondary}; font-size: 16px; line-height: 1.8; margin: 0; padding-left: 20px;">
           <li>Ensure you're available at the service location</li>
-          <li>Keep your phone accessible in case the barber needs to contact you</li>
           <li>You'll receive another notification when the barber arrives</li>
         </ul>
       </div>
@@ -597,12 +575,11 @@ ${env.APP_NAME} Team
     return wrapEmail(content, 'Barber On The Way');
   },
 
-  // Barber Arrived Email
+  // Barber Arrived Email (customer sees barber name only, no contact)
   barberArrived: (data: {
     customerName: string;
     orderNumber: string;
     barberName: string;
-    barberPhone?: string;
   }): string => {
     const env = getEnv();
     const content = `
@@ -623,11 +600,6 @@ ${env.APP_NAME} Team
         <p style="color: ${BRAND_COLORS.primary}; font-size: 24px; margin: 0; font-weight: 700;">
           ${data.orderNumber}
         </p>
-        ${data.barberPhone ? `
-        <p style="color: ${BRAND_COLORS.textSecondary}; font-size: 14px; margin: 20px 0 0 0;">
-          Barber Contact: <a href="tel:${data.barberPhone}" style="color: ${BRAND_COLORS.primary}; text-decoration: none; font-weight: 600;">${data.barberPhone}</a>
-        </p>
-        ` : ''}
       </div>
 
       <div style="background-color: ${BRAND_COLORS.bgLight}; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
@@ -795,12 +767,11 @@ ${env.APP_NAME} Team
     return wrapEmail(content, 'Order Declined');
   },
 
-  // Customer Notification - Barber Assigned (to Customer)
+  // Customer Notification - Barber Assigned (to Customer — barber name and address only, no phone/email)
   customerBarberAssigned: (data: {
     customerName: string;
     orderNumber: string;
     barberName: string;
-    barberPhone?: string;
     barberPicture?: string;
     city: string;
     location: string;
@@ -852,12 +823,6 @@ ${env.APP_NAME} Team
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Barber:</strong></td>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.barberName}</td>
           </tr>
-          ${data.barberPhone ? `
-          <tr>
-            <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Barber Phone:</strong></td>
-            <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;"><a href="tel:${data.barberPhone}" style="color: ${BRAND_COLORS.primary}; text-decoration: none;">${data.barberPhone}</a></td>
-          </tr>
-          ` : ''}
           <tr>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textSecondary};"><strong>Service Location:</strong></td>
             <td style="padding: 8px 0; color: ${BRAND_COLORS.textPrimary}; text-align: right;">${data.city}, ${data.location}</td>
@@ -890,7 +855,7 @@ ${env.APP_NAME} Team
       </div>
 
       <p style="color: ${BRAND_COLORS.textSecondary}; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0;">
-        Your barber will contact you soon. If you have any questions, don't hesitate to reach out to us.
+        If you have any questions, reach out to us at support.
       </p>
       <p style="color: ${BRAND_COLORS.textSecondary}; font-size: 16px; line-height: 1.6; margin: 0;">
         Best regards,<br>
@@ -905,7 +870,6 @@ ${env.APP_NAME} Team
     customerName: string;
     orderNumber: string;
     barberName: string;
-    barberPhone?: string;
     city: string;
     location: string;
     items: Array<{ title: string; quantity: number }>;
@@ -921,7 +885,7 @@ Great news! A professional barber has been assigned to your order.
 
 Order Number: ${data.orderNumber}
 Barber: ${data.barberName}
-${data.barberPhone ? `Barber Phone: ${data.barberPhone}\n` : ''}Service Location: ${data.city}, ${data.location}
+Service Location: ${data.city}, ${data.location}
 Services: ${data.items.map(i => `${i.title} (x${i.quantity})`).join(', ')}
 Total: ₦${data.totalAmount.toLocaleString()}
 

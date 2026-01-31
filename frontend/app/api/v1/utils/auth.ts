@@ -69,7 +69,8 @@ async function verifyToken(token: string): Promise<AuthUser | null> {
 }
 
 /**
- * Verify admin or rep (both have dashboard access)
+ * Verify admin, rep, manager, or viewer (dashboard access).
+ * VIEWER = read-only; MANAGER = department/location-scoped (treated like REP for now).
  */
 export async function verifyAdminOrRep(request: NextRequest): Promise<AuthUser | null> {
   const token = getTokenFromRequest(request);
@@ -82,11 +83,16 @@ export async function verifyAdminOrRep(request: NextRequest): Promise<AuthUser |
     return null;
   }
 
-  if (user.role !== 'ADMIN' && user.role !== 'REP') {
+  if (user.role !== 'ADMIN' && user.role !== 'REP' && user.role !== 'MANAGER' && user.role !== 'VIEWER') {
     return null;
   }
   
   return user;
+}
+
+/** True if user can only view (no export, no send report, no write). */
+export function isViewOnly(user: AuthUser): boolean {
+  return user.role === 'VIEWER';
 }
 
 /**

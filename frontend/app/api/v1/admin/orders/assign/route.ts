@@ -153,7 +153,6 @@ export async function POST(request: NextRequest) {
           barberEmail: barber.user.email,
           orderNumber: updatedOrder.orderNumber,
           customerName: updatedOrder.customerName,
-          customerPhone: updatedOrder.customerPhone,
           city: updatedOrder.city,
           location: updatedOrder.location,
           address: updatedOrder.address || undefined,
@@ -168,7 +167,6 @@ export async function POST(request: NextRequest) {
           barberName: barber.user.name,
           orderNumber: updatedOrder.orderNumber,
           customerName: updatedOrder.customerName,
-          customerPhone: updatedOrder.customerPhone,
           city: updatedOrder.city,
           location: updatedOrder.location,
           items: updatedOrder.items.map((item) => ({
@@ -201,7 +199,6 @@ export async function POST(request: NextRequest) {
           customerName: updatedOrder.customerName,
           orderNumber: updatedOrder.orderNumber,
           barberName: barber.user.name,
-          barberPhone: barber.user.phone || undefined,
           barberPicture: barber.user.avatarUrl || undefined, // Include barber picture
           city: updatedOrder.city,
           location: updatedOrder.location,
@@ -217,7 +214,6 @@ export async function POST(request: NextRequest) {
           customerName: updatedOrder.customerName,
           orderNumber: updatedOrder.orderNumber,
           barberName: barber.user.name,
-          barberPhone: barber.user.phone || undefined,
           city: updatedOrder.city,
           location: updatedOrder.location,
           items: updatedOrder.items.map((item) => ({
@@ -250,7 +246,6 @@ export async function POST(request: NextRequest) {
           assignedBarber: {
             id: updatedOrder.assignedBarber?.id,
             name: updatedOrder.assignedBarber?.user.name,
-            email: updatedOrder.assignedBarber?.user.email,
           },
           jobStatus: updatedOrder.jobStatus,
         },

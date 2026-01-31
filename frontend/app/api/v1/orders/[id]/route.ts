@@ -103,7 +103,10 @@ export async function GET(
         jobStatus: order.jobStatus,
         assignedBarber: order.assignedBarber ? {
           id: order.assignedBarber.id,
-          user: order.assignedBarber.user,
+          user: {
+            name: order.assignedBarber.user.name,
+            avatarUrl: order.assignedBarber.user.avatarUrl ?? null,
+          },
         } : null,
         items: order.items.map(item => ({
           id: item.id,
