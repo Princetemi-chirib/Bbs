@@ -130,10 +130,10 @@ Assignment sets `jobStatus: PENDING_ACCEPTANCE`. Barber accept → ACCEPTED; sta
 
 | # | Issue | Severity | Location / fix |
 |---|--------|----------|-----------------|
-| 1 | Checkout uses `POST /api/v1/orders` which is **REP-only**; customers/guests get 403 when saving order after Paystack. | High | Either allow customer/guest order creation (e.g. by auth or new endpoint) or document that checkout is “payment only” and orders are created only by Rep. |
-| 2 | Admin creating order from dashboard gets 403 if user is **ADMIN** (only REP can create). | Medium | Consider allowing ADMIN in `POST /api/v1/orders` (e.g. use `verifyAdminOrRep` instead of `verifyRep`). |
+| 1 | Checkout used `POST /api/v1/orders` (REP-only); customers/guests got 403 after Paystack. | High | **Fixed (partial):** Logged-in customers can create orders after Paystack; Admin/Rep unchanged. Guest checkout still needs separate flow. |
+| 2 | Admin creating order from dashboard got 403 if user was **ADMIN** (only REP could create). | Medium | **Fixed:** `POST /api/v1/orders` allows Admin, Rep, or Customer; ADMIN can create orders. |
 | 3 | **Review link in “Service Completed” email** pointed to `/orders/{id}/review` instead of `/review/{id}`. | Medium | **Fixed:** `status` route now uses `/review/${updatedOrder.id}`. |
-| 4 | **Barber decline:** no email to admin (TODO in code). | Medium | Implement admin (and optionally customer) notification when barber declines. |
+| 4 | **Barber decline:** no email to admin (TODO in code). | Medium | **Fixed:** Admin receives barberDeclined email when barber declines (non-blocking). |
 | 5 | Review submission **requires customer to be logged in**; link in email may 401 if they are not. | Low / UX | Consider token/magic-link review submission for one-click from email. |
 
 ---
@@ -145,7 +145,7 @@ Assignment sets `jobStatus: PENDING_ACCEPTANCE`. Barber accept → ACCEPTED; sta
 | Order created | ✅ Order confirmation | ✅ New order | — |
 | Barber assigned | ✅ Barber assigned | — | ✅ New order assigned |
 | Barber accepted | ✅ Barber accepted | — | — |
-| Barber declined | — | ❌ Not implemented | — |
+| Barber declined | — | ✅ Order declined (reassign) | — |
 | On the way | ✅ On the way | — | — |
 | Arrived | ✅ Arrived | — | — |
 | Completed | ✅ Service completed + review link | — | — |
@@ -164,4 +164,4 @@ Implemented in: barber orders API response, customer order GET response, barber 
 ## 7. Files in this review
 
 - **This document:** `ORDER_FLOW_REVIEW.md` — flow, implementation notes, and inconsistencies.
-- Privacy rules above are implemented in the codebase; remaining items in §4 are recommendations for product/backend changes.
+- Privacy rules and inconsistencies #1–4 are implemented/fixed in the codebase; #5 (token review link) remains optional.

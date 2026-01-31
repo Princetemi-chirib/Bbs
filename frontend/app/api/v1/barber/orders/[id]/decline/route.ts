@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { emailService } from '@/lib/server/emailService';
+import { emailTemplates } from '@/lib/server/emailTemplates';
 import jwt from 'jsonwebtoken';
 
 export const dynamic = 'force-dynamic';
@@ -86,7 +88,28 @@ export async function POST(
       },
     });
 
-    // TODO: Send email notification to admin about decline
+    // Send email notification to admin about decline (non-blocking)
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@bbslimited.online';
+    try {
+      const emailHtml = emailTemplates.barberDeclined({
+        adminEmail,
+        orderNumber: updatedOrder.orderNumber,
+        customerName: updatedOrder.customerName,
+        barberName: auth.user.name,
+        declineReason: updatedOrder.declineReason ?? undefined,
+        city: updatedOrder.city,
+        location: updatedOrder.location,
+      });
+      await emailService.sendEmail({
+        to: adminEmail,
+        subject: `Order Declined by Barber - ${updatedOrder.orderNumber}`,
+        html: emailHtml,
+        text: `Order ${updatedOrder.orderNumber} was declined by barber ${auth.user.name}. Customer: ${updatedOrder.customerName}. Location: ${updatedOrder.city}, ${updatedOrder.location}. Reason: ${updatedOrder.declineReason ?? 'Not provided'}. Please reassign at ${process.env.NEXT_PUBLIC_BASE_URL || 'https://app'}/admin/orders`,
+      });
+      console.log(`✅ Barber decline notification sent to admin for order ${updatedOrder.orderNumber}`);
+    } catch (emailError) {
+      console.error('⚠️ Failed to send admin notification for barber decline:', emailError);
+    }
 
     return NextResponse.json({
       success: true,

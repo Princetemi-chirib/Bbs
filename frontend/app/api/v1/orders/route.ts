@@ -2,23 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/server/emailService';
 import { emailTemplates } from '@/lib/server/emailTemplates';
-import { verifyRep } from '@/app/api/v1/utils/auth';
+import { verifyAdminOrRep, verifyUser } from '@/app/api/v1/utils/auth';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
-// POST /api/v1/orders - Create a new order (REP only)
+// POST /api/v1/orders - Create a new order (Admin, Rep, or Customer e.g. checkout)
 export async function POST(request: NextRequest) {
   try {
-    // Only Customer Representatives can create orders
-    const rep = await verifyRep(request);
-    if (!rep) {
+    const adminOrRep = await verifyAdminOrRep(request);
+    const user = await verifyUser(request);
+    const canCreate =
+      adminOrRep ||
+      (user !== null && user.role === 'CUSTOMER');
+
+    if (!canCreate) {
       return NextResponse.json(
         {
           success: false,
           error: {
-            message: 'Unauthorized. Only Customer Representatives can create orders.',
+            message: 'Unauthorized. Admin, Rep, or Customer login required to create orders.',
           },
         },
         { status: 403 }
