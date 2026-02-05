@@ -1,51 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
 import { emailService } from '@/lib/server/emailService';
 import { emailTemplates } from '@/lib/server/emailTemplates';
+import { verifyUser } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
-
-async function verifyBarber(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
-    const user = await prisma.user.findUnique({ 
-      where: { id: decoded.id },
-      include: { barber: true },
-    });
-    
-    if (!user || user.role !== 'BARBER' || !user.isActive || !user.barber) {
-      return null;
-    }
-    
-    return { user, barber: user.barber };
-  } catch {
-    return null;
-  }
-}
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = await verifyBarber(request);
-    if (!auth) {
+    const auth = await verifyUser(request);
+    if (!auth || auth.role !== 'BARBER') {
       return NextResponse.json(
         { success: false, error: { message: 'Unauthorized. Barber access required.' } },
         { status: 401 }
       );
     }
 
-    const { barber } = auth;
+    const user = await prisma.user.findUnique({
+      where: { id: auth.id },
+      include: { barber: true },
+    });
+    const barber = user?.isActive ? user.barber : null;
+    if (!barber) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. Barber access required.' } },
+        { status: 401 }
+      );
+    }
+
     const orderId = params.id;
 
     // Issue 2 & 5: Use transaction to prevent race condition and ensure atomicity

@@ -1,32 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
 import { emailService } from '@/lib/server/emailService';
+import { verifyAdmin } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
-
-async function verifyAdmin(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
-    
-    if (!user || user.role !== 'ADMIN' || !user.isActive) {
-      return null;
-    }
-    
-    return user;
-  } catch {
-    return null;
-  }
-}
 
 export async function GET(request: NextRequest) {
   try {

@@ -1,18 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Mitigation: disable Next.js Image Optimizer (reduces DoS surface)
+    // Many pages already pass `unoptimized` per-image; this makes it consistent.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'localhost',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.amazonaws.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.cloudinary.com',
+        hostname: 'res.cloudinary.com',
       },
       {
         protocol: 'https',

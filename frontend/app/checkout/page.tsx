@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store/cartStore';
 import { emailApi, orderApi } from '@/lib/api';
+import { getSlotsLeftForToday } from '@/lib/utils';
 import styles from './page.module.css';
 
 // Dynamically import Paystack to avoid SSR issues with window object
@@ -659,6 +660,7 @@ export default function CheckoutPage() {
                   <div key={item.key} className={styles.summaryItem}>
                     <div className={styles.summaryItemInfo}>
                       <h4>{item.title}</h4>
+                      <span className={styles.slotsBadge} aria-label="Slots remaining today">{getSlotsLeftForToday(item.productId || item.key)} left for today</span>
                       {item.displayAge !== 'Fixed' && (
                         <span className={styles.summaryItemAge}>{item.displayAge}</span>
                       )}

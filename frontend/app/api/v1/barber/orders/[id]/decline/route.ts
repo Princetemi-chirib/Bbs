@@ -2,50 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/server/emailService';
 import { emailTemplates } from '@/lib/server/emailTemplates';
-import jwt from 'jsonwebtoken';
+import { verifyUser } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
-
-async function verifyBarber(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
-    const user = await prisma.user.findUnique({ 
-      where: { id: decoded.id },
-      include: { barber: true },
-    });
-    
-    if (!user || user.role !== 'BARBER' || !user.isActive || !user.barber) {
-      return null;
-    }
-    
-    return { user, barber: user.barber };
-  } catch {
-    return null;
-  }
-}
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = await verifyBarber(request);
-    if (!auth) {
+    const auth = await verifyUser(request);
+    if (!auth || auth.role !== 'BARBER') {
       return NextResponse.json(
         { success: false, error: { message: 'Unauthorized. Barber access required.' } },
         { status: 401 }
       );
     }
 
-    const { barber } = auth;
+    const user = await prisma.user.findUnique({
+      where: { id: auth.id },
+      include: { barber: true },
+    });
+    const barber = user?.isActive ? user.barber : null;
+    if (!user || !barber) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. Barber access required.' } },
+        { status: 401 }
+      );
+    }
+
     const orderId = params.id;
     const body = await request.json();
     const { reason } = body;
@@ -95,7 +80,7 @@ export async function POST(
         adminEmail,
         orderNumber: updatedOrder.orderNumber,
         customerName: updatedOrder.customerName,
-        barberName: auth.user.name,
+        barberName: user.name,
         declineReason: updatedOrder.declineReason ?? undefined,
         city: updatedOrder.city,
         location: updatedOrder.location,
@@ -104,7 +89,7 @@ export async function POST(
         to: adminEmail,
         subject: `Order Declined by Barber - ${updatedOrder.orderNumber}`,
         html: emailHtml,
-        text: `Order ${updatedOrder.orderNumber} was declined by barber ${auth.user.name}. Customer: ${updatedOrder.customerName}. Location: ${updatedOrder.city}, ${updatedOrder.location}. Reason: ${updatedOrder.declineReason ?? 'Not provided'}. Please reassign at ${process.env.NEXT_PUBLIC_BASE_URL || 'https://app'}/admin/orders`,
+        text: `Order ${updatedOrder.orderNumber} was declined by barber ${user.name}. Customer: ${updatedOrder.customerName}. Location: ${updatedOrder.city}, ${updatedOrder.location}. Reason: ${updatedOrder.declineReason ?? 'Not provided'}. Please reassign at ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/admin/orders`,
       });
       console.log(`✅ Barber decline notification sent to admin for order ${updatedOrder.orderNumber}`);
     } catch (emailError) {

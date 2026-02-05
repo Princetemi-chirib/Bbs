@@ -1,39 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { verifyUser } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
-
-async function getCustomerFromRequest(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
-    
-    if (decoded.role !== 'CUSTOMER') {
-      return null;
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      include: { customer: true },
-    });
-
-    if (!user || !user.customer || !user.isActive) {
-      return null;
-    }
-
-    return user.customer;
-  } catch {
-    return null;
-  }
-}
 
 // GET /api/v1/orders/[id] - Get a single order
 export async function GET(
@@ -41,8 +10,19 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const customer = await getCustomerFromRequest(request);
-    
+    const auth = await verifyUser(request);
+    if (!auth || auth.role !== 'CUSTOMER') {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. Customer access required.' } },
+        { status: 401 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: auth.id },
+      include: { customer: true },
+    });
+    const customer = user?.isActive ? user.customer : null;
     if (!customer) {
       return NextResponse.json(
         { success: false, error: { message: 'Unauthorized. Customer access required.' } },

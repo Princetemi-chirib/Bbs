@@ -1,27 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { verifyUser } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
 
 async function getBarberFromRequest(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const auth = await verifyUser(request);
+  if (!auth || auth.role !== 'BARBER') {
     return null;
   }
 
-  const token = authHeader.substring(7);
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
-    
-    if (decoded.role !== 'BARBER') {
-      return null;
-    }
-
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
+      where: { id: auth.id },
       include: {
         barber: {
           include: {

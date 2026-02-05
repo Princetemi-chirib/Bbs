@@ -1,45 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { verifyUser } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
-
-async function getBarberFromRequest(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
-    
-    if (decoded.role !== 'BARBER') {
-      return null;
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      include: { barber: true },
-    });
-
-    if (!user || !user.barber || !user.isActive) {
-      return null;
-    }
-
-    return user.barber;
-  } catch {
-    return null;
-  }
-}
 
 // GET /api/v1/barber/online-status - Get current online status
 export async function GET(request: NextRequest) {
   try {
-    const barber = await getBarberFromRequest(request);
-    
+    const auth = await verifyUser(request);
+    if (!auth || auth.role !== 'BARBER') {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. Barber access required.' } },
+        { status: 401 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: auth.id },
+      include: { barber: true },
+    });
+    const barber = user?.isActive ? user.barber : null;
     if (!barber) {
       return NextResponse.json(
         { success: false, error: { message: 'Unauthorized. Barber access required.' } },
@@ -97,8 +77,19 @@ export async function GET(request: NextRequest) {
 // PUT /api/v1/barber/online-status - Toggle online status
 export async function PUT(request: NextRequest) {
   try {
-    const barber = await getBarberFromRequest(request);
-    
+    const auth = await verifyUser(request);
+    if (!auth || auth.role !== 'BARBER') {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. Barber access required.' } },
+        { status: 401 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: auth.id },
+      include: { barber: true },
+    });
+    const barber = user?.isActive ? user.barber : null;
     if (!barber) {
       return NextResponse.json(
         { success: false, error: { message: 'Unauthorized. Barber access required.' } },

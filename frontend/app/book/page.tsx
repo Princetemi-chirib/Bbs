@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore, OrderItem } from '@/lib/store/cartStore';
 import { productApi } from '@/lib/api';
+import { getSlotsLeftForToday } from '@/lib/utils';
 import styles from './page.module.css';
 
 interface Service {
@@ -291,7 +292,10 @@ export default function BookPage() {
                       />
                     </div>
                     <div className={styles.serviceContent}>
-                      <h3 className={styles.serviceTitle}>{service.title}</h3>
+                      <div className={styles.serviceTitleRow}>
+                        <h3 className={styles.serviceTitle}>{service.title}</h3>
+                        <span className={styles.slotsBadge} aria-label="Slots remaining today">{getSlotsLeftForToday(String(service.id))} left for today</span>
+                      </div>
                       <p className={styles.serviceDescription}>{service.description}</p>
 
                       {hasDifferentPrices ? (

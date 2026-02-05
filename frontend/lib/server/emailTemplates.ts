@@ -177,7 +177,7 @@ export const emailTemplates = {
         Hello ${data.customerName},
       </p>
       <p style="color: ${BRAND_COLORS.textSecondary}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
-        Thank you for your booking! We have received your order and payment. Your booking details are below:
+        Thank you for your booking! We’ve received your booking request. Your booking details are below:
       </p>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
         <tr>
@@ -304,7 +304,7 @@ Order Confirmation - ${env.APP_NAME}
 
 Hello ${data.customerName},
 
-Thank you for your booking! We have received your order and payment.
+Thank you for your booking! We’ve received your booking request.
 
 ORDER DETAILS:
 Order Reference: ${data.orderReference}

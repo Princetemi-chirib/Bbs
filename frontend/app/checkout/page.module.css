@@ -181,6 +181,20 @@
   margin: 0;
 }
 
+.slotsBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(180, 140, 80, 0.2);
+  color: #5c4a2a;
+  border: 1px solid rgba(180, 140, 80, 0.35);
+  white-space: nowrap;
+  margin-top: 4px;
+}
+
 .summaryItemAge {
   font-size: 0.85rem;
   color: rgba(57, 65, 63, 0.7);

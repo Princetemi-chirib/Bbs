@@ -2,20 +2,69 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/server/emailService';
 import { emailTemplates } from '@/lib/server/emailTemplates';
-import { verifyAdminOrRep, verifyUser } from '@/app/api/v1/utils/auth';
+import { isViewOnly, verifyAdminOrRep, verifyUser } from '@/app/api/v1/utils/auth';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
+
+async function verifyPaystackPayment(reference: string, expectedAmountNaira: number) {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY || process.env.PAYSTACK_SECRET || '';
+  if (!secretKey) {
+    return { verified: false, reason: 'PAYSTACK_SECRET_KEY not configured' as const };
+  }
+
+  try {
+    const res = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        'Content-Type': 'application/json',
+      },
+      // Avoid cached verification responses in edge cases
+      cache: 'no-store',
+    });
+
+    const payload = (await res.json()) as any;
+    if (!res.ok || !payload?.status) {
+      return { verified: false, reason: payload?.message || 'Paystack verification failed' as const };
+    }
+
+    const data = payload.data;
+    const expectedKobo = Math.round(Number(expectedAmountNaira) * 100);
+    const paidKobo = Number(data?.amount ?? 0);
+
+    if (String(data?.status) !== 'success') {
+      return { verified: false, reason: `Paystack status=${String(data?.status)}` as const };
+    }
+
+    if (!Number.isFinite(expectedKobo) || expectedKobo <= 0) {
+      return { verified: false, reason: 'Invalid expected amount' as const };
+    }
+
+    if (paidKobo !== expectedKobo) {
+      return { verified: false, reason: `Amount mismatch (expected ${expectedKobo}, got ${paidKobo})` as const };
+    }
+
+    return { verified: true as const };
+  } catch (e: any) {
+    return { verified: false, reason: e?.message || 'Paystack verification error' as const };
+  }
+}
 
 // POST /api/v1/orders - Create a new order (Admin, Rep, or Customer e.g. checkout)
 export async function POST(request: NextRequest) {
   try {
     const adminOrRep = await verifyAdminOrRep(request);
     const user = await verifyUser(request);
-    const canCreate =
-      adminOrRep ||
-      (user !== null && user.role === 'CUSTOMER');
+    const isCustomerActor = user !== null && user.role === 'CUSTOMER' && !adminOrRep;
+    const canCreate = adminOrRep || isCustomerActor;
+
+    if (adminOrRep && isViewOnly(adminOrRep)) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. View-only accounts cannot create orders.' } },
+        { status: 403 }
+      );
+    }
 
     if (!canCreate) {
       return NextResponse.json(
@@ -30,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
+    let {
       customerName,
       customerEmail,
       customerPhone,
@@ -43,6 +92,11 @@ export async function POST(request: NextRequest) {
       paymentReference,
       paymentMethod,
     } = body;
+
+    // If a logged-in CUSTOMER is creating this order, bind it to their account email
+    if (isCustomerActor && user) {
+      customerEmail = user.email;
+    }
 
     // Validate required fields
     if (
@@ -69,6 +123,30 @@ export async function POST(request: NextRequest) {
 
     // Generate unique order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+
+    // Payment verification (prevents spoofing paid orders)
+    let paymentStatus: 'PAID' | 'PENDING' = 'PENDING';
+    let orderStatus: 'CONFIRMED' | 'PENDING' = 'PENDING';
+
+    if (paymentReference) {
+      const method = String(paymentMethod || '').toLowerCase().trim();
+      if (method === 'paystack') {
+        const verification = await verifyPaystackPayment(String(paymentReference), Number(totalAmount));
+        if (verification.verified) {
+          paymentStatus = 'PAID';
+          orderStatus = 'CONFIRMED';
+        } else {
+          console.warn(`⚠️ Paystack verification failed for ${paymentReference}: ${verification.reason}`);
+        }
+      } else if (!isCustomerActor) {
+        // Allow trusted dashboard actors to mark payments for non-paystack/manual methods
+        paymentStatus = 'PAID';
+        orderStatus = 'CONFIRMED';
+      } else {
+        // Customer-submitted non-paystack references should not mark the order as paid automatically
+        console.warn(`⚠️ Customer order submitted with unverified payment method: ${paymentMethod || 'unknown'}`);
+      }
+    }
 
     // Auto-create or find Customer
     let customerId: string | null = null;
@@ -157,8 +235,8 @@ export async function POST(request: NextRequest) {
         totalAmount,
         paymentReference: paymentReference || null,
         paymentMethod: paymentMethod || null,
-        paymentStatus: paymentReference ? 'PAID' : 'PENDING',
-        status: paymentReference ? 'CONFIRMED' : 'PENDING',
+        paymentStatus,
+        status: orderStatus,
         customerId: customerId, // Link to customer if created/found
         items: {
           create: items.map((item: any) => ({
@@ -365,9 +443,17 @@ View order in dashboard: ${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_
   }
 }
 
-// GET /api/v1/orders - Get all orders (Admin only - add auth later)
+// GET /api/v1/orders - Get all orders (Admin/Rep/Manager/Viewer)
 export async function GET(request: NextRequest) {
   try {
+    const auth = await verifyAdminOrRep(request);
+    if (!auth) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. Admin/Rep access required.' } },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '50', 10);

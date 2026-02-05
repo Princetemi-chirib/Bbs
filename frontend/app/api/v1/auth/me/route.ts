@@ -1,46 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { verifyUser } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const auth = await verifyUser(request);
+    if (!auth) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: 'Authentication required',
-          },
-        },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-    let decoded: { id: string; email: string; role: string };
-    try {
-      decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string };
-    } catch (error) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: 'Invalid or expired token',
-          },
-        },
+        { success: false, error: { message: 'Authentication required' } },
         { status: 401 }
       );
     }
 
     // Get user from database
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
+      where: { id: auth.id },
       include: {
         barber: true,
         customer: true,

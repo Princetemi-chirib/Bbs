@@ -19,3 +19,23 @@ export function formatTime(date: Date | string): string {
     minute: '2-digit',
   });
 }
+
+/**
+ * Deterministic "slots left for today" per service (same day + same serviceId = same number).
+ * Used for urgency messaging on book and checkout. Replace with real inventory when available.
+ */
+export function getSlotsLeftForToday(
+  serviceId: string,
+  min: number = 3,
+  max: number = 12
+): number {
+  const today = new Date().toISOString().slice(0, 10);
+  const seed = `${today}-${serviceId}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  const range = max - min + 1;
+  return min + (Math.abs(hash) % range);
+}

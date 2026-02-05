@@ -86,6 +86,15 @@ export async function verifyAdminOrRep(request: NextRequest): Promise<AuthUser |
   if (user.role !== 'ADMIN' && user.role !== 'REP' && user.role !== 'MANAGER' && user.role !== 'VIEWER') {
     return null;
   }
+
+  // Enforce VIEWER as read-only across endpoints using this helper
+  // (Prevents unintended writes where routes rely on verifyAdminOrRep for authorization.)
+  if (user.role === 'VIEWER') {
+    const method = (request.method || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') {
+      return null;
+    }
+  }
   
   return user;
 }
