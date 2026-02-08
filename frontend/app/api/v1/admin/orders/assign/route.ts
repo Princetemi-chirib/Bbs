@@ -95,16 +95,25 @@ export async function POST(request: NextRequest) {
       // Issue 1 & 3: Assign order to barber (atomic update prevents race condition)
       // Use updateMany first to ensure atomicity, then fetch the updated record
       const updateResult = await tx.order.updateMany({
-        where: { 
+        where: {
           id: orderId,
-          // Only update if not already assigned to a different barber (prevents race condition)
-          OR: [
-            { assignedBarberId: null },
-            { assignedBarberId: barberId }, // Allow reassignment to same barber
-          ],
-          // Don't assign if already completed
-          jobStatus: { not: 'COMPLETED' },
           status: { not: 'COMPLETED' },
+          AND: [
+            // Only update if not already assigned to a different barber (prevents race condition)
+            {
+              OR: [
+                { assignedBarberId: null },
+                { assignedBarberId: barberId }, // Allow reassignment to same barber
+              ],
+            },
+            // Don't assign if already completed (jobStatus is null for unassigned orders)
+            {
+              OR: [
+                { jobStatus: null },
+                { jobStatus: { not: 'COMPLETED' } },
+              ],
+            },
+          ],
         },
         data: {
           assignedBarberId: barberId,
