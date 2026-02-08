@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isViewOnly, verifyAdminOrRep } from '@/app/api/v1/utils/auth';
+import { getNowInLagos, formatTimeHHmm } from '@/app/api/v1/utils/timezone';
 import { emailService } from '@/lib/server/emailService';
 import { emailTemplates } from '@/lib/server/emailTemplates';
 
@@ -77,22 +78,17 @@ export async function POST(request: NextRequest) {
         throw new Error('Barber is currently offline and cannot accept new orders');
       }
 
-      // Check if barber is within availability hours
-      const now = new Date();
-      const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
-      const currentTime = now.toTimeString().slice(0, 5); // HH:mm format
-
-      const todayAvailability = barber.availability.find(a => a.dayOfWeek === currentDay);
+      // Check if barber is within availability hours (use Nigeria/Lagos time)
+      const { currentDay, currentTime } = getNowInLagos();
+      const todayAvailability = barber.availability.find((a) => a.dayOfWeek === currentDay);
       if (todayAvailability) {
-        const startTime = todayAvailability.startTime.toString().slice(0, 5); // HH:mm
-        const endTime = todayAvailability.endTime.toString().slice(0, 5); // HH:mm
+        const startTime = formatTimeHHmm(todayAvailability.startTime);
+        const endTime = formatTimeHHmm(todayAvailability.endTime);
         const isWithinHours = currentTime >= startTime && currentTime <= endTime;
-        
         if (!isWithinHours) {
           throw new Error('Barber is outside their scheduled availability hours');
         }
       } else {
-        // No availability set for today - barber is not available
         throw new Error('Barber has no availability set for today');
       }
 

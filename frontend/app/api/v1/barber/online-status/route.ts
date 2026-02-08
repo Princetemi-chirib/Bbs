@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyUser } from '@/app/api/v1/utils/auth';
+import { getNowInLagos, formatTimeHHmm } from '@/app/api/v1/utils/timezone';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,17 +36,14 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Check if currently within availability hours
-    const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
-    const currentTime = now.toTimeString().slice(0, 5); // HH:mm format
-
-    const todayAvailability = availability.find(a => a.dayOfWeek === currentDay);
+    // Use Nigeria (Lagos) time so "within hours" matches barber's local time
+    const { currentDay, currentTime } = getNowInLagos();
+    const todayAvailability = availability.find((a) => a.dayOfWeek === currentDay);
     let isWithinHours = false;
 
     if (todayAvailability) {
-      const startTime = todayAvailability.startTime.toString().slice(0, 5); // HH:mm
-      const endTime = todayAvailability.endTime.toString().slice(0, 5); // HH:mm
+      const startTime = formatTimeHHmm(todayAvailability.startTime);
+      const endTime = formatTimeHHmm(todayAvailability.endTime);
       isWithinHours = currentTime >= startTime && currentTime <= endTime;
     }
 
@@ -60,8 +58,8 @@ export async function GET(request: NextRequest) {
         isAvailable,
         currentTime,
         todayAvailability: todayAvailability ? {
-          startTime: todayAvailability.startTime.toString().slice(0, 5),
-          endTime: todayAvailability.endTime.toString().slice(0, 5),
+          startTime: formatTimeHHmm(todayAvailability.startTime),
+          endTime: formatTimeHHmm(todayAvailability.endTime),
         } : null,
       },
     });
