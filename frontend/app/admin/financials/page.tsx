@@ -952,38 +952,38 @@ export default function AdminFinancialsPage() {
             {/* Real-time strip (§16) */}
             {realtimeData && (
               <section className={styles.summarySection} style={{ marginBottom: 24 }}>
-                <div className={styles.summaryCard} style={{ background: 'linear-gradient(135deg, #39413f 0%, #2a312f 100%)', color: '#fff' }}>
-                  <h2 className={styles.sectionTitle} style={{ color: '#fff', marginBottom: 16 }}>
+                <div className={styles.summaryCard} style={{ background: 'linear-gradient(135deg, #39413f 0%, #2a312f 100%)', color: '#111' }}>
+                  <h2 className={styles.sectionTitle} style={{ color: '#111', marginBottom: 16 }}>
                     <RefreshCw size={20} style={{ verticalAlign: 'middle', marginRight: 8 }} aria-hidden />
                     Live Now
                   </h2>
                   <div className={styles.summaryGrid} style={{ gap: 24 }}>
                     <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Live Visitors</span>
-                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.liveVisitors ?? 0).toLocaleString()}</span>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(0,0,0,0.85)' }}>Live Visitors</span>
+                      <span className={styles.summaryValue} style={{ color: '#111' }}>{(realtimeData.liveVisitors ?? 0).toLocaleString()}</span>
                     </div>
                     <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Orders Today</span>
-                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.ordersToday ?? 0).toLocaleString()}</span>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(0,0,0,0.85)' }}>Orders Today</span>
+                      <span className={styles.summaryValue} style={{ color: '#111' }}>{(realtimeData.ordersToday ?? 0).toLocaleString()}</span>
                     </div>
                     <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Revenue Today</span>
-                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{formatCurrency(realtimeData.revenueToday ?? 0)}</span>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(0,0,0,0.85)' }}>Revenue Today</span>
+                      <span className={styles.summaryValue} style={{ color: '#111' }}>{formatCurrency(realtimeData.revenueToday ?? 0)}</span>
                     </div>
                     <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Active Barbers</span>
-                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.activeBarbers ?? 0).toLocaleString()}</span>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(0,0,0,0.85)' }}>Active Barbers</span>
+                      <span className={styles.summaryValue} style={{ color: '#111' }}>{(realtimeData.activeBarbers ?? 0).toLocaleString()}</span>
                     </div>
                     <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Bookings Today</span>
-                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.bookingsToday ?? 0).toLocaleString()}</span>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(0,0,0,0.85)' }}>Bookings Today</span>
+                      <span className={styles.summaryValue} style={{ color: '#111' }}>{(realtimeData.bookingsToday ?? 0).toLocaleString()}</span>
                     </div>
                     <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel} style={{ color: 'rgba(255,255,255,0.8)' }}>Pending Orders</span>
-                      <span className={styles.summaryValue} style={{ color: '#fff' }}>{(realtimeData.pendingOrders ?? 0).toLocaleString()}</span>
+                      <span className={styles.summaryLabel} style={{ color: 'rgba(0,0,0,0.85)' }}>Pending Orders</span>
+                      <span className={styles.summaryValue} style={{ color: '#111' }}>{(realtimeData.pendingOrders ?? 0).toLocaleString()}</span>
                     </div>
                   </div>
-                  <p className={styles.sectionSubtext} style={{ marginTop: 12, color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
+                  <p className={styles.sectionSubtext} style={{ marginTop: 12, color: 'rgba(0,0,0,0.7)', fontSize: '0.8rem' }}>
                     Last updated: {realtimeData.lastUpdated ? new Date(realtimeData.lastUpdated).toLocaleTimeString() : '—'}
                   </p>
                 </div>

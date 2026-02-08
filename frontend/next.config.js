@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    // Mitigation: disable Next.js Image Optimizer (reduces DoS surface)
-    // Many pages already pass `unoptimized` per-image; this makes it consistent.
-    unoptimized: true,
+    // Enable optimization for landing page and other remote images (resize, WebP, cache).
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: 'https',

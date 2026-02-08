@@ -68,6 +68,32 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
   const [counters, setCounters] = useState({ clients: 0, barbers: 0, satisfaction: 0, appointments: 0 });
+  // Lazy-load feature videos only when in viewport (keeps design identical, reduces initial load).
+  const [featureVideoVisible, setFeatureVideoVisible] = useState<[boolean, boolean, boolean]>([false, false, false]);
+  const featureCardRefs = useRef<(HTMLDivElement | null)[]>([null, null, null]);
+
+  // Lazy-load feature videos when each card enters viewport.
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    featureCardRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const ob = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            setFeatureVideoVisible((prev) => {
+              const next = [...prev] as [boolean, boolean, boolean];
+              next[i] = true;
+              return next;
+            });
+          }
+        },
+        { rootMargin: '100px', threshold: 0.1 }
+      );
+      ob.observe(el);
+      observers.push(ob);
+    });
+    return () => observers.forEach((ob) => ob.disconnect());
+  }, []);
 
   useEffect(() => {
     const animate = () => {
@@ -97,13 +123,20 @@ export default function Home() {
     return () => ob.disconnect();
   }, []);
 
+  // Gallery: use requestAnimationFrame for smooth scroll without layout thrash (was setInterval 50ms).
   useEffect(() => {
     const g = galleryRef.current;
     if (!g) return;
     let x = 0;
-    const run = () => { x += 1; if (x >= g.scrollWidth - g.clientWidth) x = 0; g.scrollLeft = x; };
-    const id = setInterval(run, 50);
-    return () => clearInterval(id);
+    let rafId: number;
+    const run = () => {
+      x += 1;
+      if (x >= g.scrollWidth - g.clientWidth) x = 0;
+      g.scrollLeft = x;
+      rafId = requestAnimationFrame(run);
+    };
+    rafId = requestAnimationFrame(run);
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   const handleSliderMove = (clientX: number) => {
@@ -137,7 +170,7 @@ export default function Home() {
       {/* Hero - exact copy from current site */}
       <section className={styles.hero}>
         <div className={styles.heroVideo}>
-          <video autoPlay loop muted playsInline>
+          <video autoPlay loop muted playsInline preload="metadata">
             <source src={HERO_VIDEO} type="video/mp4" />
           </video>
         </div>
@@ -161,7 +194,7 @@ export default function Home() {
           <div className={styles.serviceGrid}>
             {SERVICE_IMAGES.map((img, i) => (
               <div key={i} className={styles.serviceCard}>
-                <Image src={img.src} alt={img.caption} width={360} height={480} className={styles.serviceImg} unoptimized />
+                <Image src={img.src} alt={img.caption} width={360} height={480} className={styles.serviceImg} sizes="(max-width: 768px) 100vw, 360px" loading="lazy" />
                 <span className={styles.serviceCaption}>{img.caption}</span>
               </div>
             ))}
@@ -182,10 +215,10 @@ export default function Home() {
             </p>
           </div>
           <div className={styles.whatWeDoCards}>
-            <div className={styles.featureCard}>
+            <div ref={(el) => { featureCardRefs.current[0] = el; }} className={styles.featureCard}>
               <div className={styles.featureMediaWrap}>
                 <video autoPlay loop muted playsInline>
-                  <source src={FEATURE_VIDEOS[0]} type="video/mp4" />
+                  {featureVideoVisible[0] && <source src={FEATURE_VIDEOS[0]} type="video/mp4" />}
                 </video>
                 <div className={styles.featureOverlay} />
               </div>
@@ -194,10 +227,10 @@ export default function Home() {
                 <p className={styles.featureDesc}>We meticulously select and train only the most skilled and passionate barbers. Each professional on our team is dedicated to perfecting their craft and delivering a flawless look.</p>
               </div>
             </div>
-            <div className={styles.featureCard}>
+            <div ref={(el) => { featureCardRefs.current[1] = el; }} className={styles.featureCard}>
               <div className={styles.featureMediaWrap}>
                 <video autoPlay loop muted playsInline>
-                  <source src={FEATURE_VIDEOS[1]} type="video/mp4" />
+                  {featureVideoVisible[1] && <source src={FEATURE_VIDEOS[1]} type="video/mp4" />}
                 </video>
                 <div className={styles.featureOverlay} />
               </div>
@@ -206,10 +239,10 @@ export default function Home() {
                 <p className={styles.featureDesc}>We bring the complete barbershop experience directly to you. Enjoy a premium service at your home or office, saving you time and the hassle of travel and waiting.</p>
               </div>
             </div>
-            <div className={styles.featureCard}>
+            <div ref={(el) => { featureCardRefs.current[2] = el; }} className={styles.featureCard}>
               <div className={styles.featureMediaWrap}>
                 <video autoPlay loop muted playsInline>
-                  <source src={FEATURE_VIDEOS[2]} type="video/mp4" />
+                  {featureVideoVisible[2] && <source src={FEATURE_VIDEOS[2]} type="video/mp4" />}
                 </video>
                 <div className={styles.featureOverlay} />
               </div>
@@ -238,10 +271,10 @@ export default function Home() {
             onClick={(e) => !isDragging && handleSliderMove(e.clientX)}
           >
             <div className={styles.beforeWrap} style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}>
-              <Image src={BEFORE_IMG} alt="Before" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" unoptimized />
+              <Image src={BEFORE_IMG} alt="Before" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" />
             </div>
             <div className={styles.afterWrap} style={{ clipPath: `polygon(${sliderPosition}% 0, 100% 0, 100% 100%, ${sliderPosition}% 100%)` }}>
-              <Image src={AFTER_IMG} alt="After" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" unoptimized />
+              <Image src={AFTER_IMG} alt="After" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" />
             </div>
             <div className={styles.sliderLine} style={{ left: `${sliderPosition}%` }} />
             <div className={styles.sliderHandle} style={{ left: `${sliderPosition}%` }} onMouseDown={onDown} onTouchStart={onDown}>
@@ -286,7 +319,7 @@ export default function Home() {
         <div ref={galleryRef} className={styles.galleryTrack}>
           {GALLERY_CAROUSEL.map((src, i) => (
             <div key={i} className={styles.galleryItem}>
-              <Image src={src} alt={`Gallery ${i + 1}`} width={276} height={300} className={styles.galleryImg} unoptimized />
+              <Image src={src} alt={`Gallery ${i + 1}`} width={276} height={300} className={styles.galleryImg} sizes="276px" loading="lazy" />
             </div>
           ))}
         </div>
@@ -299,7 +332,7 @@ export default function Home() {
           <div className={styles.partnersGrid}>
             {PARTNERS.map((logo, i) => (
               <div key={i} className={styles.partnerLogo}>
-                <Image src={logo} alt={`Partner ${i + 1}`} width={120} height={60} className={styles.partnerImg} unoptimized />
+                <Image src={logo} alt={`Partner ${i + 1}`} width={120} height={60} className={styles.partnerImg} sizes="120px" loading="lazy" />
               </div>
             ))}
           </div>
@@ -337,7 +370,7 @@ export default function Home() {
               <article key={i} className={styles.reviewCard}>
                 <div className={styles.reviewHead}>
                   <div className={styles.reviewAvatar}>
-                    <Image src={r.avatar} alt="" width={40} height={40} className={styles.avatarImg} unoptimized />
+                    <Image src={r.avatar} alt="" width={40} height={40} className={styles.avatarImg} sizes="40px" loading="lazy" />
                   </div>
                   <div className={styles.reviewHeadText}>
                     <div className={styles.reviewName}>{r.name}</div>
