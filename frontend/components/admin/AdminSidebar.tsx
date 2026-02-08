@@ -90,7 +90,7 @@ function isPathActive(pathname: string, href: string, searchParams?: string | nu
   if (href.startsWith('/admin/financials')) {
     if (pathname !== '/admin/financials') return false;
     const tab = href.includes('tab=') ? href.split('tab=')[1]?.split('&')[0] : '';
-    return !tab || searchParams?.includes(`tab=${tab}`);
+    return !tab || (searchParams?.includes(`tab=${tab}`) ?? false);
   }
   return pathname === href || (href !== '/admin' && pathname?.startsWith(href));
 }
