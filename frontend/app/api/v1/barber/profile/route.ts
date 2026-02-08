@@ -153,35 +153,29 @@ export async function PUT(request: NextRequest) {
         where: { barberId: barber.id },
       });
 
-      // Filter and create new availability - ensure all required fields are present
-      const validAvailability = availability
-        .filter((avail: any) => 
-          avail.dayOfWeek !== undefined && 
-          avail.dayOfWeek !== null &&
-          avail.startTime &&
-          avail.endTime
-        )
-        .map((avail: any) => {
-          // Ensure startTime and endTime are in proper format (HH:mm:ss)
-          let startTime = avail.startTime;
-          let endTime = avail.endTime;
-          
-          // If time is in HH:mm format, convert to HH:mm:ss
-          if (typeof startTime === 'string' && startTime.split(':').length === 2) {
-            startTime = `${startTime}:00`;
-          }
-          if (typeof endTime === 'string' && endTime.split(':').length === 2) {
-            endTime = `${endTime}:00`;
-          }
+      // Prisma DateTime (for @db.Time) expects ISO-8601; use reference date + time
+      const timeStringToDate = (t: string): string => {
+        const parts = String(t).trim().split(':');
+        const h = parts[0]?.padStart(2, '0') ?? '00';
+        const m = (parts[1] ?? '00').padStart(2, '0');
+        const s = (parts[2] ?? '00').padStart(2, '0');
+        return `1970-01-01T${h}:${m}:${s}.000Z`;
+      };
 
-          return {
-            barberId: barber.id,
-            dayOfWeek: Number(avail.dayOfWeek),
-            startTime: startTime,
-            endTime: endTime,
-            isAvailable: avail.isAvailable !== false,
-          };
-        });
+      const validAvailability = availability
+        .filter((avail: any) =>
+          avail.dayOfWeek !== undefined &&
+          avail.dayOfWeek !== null &&
+          avail.startTime != null &&
+          avail.endTime != null
+        )
+        .map((avail: any) => ({
+          barberId: barber.id,
+          dayOfWeek: Number(avail.dayOfWeek),
+          startTime: timeStringToDate(avail.startTime),
+          endTime: timeStringToDate(avail.endTime),
+          isAvailable: avail.isAvailable !== false,
+        }));
 
       // Create new availability
       if (validAvailability.length > 0) {
