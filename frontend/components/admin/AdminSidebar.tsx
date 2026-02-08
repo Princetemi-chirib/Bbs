@@ -97,6 +97,7 @@ function isPathActive(pathname: string, href: string, searchParams?: string | nu
 
 export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
   const pathname = usePathname();
+  const path = pathname ?? '';
   const searchParams = useSearchParams()?.toString() || null;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [userRole, setUserRole] = useState<Role | null>(null);
@@ -113,10 +114,10 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
     const next = new Set<string>();
     ALL_NAV_ITEMS.forEach((item) => {
       if (item.type !== 'parent' || !item.children) return;
-      const childActive = item.children.some((c) => isPathActive(pathname, c.href, searchParams));
+      const childActive = item.children.some((c) => isPathActive(path, c.href, searchParams));
       if (childActive) next.add(item.label);
     });
-    setExpandedParents((prev) => (next.size ? (prev) => new Set([...prev, ...next]) : prev));
+    setExpandedParents((prev) => (next.size ? new Set([...prev, ...next]) : prev));
   }, [pathname, searchParams]);
 
   useEffect(() => {
@@ -173,7 +174,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
           <nav className={styles.nav}>
             {menuItems.map((item) => {
               if (item.type === 'link' && item.href) {
-                const isActive = isPathActive(pathname, item.href, searchParams);
+                const isActive = isPathActive(path, item.href, searchParams);
                 return (
                   <Link
                     key={item.href}
@@ -189,8 +190,8 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
               if (item.type === 'parent' && item.children?.length) {
                 const isExpanded = expandedParents.has(item.label);
                 const isParentActive = item.href
-                  ? isPathActive(pathname, item.href, searchParams)
-                  : item.children.some((c) => isPathActive(pathname, c.href, searchParams));
+                  ? isPathActive(path, item.href, searchParams)
+                  : item.children.some((c) => isPathActive(path, c.href, searchParams));
 
                 return (
                   <div key={item.label} className={styles.parentGroup}>
@@ -224,7 +225,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
                     {isExpanded && (
                       <ul className={styles.subNav}>
                         {item.children.map((sub) => {
-                          const isSubActive = isPathActive(pathname, sub.href, searchParams);
+                          const isSubActive = isPathActive(path, sub.href, searchParams);
                           return (
                             <li key={sub.href}>
                               <Link
