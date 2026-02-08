@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       paymentReference,
     });
 
-    // Send email
+    // Send email (do not fail checkout if SMTP is disabled or misconfigured)
     const result = await emailService.sendEmail({
       to: customerEmail,
       subject: `Order Confirmation - ${orderReference}`,
@@ -88,27 +88,22 @@ export async function POST(request: NextRequest) {
           previewUrl: result.previewUrl,
         },
       });
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: result.error || 'Failed to send email',
-          },
-        },
-        { status: 500 }
-      );
     }
+
+    // SMTP failed (e.g. 554 Disabled by hPanel) – return 200 so checkout flow is not broken
+    console.warn('Order confirmation email not sent:', result.error);
+    return NextResponse.json({
+      success: false,
+      message: 'Order confirmation email could not be sent. Order is still confirmed.',
+      error: { message: result.error || 'Email service unavailable' },
+    });
   } catch (error: any) {
     console.error('Error sending order confirmation email:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: error.message || 'Internal server error',
-        },
-      },
-      { status: 500 }
-    );
+    // Return 200 so checkout success page still works; caller can check success: false
+    return NextResponse.json({
+      success: false,
+      message: 'Order confirmation email could not be sent. Order is still confirmed.',
+      error: { message: error.message || 'Internal server error' },
+    });
   }
 }

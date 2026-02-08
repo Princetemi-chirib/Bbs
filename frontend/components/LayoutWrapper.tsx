@@ -8,8 +8,12 @@ import TrafficTracker from '@/components/TrafficTracker';
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Hide header/footer for admin and barber dashboards
-  const hideHeaderFooter = pathname?.startsWith('/admin') || pathname?.startsWith('/barber') || pathname?.startsWith('/login');
+  // Hide header/footer for admin, barber dashboard, and login (show on /barber-recruit)
+  const hideHeaderFooter =
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/login') ||
+    pathname === '/barber' ||
+    pathname?.startsWith('/barber/');
 
   if (hideHeaderFooter) {
     return (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchAuth, isAdmin } from '@/lib/auth';
+import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './reviews.module.css';
 
 type ReviewRow = {
@@ -277,8 +278,9 @@ export default function AdminReviewsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1>Review Management</h1>
-        <p className={styles.subtitle}>Moderate reviews, track metrics, and handle negative feedback</p>
+        <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: 'Reviews' }]} />
+        <h1>Reviews</h1>
+        <p className={styles.subtitle}>Moderate reviews, track metrics, and handle negative feedback.</p>
       </header>
 
       {overview && (

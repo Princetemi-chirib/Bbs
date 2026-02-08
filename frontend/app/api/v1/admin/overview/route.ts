@@ -44,8 +44,9 @@ export async function GET(request: NextRequest) {
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
-          items: {
-            take: 3,
+          items: { take: 3 },
+          assignedBarber: {
+            select: { user: { select: { name: true } } },
           },
         },
       }),
@@ -112,6 +113,7 @@ export async function GET(request: NextRequest) {
           jobStatus: order.jobStatus,
           paymentStatus: order.paymentStatus,
           assignedBarberId: order.assignedBarberId || null,
+          assignedBarberName: order.assignedBarber?.user?.name ?? null,
           createdAt: order.createdAt,
         })),
       },

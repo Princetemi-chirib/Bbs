@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { BarChart2, Users, Calendar, RefreshCw, Check, Pause, Wallet, RotateCcw, Star } from 'lucide-react';
 import { fetchAuth } from '@/lib/auth';
+import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './customers.module.css';
 import Link from 'next/link';
 
@@ -202,8 +203,9 @@ export default function AdminCustomersPage() {
     <div className={styles.customers}>
       <header className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Customer Management</h1>
-          <p className={styles.pageSubtitle}>Manage and track all your customers</p>
+          <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: 'Customers' }]} />
+          <h1 className={styles.pageTitle}>Customers</h1>
+          <p className={styles.pageSubtitle}>Manage and track all your customers.</p>
         </div>
         <div>
           <Link href="/admin/customers/analytics" className={styles.primaryButton} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}>

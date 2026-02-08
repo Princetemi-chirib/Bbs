@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { fetchAuth, isAdmin, hasRole } from '@/lib/auth';
 import { orderApi, productApi } from '@/lib/api';
+import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './orders.module.css';
 
 interface OrderItem {
@@ -18,6 +19,7 @@ interface OrderItem {
 
 export default function AdminOrdersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<any[]>([]);
   const [barbers, setBarbers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -34,6 +36,7 @@ export default function AdminOrdersPage() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
   const [serviceTypeFilter, setServiceTypeFilter] = useState('');
+  const [unassignedOnly, setUnassignedOnly] = useState(false);
   
   // Order form state
   const [formData, setFormData] = useState({
@@ -60,6 +63,20 @@ export default function AdminOrdersPage() {
     loadBarbers();
     loadProducts();
   }, []);
+
+  // Refetch barbers when opening assign modal so online status is up to date
+  useEffect(() => {
+    if (selectedOrder) {
+      loadBarbers();
+    }
+  }, [selectedOrder]);
+
+  // Open create form when URL has ?create=1
+  useEffect(() => {
+    if (searchParams?.get('create') === '1') {
+      setShowCreateForm(true);
+    }
+  }, [searchParams]);
 
   const loadOrders = async () => {
     try {
@@ -131,7 +148,7 @@ export default function AdminOrdersPage() {
 
       const data = await response.json();
       if (data.success) {
-        alert('Order assigned successfully');
+        alert('Order assigned successfully. The barber will be notified.');
         setSelectedOrder(null);
         setSelectedBarber('');
         loadOrders();
@@ -228,6 +245,12 @@ export default function AdminOrdersPage() {
 
   // Filter orders based on filters
   const filteredOrders = orders.filter((order) => {
+    // Unassigned only: paid orders with no barber
+    if (unassignedOnly) {
+      if (!order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED')) return true;
+      return false;
+    }
+
     // Date range filter: Start = local start-of-day, End = local end-of-day
     if (dateRange.start || dateRange.end) {
       const orderDate = new Date(order.createdAt);
@@ -293,13 +316,37 @@ export default function AdminOrdersPage() {
     return <div className={styles.loading}>Loading orders...</div>;
   }
 
+  const setPresetToday = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    setDateRange({ start: today, end: today });
+    setUnassignedOnly(false);
+  };
+  const setPresetWeek = () => {
+    const now = new Date();
+    const end = new Date(now);
+    const start = new Date(now);
+    start.setDate(start.getDate() - 7);
+    setDateRange({
+      start: start.toISOString().slice(0, 10),
+      end: end.toISOString().slice(0, 10),
+    });
+    setUnassignedOnly(false);
+  };
+  const setPresetUnassigned = () => {
+    setUnassignedOnly(true);
+    setDateRange({ start: '', end: '' });
+  };
+
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+        <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: 'Orders' }]} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h1 className={styles.pageTitle}>Order Management</h1>
-            <p className={styles.pageSubtitle}>Manage and assign orders to barbers</p>
+            <h1 className={styles.pageTitle}>Orders</h1>
+            <p className={styles.pageSubtitle}>
+              View orders, assign barbers, and track status. Use filters or quick presets below.
+            </p>
           </div>
           {hasRole('REP') && (
             <button
@@ -307,7 +354,7 @@ export default function AdminOrdersPage() {
               className={styles.primaryBtn}
               style={{ padding: '12px 24px' }}
             >
-              {showCreateForm ? 'Cancel' : '+ Create Order'}
+              {showCreateForm ? 'Cancel' : '+ Create order'}
             </button>
           )}
         </div>
@@ -316,7 +363,7 @@ export default function AdminOrdersPage() {
       <main className={styles.main}>
         {/* Order Overview Metrics */}
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Order Overview</h2>
+          <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Summary</h2>
           <div className={styles.metricsGrid}>
             <div className={styles.metricCard}>
               <div className={styles.metricLabel}>Total Orders</div>
@@ -351,10 +398,41 @@ export default function AdminOrdersPage() {
 
         {/* Filters Section */}
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Filters</h2>
+          <h2 className={styles.sectionTitle} style={{ marginBottom: '16px' }}>Filters</h2>
+          <p className={styles.sectionSubtext} style={{ marginBottom: '16px' }}>Quick presets or set dates and status below.</p>
+          <div className={styles.presetRow}>
+            <button
+              type="button"
+              className={unassignedOnly ? styles.presetBtnActive : styles.presetBtn}
+              onClick={setPresetUnassigned}
+            >
+              Unassigned
+            </button>
+            <button
+              type="button"
+              className={!unassignedOnly && dateRange.start && dateRange.start === dateRange.end && dateRange.start === new Date().toISOString().slice(0, 10) ? styles.presetBtnActive : styles.presetBtn}
+              onClick={setPresetToday}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              className={!unassignedOnly && dateRange.start && dateRange.end ? styles.presetBtnActive : styles.presetBtn}
+              onClick={setPresetWeek}
+            >
+              Last 7 days
+            </button>
+            <button
+              type="button"
+              className={!unassignedOnly && !dateRange.start && !dateRange.end ? styles.presetBtnActive : styles.presetBtn}
+              onClick={() => { setDateRange({ start: '', end: '' }); setUnassignedOnly(false); }}
+            >
+              All time
+            </button>
+          </div>
           <div className={styles.filtersGrid}>
             <div>
-              <label className={styles.label}>Date Range (Start)</label>
+              <label className={styles.label}>Date range (start)</label>
               <input
                 type="date"
                 className={styles.input}
@@ -363,7 +441,7 @@ export default function AdminOrdersPage() {
               />
             </div>
             <div>
-              <label className={styles.label}>Date Range (End)</label>
+              <label className={styles.label}>Date range (end)</label>
               <input
                 type="date"
                 className={styles.input}
@@ -426,7 +504,7 @@ export default function AdminOrdersPage() {
               />
             </div>
           </div>
-          {(dateRange.start || dateRange.end || orderStatusFilter || paymentStatusFilter || paymentMethodFilter || serviceTypeFilter) && (
+          {(dateRange.start || dateRange.end || orderStatusFilter || paymentStatusFilter || paymentMethodFilter || serviceTypeFilter || unassignedOnly) && (
             <button
               onClick={() => {
                 setDateRange({ start: '', end: '' });
@@ -446,8 +524,14 @@ export default function AdminOrdersPage() {
         {/* Orders Table */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>All Orders</h2>
+            <h2 className={styles.sectionTitle}>Order list</h2>
             <span className={styles.sectionBadge}>{filteredOrders.length} orders</span>
+          </div>
+          <div className={styles.statusLegend}>
+            <span className={styles.statusLegendItem}><span className={styles.legendDot} style={{ background: '#fff3cd' }} /> Pending</span>
+            <span className={styles.statusLegendItem}><span className={styles.legendDot} style={{ background: '#d1ecf1' }} /> Completed</span>
+            <span className={styles.statusLegendItem}><span className={styles.legendDot} style={{ background: '#f8d7da' }} /> Cancelled</span>
+            <span className={styles.statusLegendItem}><span className={styles.legendDot} style={{ background: '#d1e7dd' }} /> In progress</span>
           </div>
           <div className={styles.tableContainer}>
             <table className={styles.ordersTable}>
@@ -582,7 +666,9 @@ export default function AdminOrdersPage() {
                          orderCity.includes(barberState));
                     })
                   .map((barber) => {
+                    const isOnline = barber.isOnline === true;
                     const isAvailable = barber.isAvailable === true;
+                    const statusLabel = !isOnline ? ' (Offline)' : !isAvailable ? ' (Outside hours)' : '';
                     return (
                       <option 
                         key={barber.id} 
@@ -594,7 +680,7 @@ export default function AdminOrdersPage() {
                         }}
                       >
                         {barber.user?.name || 'Unknown'} - {barber.address || barber.city || barber.location || 'No address'}
-                        {!isAvailable && ' (Offline)'}
+                        {statusLabel}
                       </option>
                     );
                     })}

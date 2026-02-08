@@ -80,8 +80,8 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Calculate earnings (assuming 70% commission rate, but you can adjust)
-    const commissionRate = Number(barber.commissionRate || 0.7);
+    // Calculate earnings (barber 35%, company 65%)
+    const commissionRate = Number(barber.commissionRate ?? 0.35);
     
     let totalEarnings = 0;
     const earningsByService: Record<string, { count: number; earnings: number }> = {};

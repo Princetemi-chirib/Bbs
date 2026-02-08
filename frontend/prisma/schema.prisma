@@ -126,7 +126,7 @@ model Barber {
   totalReviews     Int      @default(0) @map("total_reviews")
   totalBookings    Int      @default(0) @map("total_bookings")
   status           BarberStatus @default(PENDING_APPROVAL)
-  commissionRate   Decimal  @default(0.70) @db.Decimal(3, 2) @map("commission_rate")
+  commissionRate   Decimal  @default(0.35) @db.Decimal(3, 2) @map("commission_rate")
   isOnline         Boolean  @default(false) @map("is_online") // Manual online/offline toggle
   location         String?  // Deprecated - use city
   state            String?  // State where barber operates

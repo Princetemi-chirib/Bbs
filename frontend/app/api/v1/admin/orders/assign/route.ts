@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdmin } from '@/app/api/v1/utils/auth';
+import { isViewOnly, verifyAdminOrRep } from '@/app/api/v1/utils/auth';
 import { emailService } from '@/lib/server/emailService';
 import { emailTemplates } from '@/lib/server/emailTemplates';
 
@@ -8,11 +8,17 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const adminUser = await verifyAdmin(request);
-    if (!adminUser) {
+    const authUser = await verifyAdminOrRep(request);
+    if (!authUser) {
       return NextResponse.json(
-        { success: false, error: { message: 'Unauthorized. Admin access required.' } },
+        { success: false, error: { message: 'Unauthorized. Admin or Rep access required.' } },
         { status: 401 }
+      );
+    }
+    if (isViewOnly(authUser)) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. View-only accounts cannot assign orders.' } },
+        { status: 403 }
       );
     }
 

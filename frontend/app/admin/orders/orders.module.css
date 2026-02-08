@@ -81,6 +81,69 @@
   letter-spacing: -0.3px;
 }
 
+.sectionSubtext {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.presetRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.presetBtn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: #39413f;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.presetBtn:hover {
+  background: #f5f5f5;
+  border-color: #39413f;
+}
+
+.presetBtnActive {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #39413f;
+  background: #39413f;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.statusLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.statusLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .sectionBadge {
   background: #39413f;
   color: #ffffff;

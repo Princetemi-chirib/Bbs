@@ -889,7 +889,7 @@ export async function GET(request: NextRequest) {
         if (!barber) return null;
 
         const totalRevenue = Number(item._sum.totalAmount || 0);
-        const commissionRate = Number(barber.commissionRate || 0.70);
+        const commissionRate = Number(barber.commissionRate ?? 0.35);
         const barberEarning = totalRevenue * commissionRate;
         const companyCommission = totalRevenue * (1 - commissionRate);
 

@@ -32,6 +32,97 @@
   font-size: 0.95rem;
 }
 
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #39413f;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.primaryCta:hover {
+  background: #2a312f;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.quickAction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  background: #fff8e6;
+  border: 1px solid #ffd966;
+  border-radius: 8px;
+}
+
+.quickActionText {
+  margin: 0;
+  color: #39413f;
+  font-size: 0.95rem;
+}
+
+.quickActionLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #39413f;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.quickActionLink:hover {
+  text-decoration: underline;
+}
+
+.sectionLink {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #39413f;
+  text-decoration: none;
+}
+
+.sectionLink:hover {
+  text-decoration: underline;
+}
+
+.orderCardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.emptyStateLink {
+  display: inline-block;
+  margin-top: 12px;
+  color: #39413f;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.emptyStateLink:hover {
+  text-decoration: underline;
+}
+
 /* Main Content */
 .main {
   padding: 0 40px 40px 40px;
@@ -288,6 +379,21 @@
 .jobStatusPENDING {
   background: #fff3cd;
   color: #856404;
+}
+
+.jobStatusPENDING_ACCEPTANCE {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.jobStatusACCEPTED {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.jobStatusDECLINED {
+  background: #f8d7da;
+  color: #721c24;
 }
 
 .jobStatusIN_PROGRESS {

@@ -1,9 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Scissors, Package, Wallet, Star } from 'lucide-react';
+import Link from 'next/link';
+import { Scissors, Package, Wallet, Star, ArrowRight } from 'lucide-react';
 import { fetchAuth } from '@/lib/auth';
+import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './admin.module.css';
+
+const FRIENDLY_STATUS: Record<string, string> = {
+  PENDING: 'Pending',
+  PAID: 'Paid',
+  CONFIRMED: 'Confirmed',
+  PROCESSING: 'Processing',
+  COMPLETED: 'Done',
+  CANCELLED: 'Cancelled',
+  PENDING_ACCEPTANCE: 'Waiting for barber',
+  ACCEPTED: 'In progress',
+  DECLINED: 'Declined',
+};
+function friendlyStatus(s: string) {
+  return FRIENDLY_STATUS[s] || s;
+}
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -50,16 +67,44 @@ export default function AdminDashboard() {
     );
   }
 
+  const unassignedInRecent = stats?.recentOrders?.filter(
+    (o: any) => o.paymentStatus === 'PAID' && !o.assignedBarberId
+  ) ?? [];
+  const unassignedCount = unassignedInRecent.length;
+  const hasUnassigned = unassignedCount > 0;
+
   return (
     <div className={styles.dashboard}>
       <header className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.pageTitle}>Dashboard Overview</h1>
-          <p className={styles.pageSubtitle}>Monitor your business performance at a glance</p>
+        <AdminBreadcrumbs items={[{ label: 'Dashboard' }]} />
+        <div className={styles.headerRow}>
+          <div>
+            <h1 className={styles.pageTitle}>Dashboard</h1>
+            <p className={styles.pageSubtitle}>
+              What needs your attention — orders, revenue, and recent activity.
+            </p>
+          </div>
+          {hasUnassigned && (
+            <Link href="/admin/orders" className={styles.primaryCta}>
+              Assign orders <ArrowRight size={18} />
+            </Link>
+          )}
         </div>
       </header>
 
       <main className={styles.main}>
+        {/* Quick attention */}
+        {unassignedCount > 0 && (
+          <section className={styles.quickAction}>
+            <p className={styles.quickActionText}>
+              <strong>{unassignedCount}</strong> order{unassignedCount !== 1 ? 's' : ''} may need a barber assigned.
+            </p>
+            <Link href="/admin/orders" className={styles.quickActionLink}>
+              Go to Orders <ArrowRight size={16} />
+            </Link>
+          </section>
+        )}
+
         {/* Stats Grid */}
         <section className={styles.statsGrid}>
           <div className={styles.statCard}>
@@ -68,7 +113,7 @@ export default function AdminDashboard() {
                 <Scissors size={24} aria-hidden />
               </div>
               <div className={styles.statCardContent}>
-                <h3 className={styles.statLabel}>Total Barbers</h3>
+                <h3 className={styles.statLabel}>Total barbers</h3>
                 <p className={styles.statNumber}>{stats?.stats.totalBarbers || 0}</p>
                 <span className={styles.statSubtext}>
                   {stats?.stats.activeBarbers || 0} active
@@ -83,7 +128,7 @@ export default function AdminDashboard() {
                 <Package size={24} aria-hidden />
               </div>
               <div className={styles.statCardContent}>
-                <h3 className={styles.statLabel}>Total Orders</h3>
+                <h3 className={styles.statLabel}>Total orders</h3>
                 <p className={styles.statNumber}>{stats?.stats.totalOrders || 0}</p>
                 <span className={styles.statSubtext}>All time</span>
               </div>
@@ -97,7 +142,7 @@ export default function AdminDashboard() {
                   <span>💰</span>
                 </div>
                 <div className={styles.statCardContent}>
-                  <h3 className={styles.statLabel}>Total Revenue</h3>
+                  <h3 className={styles.statLabel}>Total revenue</h3>
                   <p className={styles.statNumber}>₦{stats?.stats.totalRevenue?.toLocaleString() || '0'}</p>
                   <span className={styles.statSubtext}>Lifetime earnings</span>
                 </div>
@@ -111,7 +156,7 @@ export default function AdminDashboard() {
                 <Star size={24} aria-hidden />
               </div>
               <div className={styles.statCardContent}>
-                <h3 className={styles.statLabel}>Average Rating</h3>
+                <h3 className={styles.statLabel}>Average rating</h3>
                 <p className={styles.statNumber}>{stats?.stats.averageRating || '0.00'}</p>
                 <span className={styles.statSubtext}>Out of 5.0</span>
               </div>
@@ -120,13 +165,13 @@ export default function AdminDashboard() {
         </section>
 
         {/* Order Status Breakdown */}
-        {stats?.orderStatusBreakdown && (
+        {(stats?.orderStatusBreakdown?.length || stats?.ordersByStatus?.length) && (
           <section className={styles.statusBreakdown}>
-            <h2 className={styles.sectionTitle}>Orders by Status</h2>
+            <h2 className={styles.sectionTitle}>Orders by status</h2>
             <div className={styles.statusGrid}>
-              {stats.orderStatusBreakdown.map((item: any) => (
+              {(stats?.orderStatusBreakdown || stats?.ordersByStatus || []).map((item: any) => (
                 <div key={item.status} className={styles.statusCard}>
-                  <span className={styles.statusLabel}>{item.status}</span>
+                  <span className={styles.statusLabel}>{friendlyStatus(item.status)}</span>
                   <span className={styles.statusCount}>{item.count}</span>
                 </div>
               ))}
@@ -137,40 +182,45 @@ export default function AdminDashboard() {
         {/* Recent Orders */}
         <section className={styles.recentOrders}>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Recent Orders</h2>
-            <span className={styles.sectionBadge}>{stats?.recentOrders?.length || 0} orders</span>
+            <h2 className={styles.sectionTitle}>Recent orders</h2>
+            <Link href="/admin/orders" className={styles.sectionLink}>View all</Link>
           </div>
           <div className={styles.ordersList}>
             {stats?.recentOrders?.length > 0 ? (
               stats.recentOrders.map((order: any) => (
-                <div key={order.id} className={styles.orderCard}>
-                  <div className={styles.orderInfo}>
-                    <div className={styles.orderPrimary}>
-                      <strong className={styles.orderNumber}>{order.orderNumber}</strong>
-                      <span className={styles.customerName}>{order.customerName}</span>
+                <Link key={order.id} href="/admin/orders" className={styles.orderCardLink}>
+                  <div className={styles.orderCard}>
+                    <div className={styles.orderInfo}>
+                      <div className={styles.orderPrimary}>
+                        <strong className={styles.orderNumber}>{order.orderNumber}</strong>
+                        <span className={styles.customerName}>{order.customerName}</span>
+                      </div>
+                      <div className={styles.orderSecondary}>
+                        <span className={styles.orderAmount}>₦{Number(order.totalAmount).toLocaleString()}</span>
+                        {order.assignedBarberName ? (
+                          <span className={styles.barberInfo}>Barber: {order.assignedBarberName}</span>
+                        ) : order.assignedBarberId ? (
+                          <span className={styles.barberInfo}>Barber assigned</span>
+                        ) : null}
+                      </div>
                     </div>
-                    <div className={styles.orderSecondary}>
-                      <span className={styles.orderAmount}>₦{order.totalAmount.toLocaleString()}</span>
-                      {order.assignedBarberId && (
-                        <span className={styles.barberInfo}>Barber: {order.assignedBarberId.slice(0, 8)}...</span>
+                    <div className={styles.orderStatus}>
+                      <span className={`${styles.statusBadge} ${styles[`status${order.status}`]}`}>
+                        {friendlyStatus(order.status)}
+                      </span>
+                      {order.jobStatus && (
+                        <span className={`${styles.jobStatusBadge} ${styles[`jobStatus${order.jobStatus}`]}`}>
+                          {friendlyStatus(order.jobStatus)}
+                        </span>
                       )}
                     </div>
                   </div>
-                  <div className={styles.orderStatus}>
-                    <span className={`${styles.statusBadge} ${styles[`status${order.status}`]}`}>
-                      {order.status}
-                    </span>
-                    {order.jobStatus && (
-                      <span className={`${styles.jobStatusBadge} ${styles[`jobStatus${order.jobStatus}`]}`}>
-                        {order.jobStatus}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                </Link>
               ))
             ) : (
               <div className={styles.emptyState}>
-                <p>No recent orders</p>
+                <p>No recent orders.</p>
+                <Link href="/admin/orders" className={styles.emptyStateLink}>Go to Orders</Link>
               </div>
             )}
           </div>

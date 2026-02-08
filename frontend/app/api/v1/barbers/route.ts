@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdmin } from '@/app/api/v1/utils/auth';
+import { verifyAdminOrRep } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const admin = await verifyAdmin(request);
-    if (!admin) {
+    const auth = await verifyAdminOrRep(request);
+    if (!auth) {
       return NextResponse.json(
-        { success: false, error: { message: 'Unauthorized. Admin access required.' } },
+        { success: false, error: { message: 'Unauthorized. Admin or Rep access required.' } },
         { status: 401 }
       );
     }

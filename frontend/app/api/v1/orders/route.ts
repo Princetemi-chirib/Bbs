@@ -51,13 +51,14 @@ async function verifyPaystackPayment(reference: string, expectedAmountNaira: num
   }
 }
 
-// POST /api/v1/orders - Create a new order (Admin, Rep, or Customer e.g. checkout)
+// POST /api/v1/orders - Create a new order (Admin, Rep, Customer, or Guest with verified Paystack)
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
     const adminOrRep = await verifyAdminOrRep(request);
     const user = await verifyUser(request);
     const isCustomerActor = user !== null && user.role === 'CUSTOMER' && !adminOrRep;
-    const canCreate = adminOrRep || isCustomerActor;
+    let canCreate = adminOrRep || isCustomerActor;
 
     if (adminOrRep && isViewOnly(adminOrRep)) {
       return NextResponse.json(
@@ -66,19 +67,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Guest checkout: allow only when Paystack payment is verified (so order is paid)
     if (!canCreate) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: 'Unauthorized. Admin, Rep, or Customer login required to create orders.',
+      const {
+        paymentReference: ref,
+        paymentMethod: method,
+        customerEmail: email,
+        totalAmount: amount,
+        items: itemsCheck,
+      } = body;
+      if (
+        ref &&
+        email &&
+        amount != null &&
+        Array.isArray(itemsCheck) &&
+        itemsCheck.length > 0 &&
+        String(method || '').toLowerCase().trim() === 'paystack'
+      ) {
+        const verification = await verifyPaystackPayment(String(ref), Number(amount));
+        if (verification.verified) {
+          canCreate = true;
+        }
+      }
+      if (!canCreate) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              message: 'Unauthorized. Log in as customer, or complete payment with Paystack to create an order.',
+            },
           },
-        },
-        { status: 403 }
-      );
+          { status: 403 }
+        );
+      }
     }
 
-    const body = await request.json();
     let {
       customerName,
       customerEmail,

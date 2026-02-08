@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchAuth, isAdmin } from '@/lib/auth';
 import Image from 'next/image';
+import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './barbers.module.css';
 
 type BarberMetrics = {
@@ -295,8 +296,9 @@ export default function AdminBarbersPage() {
       <header className={styles.pageHeader}>
         <div className={styles.pageHeaderContent}>
           <div>
-            <h1 className={styles.pageTitle}>Barber Management</h1>
-            <p className={styles.pageSubtitle}>Manage barbers, track performance, and review applications</p>
+            <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: 'Barbers' }]} />
+            <h1 className={styles.pageTitle}>Barbers</h1>
+            <p className={styles.pageSubtitle}>Manage barbers, track performance, and review applications.</p>
           </div>
           {isAdmin() && (
             <button onClick={() => setShowAddForm(!showAddForm)} className={styles.addButton}>

@@ -6,6 +6,13 @@
   overflow-x: hidden;
 }
 
+.sidebarFallback {
+  width: 280px;
+  min-width: 280px;
+  background: #fff;
+  border-right: 1px solid #e5e5e5;
+}
+
 .mainContent {
   flex: 1;
   margin-left: 280px;

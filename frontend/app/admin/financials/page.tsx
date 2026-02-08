@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import {
   LayoutDashboard,
@@ -35,6 +36,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { fetchAuth, isAdmin, isViewOnly } from '@/lib/auth';
+import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './financials.module.css';
 import {
   AreaChart,
@@ -72,14 +74,32 @@ const TABS: { id: TabId; label: string; Icon: LucideIcon }[] = [
   { id: 'settings', label: 'Settings', Icon: Settings },
 ];
 
+const TAB_IDS: TabId[] = ['overview', 'financial', 'customers', 'orders', 'barbers', 'reviews', 'traffic', 'operations', 'marketing', 'inventory', 'settings'];
+
 export default function AdminFinancialsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [financials, setFinancials] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [activeTab, setActiveTab] = useState<TabId>('overview');
+  const [activeTab, setActiveTabInternal] = useState<TabId>('overview');
+
+  const setActiveTab = (tab: TabId) => {
+    setActiveTabInternal(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    router.replace(url.pathname + '?' + url.searchParams.toString(), { scroll: false });
+  };
+
+  useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab && TAB_IDS.includes(tab as TabId)) {
+      setActiveTabInternal(tab as TabId);
+    }
+  }, [searchParams]);
   const [txSearch, setTxSearch] = useState('');
   const [txSearchInput, setTxSearchInput] = useState('');
   const [txPage, setTxPage] = useState(1);
@@ -753,8 +773,9 @@ export default function AdminFinancialsPage() {
     <div className={styles.financials}>
       <header className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Analytics & Financial Dashboard</h1>
-          <p className={styles.pageSubtitle}>Comprehensive business insights and financial overview</p>
+          <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: 'Financials' }]} />
+          <h1 className={styles.pageTitle}>Financials</h1>
+          <p className={styles.pageSubtitle}>Revenue, barber payouts, and business insights. Use the tabs or sidebar to switch views.</p>
         </div>
       </header>
 
