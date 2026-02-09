@@ -63,12 +63,29 @@ body {
     z-index: 1000;
 }
 
-/* Home: dark semi-transparent glass, white nav links (matches hero headline section) */
+/* Home only: fixed over hero so video plays underneath; transparent glass */
+.main-header-bar.header-home {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    width: 95%;
+    max-width: 95%;
+    z-index: 1000;
+}
+.main-header-bar.header-home.ast-fixed-header {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Home: dark semi-transparent glass, white nav links (video shows through) */
 .main-header-bar:not(.solid-header) {
-    background: rgba(57, 65, 63, 0.75);
+    background: rgba(30, 35, 34, 0.5);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
 }
 .main-header-bar:not(.solid-header).ast-fixed-header {
-    background: rgba(57, 65, 63, 0.85);
+    background: rgba(40, 47, 45, 0.75);
     box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
 }
 .main-header-bar:not(.solid-header) a,

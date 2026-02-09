@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import styles from './Footer.module.css';
 
@@ -148,8 +149,8 @@ export default function Footer() {
             <span className={styles.paymentItem} title="Verve">
               <VerveIcon />
             </span>
-            <span className={`${styles.paymentItem} ${styles.paymentItemPaystack}`} title="Paystack">
-              Paystack
+            <span className={`${styles.paymentItem} ${styles.paymentItemPaystack}`} title="Payment">
+              <Image src="/images/WhatsApp%20Image%202026-02-08%20at%206.49.17%20PM.jpeg" alt="Payment" width={72} height={28} className={styles.paymentImg} />
             </span>
           </div>
         </div>

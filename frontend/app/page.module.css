@@ -59,9 +59,10 @@
 .heroTitle {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  font-size: clamp(2.25rem, 5vw, 4rem);
+  font-size: 88px;
   line-height: 1.2;
   margin-bottom: 1.5rem;
+  white-space: nowrap;
 }
 
 /* Hero-only CTA: light background, dark text, rounded (per image) */
@@ -491,19 +492,57 @@
 
 /* ----- Gallery carousel ----- */
 .gallery {
-  padding: 3rem 0;
+  padding: 3rem 1rem;
   overflow: hidden;
   background: #dcd2cc;
 }
 
+.galleryWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.galleryArrow,
+.galleryArrowRight {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  z-index: 2;
+}
+.galleryArrow:hover,
+.galleryArrowRight:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+.galleryArrow:active,
+.galleryArrowRight:active {
+  transform: scale(0.95);
+}
+.galleryArrow {
+  margin-right: 0.5rem;
+}
+.galleryArrowRight {
+  margin-left: 0.5rem;
+}
+
 .galleryTrack {
+  flex: 1;
   display: flex;
   gap: 1.25rem;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 0 1.5rem;
+  padding: 0 0.25rem;
 }
 
 .galleryTrack::-webkit-scrollbar {
@@ -514,7 +553,7 @@
   flex-shrink: 0;
   width: 276px;
   scroll-snap-align: start;
-  border-radius: 40px;
+  border-radius: 100px;
   overflow: hidden;
 }
 
@@ -523,7 +562,7 @@
   height: 100%;
   object-fit: cover;
   aspect-ratio: 276 / 300;
-  border-radius: 40px;
+  border-radius: 100px;
 }
 
 /* ----- Partners ----- */
@@ -809,6 +848,7 @@
 
   .heroTitle {
     font-size: 60px;
+    white-space: normal;
   }
 
   .sectionTitle {
@@ -880,6 +920,7 @@
 @media (max-width: 544px) {
   .heroTitle {
     font-size: 50px;
+    white-space: normal;
   }
 
   .sectionTitle {

@@ -47,250 +47,236 @@
   font-weight: 400;
 }
 
-/* Headquarters Section */
-.headquartersSection {
-  padding: 80px 0;
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(57, 65, 63, 0.95) 100%);
-  text-align: center;
-}
-
-.locationTitle {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(2rem, 5vw, 3.2rem);
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: -1px;
-  line-height: 1.3;
-}
-
-/* Locations Section */
-.locationsSection {
-  padding: 120px 0;
+/* Branch images – static background, large white text overlay (reference style) */
+.branchesSection {
+  padding: 80px 0 120px;
   background: var(--bg-dark);
 }
 
-.locationsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 32px;
+.branchBlock {
+  position: relative;
+  width: 100%;
+  height: 538px;
+  min-height: 538px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  border-radius: 40px;
+}
+
+.branchOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+.branchTitle {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 28px 32px 32px;
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+/* Stack: all four branches identical – same width, height, radius */
+.branchesStack {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.locationCard {
-  background: var(--bg-card);
-  border: 1px solid rgba(57, 65, 63, 0.15);
-  border-radius: 28px;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.locationCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  border-color: rgba(57, 65, 63, 0.25);
-}
-
-.locationImageWrapper {
-  position: relative;
+.branchesStack .branchBlock {
   width: 100%;
-  height: 320px;
-  overflow: hidden;
-  background: rgba(57, 65, 63, 0.03);
 }
 
-.locationImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+@media (max-width: 768px) {
+  .branchBlock {
+    height: 380px;
+    min-height: 380px;
+  }
+
+  .branchTitle {
+    white-space: normal;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
 }
 
-.locationCard:hover .locationImage {
-  transform: scale(1.03);
+@media (max-width: 480px) {
+  .branchBlock {
+    height: 320px;
+    min-height: 320px;
+  }
 }
 
-.locationContent {
-  padding: 36px 32px;
-  text-align: center;
+/* Contact Us – two columns: left (info + customer rep image), right (form) – match reference */
+.contactUsSection {
+  padding: 120px 0;
+  background: var(--bg-dark);
 }
 
-.locationContent h3 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.75rem;
-  font-weight: 500;
+.contactUsColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.contactUsLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.contactUsTitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
-/* Contact Info Section */
-.contactInfoSection {
-  padding: 120px 0;
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(57, 65, 63, 0.95) 100%);
-}
-
-.contactGrid {
-  max-width: 750px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.contactHeader {
-  text-align: center;
-  margin-bottom: 48px;
-}
-
-.contactHeader h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(2rem, 5vw, 2.8rem);
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.98);
-  margin-bottom: 20px;
-  letter-spacing: -1px;
-  line-height: 1.3;
-}
-
-.contactHeader p {
-  font-size: 1.15rem;
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.8;
+.contactUsIntro {
+  font-size: 1.05rem;
+  color: rgba(57, 65, 63, 0.75);
+  line-height: 1.7;
+  margin: 0;
   font-weight: 400;
 }
 
-.contactItem {
+.contactDetail {
   display: flex;
   align-items: center;
-  gap: 24px;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 36px 32px;
-  border-radius: 20px;
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 12px;
+  margin: 0;
+  font-size: 1rem;
 }
 
-.contactItem:hover {
-  background: rgba(255, 255, 255, 0.12);
-  transform: translateX(4px);
-}
-
-.contactIcon {
-  width: 64px;
-  height: 64px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 18px;
+.contactDetailIcon {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: rgba(57, 65, 63, 0.55);
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
 }
 
-.contactItem:hover .contactIcon {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.contactIcon svg {
-  width: 28px;
-  height: 28px;
-  fill: var(--primary-gold);
-  opacity: 0.9;
-}
-
-.contactText {
-  flex: 1;
-}
-
-.contactLink {
-  font-size: 1.15rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.98);
+.contactDetailLink {
+  color: var(--text-primary);
   text-decoration: none;
-  transition: all 0.3s ease;
-  display: inline-block;
-}
-
-.contactLink:hover {
-  color: rgba(255, 255, 255, 1);
-  transform: translateX(2px);
-}
-
-.businessHours {
-  background: rgba(255, 255, 255, 0.08);
-  padding: 40px 36px;
-  border-radius: 20px;
-  backdrop-filter: blur(12px);
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.businessHours:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.businessHours h3 {
-  font-size: 1.25rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.98);
-  margin-bottom: 24px;
-  letter-spacing: -0.3px;
+  transition: color 0.2s;
 }
 
-.businessHours p {
-  font-size: 1.05rem;
-  color: rgba(255, 255, 255, 0.85);
+.contactDetailLink:hover {
+  color: rgba(57, 65, 63, 0.85);
+}
+
+.businessHoursBlock {
+  margin: 0;
+}
+
+.businessHoursTitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.2px;
+}
+
+.businessHoursText {
+  font-size: 1rem;
+  color: rgba(57, 65, 63, 0.7);
   line-height: 2;
   margin: 0;
   font-weight: 400;
 }
 
-/* Contact Form Section */
-.contactFormSection {
-  padding: 120px 0;
-  background: var(--bg-dark);
+/* Customer service representative image – same design as branch blocks */
+.customerRepBlock {
+  position: relative;
+  width: 100%;
+  height: 538px;
+  min-height: 538px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  border-radius: 40px;
+  margin-top: 8px;
+}
+
+.customerRepOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.2) 45%, transparent 100%);
+  pointer-events: none;
+}
+
+.customerRepLabel {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 28px 32px 32px;
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+/* Right column: form panel */
+.contactUsRight {
+  min-width: 0;
 }
 
 .formWrapper {
-  max-width: 680px;
-  margin: 0 auto;
-  background: var(--bg-card);
+  width: 100%;
+  background: rgba(220, 210, 204, 0.9);
   border: 1px solid rgba(57, 65, 63, 0.12);
-  border-radius: 28px;
-  padding: 64px 56px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.formWrapper:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 48px 40px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
 }
 
 .formHeader {
-  text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 32px;
 }
 
 .formHeader h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.9rem;
-  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 16px;
+  margin: 0 0 12px 0;
   letter-spacing: -0.5px;
   line-height: 1.3;
 }
 
 .formHeader p {
   color: rgba(57, 65, 63, 0.75);
-  font-size: 1.05rem;
+  font-size: 1rem;
   line-height: 1.7;
+  margin: 0;
   font-weight: 400;
 }
 
@@ -358,26 +344,26 @@
 }
 
 .submitButton {
-  background: var(--primary-gold);
+  background: #39413f;
   color: #ffffff;
   border: none;
   border-radius: 14px;
   padding: 18px 36px;
-  font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: 0.3px;
-  text-transform: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif;
   margin-top: 8px;
-  box-shadow: 0 2px 8px rgba(57, 65, 63, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.submitButton:hover {
-  background: rgba(57, 65, 63, 0.95);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(57, 65, 63, 0.2);
+.submitButton:hover:not(:disabled) {
+  background: #2d3332;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .submitButton:active {
@@ -522,15 +508,11 @@
     padding: 120px 0;
   }
 
-  .locationsSection {
-    padding: 100px 0;
+  .branchesSection {
+    padding: 60px 0 100px;
   }
 
-  .contactInfoSection {
-    padding: 100px 0;
-  }
-
-  .contactFormSection {
+  .contactUsSection {
     padding: 100px 0;
   }
 
@@ -538,9 +520,8 @@
     padding: 100px 0;
   }
 
-  .locationsGrid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 28px;
+  .branchesStack {
+    gap: 24px;
   }
 
   .formWrapper {
@@ -562,55 +543,61 @@
     font-size: 1.1rem;
   }
 
-  .headquartersSection {
-    padding: 60px 0;
+  .branchesSection {
+    padding: 50px 0 80px;
   }
 
-  .locationsSection {
-    padding: 80px 0;
-  }
-
-  .locationsGrid {
-    grid-template-columns: 1fr;
+  .branchesStack {
     gap: 24px;
   }
 
-  .locationImageWrapper {
-    height: 280px;
+  .branchTitle {
+    padding: 20px 24px 24px;
   }
 
-  .locationContent {
-    padding: 32px 28px;
-  }
-
-  .contactInfoSection {
+  .contactUsSection {
     padding: 80px 0;
   }
 
-  .contactGrid {
-    gap: 28px;
+  .contactUsColumns {
+    grid-template-columns: 1fr;
+    gap: 40px;
   }
 
-  .contactHeader {
-    margin-bottom: 40px;
-  }
-
-  .contactItem {
-    padding: 32px 28px;
+  .contactUsLeft {
     gap: 20px;
   }
 
-  .contactIcon {
-    width: 56px;
-    height: 56px;
+  .contactUsTitle {
+    font-size: clamp(1.5rem, 5vw, 1.9rem);
   }
 
-  .businessHours {
-    padding: 36px 32px;
+  .contactUsIntro {
+    font-size: 1rem;
   }
 
-  .contactFormSection {
-    padding: 80px 0;
+  .contactDetail {
+    font-size: 0.95rem;
+  }
+
+  .businessHoursTitle {
+    font-size: 1rem;
+  }
+
+  .businessHoursText {
+    font-size: 0.95rem;
+    line-height: 1.9;
+  }
+
+  .customerRepBlock {
+    height: 380px;
+    min-height: 380px;
+    margin-top: 4px;
+  }
+
+  .customerRepLabel {
+    padding: 20px 24px 24px;
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
   }
 
   .formWrapper {
@@ -618,12 +605,32 @@
   }
 
   .formHeader {
-    margin-bottom: 40px;
+    margin-bottom: 32px;
+  }
+
+  .formHeader h2 {
+    font-size: clamp(1.35rem, 4vw, 1.6rem);
   }
 
   .formRow {
     grid-template-columns: 1fr;
     gap: 28px;
+  }
+
+  .formInput,
+  .formTextarea {
+    padding: 14px 18px;
+    min-height: 48px;
+  }
+
+  .formTextarea {
+    min-height: 120px;
+  }
+
+  .submitButton {
+    width: 100%;
+    padding: 16px 24px;
+    min-height: 48px;
   }
 
   .faqSection {
@@ -642,80 +649,152 @@
 
 @media (max-width: 480px) {
   .container {
-    padding: 0 20px;
+    padding: 0 16px;
   }
 
   .heroSection {
-    padding: 80px 0;
+    padding: 72px 0 64px;
   }
 
-  .headquartersSection {
-    padding: 50px 0;
+  .heroContent h1 {
+    font-size: clamp(1.75rem, 8vw, 2.25rem);
+    margin-bottom: 16px;
   }
 
-  .locationsSection {
-    padding: 70px 0;
+  .heroContent p {
+    font-size: 1rem;
   }
 
-  .locationImageWrapper {
-    height: 240px;
+  .branchesSection {
+    padding: 40px 0 64px;
   }
 
-  .locationContent {
-    padding: 28px 24px;
-  }
-
-  .contactInfoSection {
-    padding: 70px 0;
-  }
-
-  .contactHeader {
-    margin-bottom: 36px;
-  }
-
-  .contactItem {
-    flex-direction: column;
-    text-align: center;
-    padding: 32px 24px;
+  .branchesStack {
     gap: 20px;
   }
 
-  .contactIcon {
-    width: 56px;
-    height: 56px;
+  .branchBlock {
+    border-radius: 24px;
   }
 
-  .businessHours {
-    padding: 32px 28px;
+  .branchTitle {
+    padding: 16px 20px 20px;
+    font-size: clamp(1.25rem, 5vw, 1.5rem);
   }
 
-  .contactFormSection {
-    padding: 70px 0;
+  .contactUsSection {
+    padding: 56px 0 64px;
+  }
+
+  .contactUsColumns {
+    gap: 32px;
+  }
+
+  .contactUsLeft {
+    gap: 16px;
+  }
+
+  .contactUsTitle {
+    font-size: 1.5rem;
+  }
+
+  .contactUsIntro {
+    font-size: 0.95rem;
+  }
+
+  .contactDetail {
+    font-size: 0.9rem;
+    gap: 10px;
+  }
+
+  .contactDetailIcon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .businessHoursBlock {
+    margin-top: 4px;
+  }
+
+  .businessHoursTitle {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+
+  .businessHoursText {
+    font-size: 0.9rem;
+    line-height: 1.85;
+  }
+
+  .customerRepBlock {
+    height: 280px;
+    min-height: 280px;
+    border-radius: 24px;
+    margin-top: 0;
+  }
+
+  .customerRepLabel {
+    padding: 16px 20px 20px;
+    font-size: clamp(1rem, 4.5vw, 1.25rem);
+    line-height: 1.25;
   }
 
   .formWrapper {
-    padding: 40px 28px;
+    padding: 32px 24px;
+    border-radius: 20px;
   }
 
   .formHeader {
-    margin-bottom: 36px;
+    margin-bottom: 24px;
   }
 
   .formHeader h2 {
-    font-size: 1.7rem;
+    font-size: 1.4rem;
+  }
+
+  .formHeader p {
+    font-size: 0.95rem;
   }
 
   .contactForm {
-    gap: 24px;
+    gap: 20px;
+  }
+
+  .formGroup label {
+    font-size: 0.9rem;
+  }
+
+  .formInput,
+  .formTextarea {
+    padding: 12px 16px;
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .formTextarea {
+    min-height: 100px;
+  }
+
+  .submitButton {
+    width: 100%;
+    padding: 14px 20px;
+    min-height: 48px;
+    font-size: 0.85rem;
+    margin-top: 4px;
   }
 
   .faqSection {
-    padding: 70px 0;
+    padding: 56px 0 64px;
   }
 
   .faqQuestion {
-    padding: 24px 20px;
-    gap: 14px;
+    padding: 20px 24px;
+    gap: 12px;
+  }
+
+  .faqQuestionText {
+    font-size: 0.95rem;
   }
 
   .faqIcon {
@@ -729,6 +808,10 @@
   }
 
   .faqAnswer {
-    padding: 0 20px 24px 58px;
+    padding: 0 24px 20px 48px;
+  }
+
+  .faqAnswer p {
+    font-size: 0.95rem;
   }
 }

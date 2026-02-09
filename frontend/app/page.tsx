@@ -28,11 +28,19 @@ const GALLERY_CAROUSEL = [
   `${MEDIA}/wp-content/uploads/2025/10/9574667e-e7e3-4c54-baa1-3fe85a175adf-274x300.jpeg`,
   `${MEDIA}/wp-content/uploads/2025/10/67e08b01-213b-4c65-82c9-11c93244021f-258x300.jpeg`,
   `${MEDIA}/wp-content/uploads/2025/10/e50c2ed2-3d1b-41e3-b766-8c65deccff67-300x300.jpeg`,
+  '/images/WhatsApp%20Image%202025-11-16%20at%2013.31.13_98036f65.jpg',
+  '/images/WhatsApp%20Image%202025-11-16%20at%2016.06.11_14d6b09f.jpg',
+  '/images/WhatsApp%20Image%202025-11-16%20at%2016.06.11_5760e38c.jpg',
+  '/images/WhatsApp%20Image%202025-11-16%20at%2016.06.11_dc8bb37b.jpg',
+  '/images/WhatsApp%20Image%202025-10-08%20at%2012.23.45%20PM.jpeg',
+  '/images/WhatsApp%20Image%202025-10-08%20at%2012.23.46%20PM.jpeg',
+  '/images/WhatsApp%20Image%202025-10-08%20at%2012.23.47%20PM.jpeg',
+  '/images/WhatsApp%20Image%202025-10-08%20at%2012.23.48%20PM.jpeg',
 ];
 
 const PARTNERS = [
   `${MEDIA}/wp-content/uploads/2025/09/IMG_0375.png`,
-  `${MEDIA}/wp-content/uploads/2025/09/fbd1ba7b-3928-41c9-b92a-bcc172e174d9.jpeg`,
+  '/images/8f269c47b35f4b5b0128919dad058d02.webp',
   `${MEDIA}/wp-content/uploads/2025/09/IMG_0376.jpeg`,
   `${MEDIA}/wp-content/uploads/2025/09/images-1.png`,
   `${MEDIA}/wp-content/uploads/2025/09/Zenith-Bank-logo.png`,
@@ -67,6 +75,7 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
+  const galleryPausedUntilRef = useRef(0);
   const [counters, setCounters] = useState({ clients: 0, barbers: 0, satisfaction: 0, appointments: 0 });
   // Lazy-load feature videos only when in viewport (keeps design identical, reduces initial load).
   const [featureVideoVisible, setFeatureVideoVisible] = useState<[boolean, boolean, boolean]>([false, false, false]);
@@ -123,21 +132,36 @@ export default function Home() {
     return () => ob.disconnect();
   }, []);
 
-  // Gallery: use requestAnimationFrame for smooth scroll without layout thrash (was setInterval 50ms).
+  // Gallery: throttled auto-scroll (setInterval) to avoid layout thrash and main-thread jank.
+  // Pauses on user scroll or arrow click so manual scroll is responsive.
   useEffect(() => {
     const g = galleryRef.current;
     if (!g) return;
-    let x = 0;
-    let rafId: number;
-    const run = () => {
-      x += 1;
-      if (x >= g.scrollWidth - g.clientWidth) x = 0;
-      g.scrollLeft = x;
-      rafId = requestAnimationFrame(run);
-    };
-    rafId = requestAnimationFrame(run);
-    return () => cancelAnimationFrame(rafId);
+    const step = 2;
+    const intervalMs = 45;
+    const timer = setInterval(() => {
+      if (Date.now() < galleryPausedUntilRef.current) return;
+      const el = galleryRef.current;
+      if (!el) return;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (maxScroll <= 0) return;
+      const next = el.scrollLeft + step;
+      el.scrollLeft = next >= maxScroll ? 0 : next;
+    }, intervalMs);
+    return () => clearInterval(timer);
   }, []);
+
+  const scrollGallery = (direction: 'left' | 'right') => {
+    galleryPausedUntilRef.current = Date.now() + 4000;
+    const g = galleryRef.current;
+    if (!g) return;
+    const step = 276 + 20; // item width + gap
+    g.scrollBy({ left: direction === 'left' ? -step : step, behavior: 'smooth' });
+  };
+
+  const pauseGalleryAutoScroll = () => {
+    galleryPausedUntilRef.current = Date.now() + 4000;
+  };
 
   const handleSliderMove = (clientX: number) => {
     if (!containerRef.current) return;
@@ -316,12 +340,20 @@ export default function Home() {
 
       {/* Gallery carousel */}
       <section className={styles.gallery}>
-        <div ref={galleryRef} className={styles.galleryTrack}>
-          {GALLERY_CAROUSEL.map((src, i) => (
-            <div key={i} className={styles.galleryItem}>
-              <Image src={src} alt={`Gallery ${i + 1}`} width={276} height={300} className={styles.galleryImg} sizes="276px" loading="lazy" />
-            </div>
-          ))}
+        <div className={styles.galleryWrap}>
+          <button type="button" className={styles.galleryArrow} aria-label="Scroll gallery left" onClick={() => scrollGallery('left')}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          </button>
+          <div ref={galleryRef} className={styles.galleryTrack}>
+            {GALLERY_CAROUSEL.map((src, i) => (
+              <div key={i} className={styles.galleryItem}>
+                <Image src={src} alt={`Gallery ${i + 1}`} width={276} height={300} className={styles.galleryImg} sizes="276px" loading="lazy" />
+              </div>
+            ))}
+          </div>
+          <button type="button" className={styles.galleryArrowRight} aria-label="Scroll gallery right" onClick={() => scrollGallery('right')}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+          </button>
         </div>
       </section>
 

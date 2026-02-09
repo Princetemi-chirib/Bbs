@@ -39,7 +39,7 @@ export default function Header() {
 
   return (
     <header
-      className={`main-header-bar ${isScrolled ? 'ast-fixed-header' : ''} ${!isHomePage ? 'solid-header' : ''}`}
+      className={`main-header-bar ${isHomePage ? 'header-home' : ''} ${isScrolled ? 'ast-fixed-header' : ''} ${!isHomePage ? 'solid-header' : ''}`}
     >
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between py-2">

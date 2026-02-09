@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useState } from 'react';
 import { contactApi } from '@/lib/api';
 import styles from './page.module.css';
@@ -99,125 +98,89 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Headquarters Section */}
-      <section className={styles.headquartersSection}>
+      {/* Branch images: all four identical – static background, overlay, same size */}
+      <section className={styles.branchesSection}>
         <div className={styles.container}>
-          <h2 className={styles.locationTitle}>Headquarters Benin City</h2>
-        </div>
-      </section>
-
-      {/* Location Zones Section */}
-      <section className={styles.locationsSection}>
-        <div className={styles.container}>
-          <div className={styles.locationsGrid}>
-            {/* Abuja Zone */}
-            <div className={styles.locationCard}>
-              <div className={styles.locationImageWrapper}>
-                <Image
-                  src="/images/WhatsApp Image 2025-11-13 at 20.12.20_03861e78.jpg"
-                  alt="Abuja Zone"
-                  width={600}
-                  height={400}
-                  className={styles.locationImage}
-                />
-              </div>
-              <div className={styles.locationContent}>
-                <h3>Abuja Zone</h3>
-              </div>
+          <div className={styles.branchesStack}>
+            <div
+              className={styles.branchBlock}
+              style={{ backgroundImage: `url(/images/WhatsApp%20Image%202025-11-16%20at%2016.02.44_c168ed1b.jpg)` }}
+            >
+              <div className={styles.branchOverlay} aria-hidden />
+              <h2 className={styles.branchTitle}>Headquarters Benin City</h2>
             </div>
-
-            {/* Lagos Zone */}
-            <div className={styles.locationCard}>
-              <div className={styles.locationImageWrapper}>
-                <Image
-                  src="/images/WhatsApp Image 2025-11-13 at 20.12.20_0928ecd1.jpg"
-                  alt="Lagos Zone"
-                  width={600}
-                  height={400}
-                  className={styles.locationImage}
-                />
-              </div>
-              <div className={styles.locationContent}>
-                <h3>Lagos Zone</h3>
-              </div>
+            <div
+              className={styles.branchBlock}
+              style={{ backgroundImage: `url(/images/WhatsApp%20Image%202025-11-13%20at%2020.12.20_03861e78.jpg)` }}
+            >
+              <div className={styles.branchOverlay} aria-hidden />
+              <h2 className={styles.branchTitle}>Abuja Zone</h2>
             </div>
-
-            {/* Delta Zone (Warri) */}
-            <div className={styles.locationCard}>
-              <div className={styles.locationImageWrapper}>
-                <Image
-                  src="/images/WhatsApp Image 2025-11-16 at 16.02.44_c168ed1b.jpg"
-                  alt="Delta Zone"
-                  width={600}
-                  height={400}
-                  className={styles.locationImage}
-                />
-              </div>
-              <div className={styles.locationContent}>
-                <h3>Delta Zone</h3>
-              </div>
+            <div
+              className={styles.branchBlock}
+              style={{ backgroundImage: `url(/images/WhatsApp%20Image%202025-11-13%20at%2020.12.20_0928ecd1.jpg)` }}
+            >
+              <div className={styles.branchOverlay} aria-hidden />
+              <h2 className={styles.branchTitle}>Lagos Zone</h2>
+            </div>
+            <div
+              className={styles.branchBlock}
+              style={{ backgroundImage: `url(/images/WhatsApp%20Image%202025-11-16%20at%2016.02.44_c168ed1b.jpg)` }}
+            >
+              <div className={styles.branchOverlay} aria-hidden />
+              <h2 className={styles.branchTitle}>Delta Zone</h2>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Contact Information Section */}
-      <section className={styles.contactInfoSection}>
+      {/* Contact Us: two columns – left (info + customer rep image), right (form) – match reference */}
+      <section className={styles.contactUsSection}>
         <div className={styles.container}>
-          <div className={styles.contactGrid}>
-            <div className={styles.contactHeader}>
-              <h2>Contact Us</h2>
-              <p>Find our contact details and get in touch with our team for any assistance or inquiries.</p>
-            </div>
-
-            <div className={styles.contactItem}>
-              <div className={styles.contactIcon}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                  <path d="M511.2 387l-23.25 100.8c-3.266 14.25-15.79 24.22-30.46 24.22C205.2 512 0 306.8 0 54.5c0-14.66 9.969-27.2 24.22-30.45l100.8-23.25C139.7-2.602 154.7 5.018 160.8 18.92l46.52 108.5c5.438 12.78 1.77 27.67-8.98 36.45L144.5 207.1c33.98 69.22 90.26 125.5 159.5 159.5l44.08-53.8c8.688-10.78 23.69-14.51 36.47-8.975l108.5 46.51C506.1 357.2 514.6 372.4 511.2 387z" />
-                </svg>
-              </div>
-              <div className={styles.contactText}>
-                <a href="tel:02013306086" className={styles.contactLink}>
-                  02013306086
-                </a>
-              </div>
-            </div>
-
-            <div className={styles.contactItem}>
-              <div className={styles.contactIcon}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                  <path d="M464 64C490.5 64 512 85.49 512 112C512 127.1 504.9 141.3 492.8 150.4L275.2 313.6C263.8 322.1 248.2 322.1 236.8 313.6L19.2 150.4C7.113 141.3 0 127.1 0 112C0 85.49 21.49 64 48 64H464zM217.6 339.2C240.4 356.3 271.6 356.3 294.4 339.2L512 176V384C512 419.3 483.3 448 448 448H64C28.65 448 0 419.3 0 384V176L217.6 339.2z" />
-                </svg>
-              </div>
-              <div className={styles.contactText}>
-                <a href="mailto:support@bbslimited.online" className={styles.contactLink}>
-                  support@bbslimited.online
-                </a>
-              </div>
-            </div>
-
-            <div className={styles.businessHours}>
-              <h3>
-                <strong>Business hours</strong>
-              </h3>
-              <p>
-                Monday 08 AM–05 PM<br />
-                Tuesday 08 AM–05 PM<br />
-                Wednesday 08 AM–05 PM<br />
-                Thursday 08 AM–05 PM<br />
-                Friday 08 AM–05 PM<br />
-                Saturday 08 AM–05 PM<br />
-                Sunday Closed
+          <div className={styles.contactUsColumns}>
+            {/* Left column: Contact Us, details, business hours, customer rep image */}
+            <div className={styles.contactUsLeft}>
+              <h2 className={styles.contactUsTitle}>Contact Us</h2>
+              <p className={styles.contactUsIntro}>
+                Find our contact details and get in touch with our team for any assistance or inquiries.
               </p>
+              <p className={styles.contactDetail}>
+                <span className={styles.contactDetailIcon} aria-hidden>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="20" height="20"><path fill="currentColor" d="M511.2 387l-23.25 100.8c-3.266 14.25-15.79 24.22-30.46 24.22C205.2 512 0 306.8 0 54.5c0-14.66 9.969-27.2 24.22-30.45l100.8-23.25C139.7-2.602 154.7 5.018 160.8 18.92l46.52 108.5c5.438 12.78 1.77 27.67-8.98 36.45L144.5 207.1c33.98 69.22 90.26 125.5 159.5 159.5l44.08-53.8c8.688-10.78 23.69-14.51 36.47-8.975l108.5 46.51C506.1 357.2 514.6 372.4 511.2 387z" /></svg>
+                </span>
+                <a href="tel:02013306086" className={styles.contactDetailLink}>02013306086</a>
+              </p>
+              <p className={styles.contactDetail}>
+                <span className={styles.contactDetailIcon} aria-hidden>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="20" height="20"><path fill="currentColor" d="M464 64C490.5 64 512 85.49 512 112C512 127.1 504.9 141.3 492.8 150.4L275.2 313.6C263.8 322.1 248.2 322.1 236.8 313.6L19.2 150.4C7.113 141.3 0 127.1 0 112C0 85.49 21.49 64 48 64H464zM217.6 339.2C240.4 356.3 271.6 356.3 294.4 339.2L512 176V384C512 419.3 483.3 448 448 448H64C28.65 448 0 419.3 0 384V176L217.6 339.2z" /></svg>
+                </span>
+                <a href="mailto:support@bbslimited.online" className={styles.contactDetailLink}>support@bbslimited.online</a>
+              </p>
+              <div className={styles.businessHoursBlock}>
+                <h3 className={styles.businessHoursTitle}>Business hours</h3>
+                <p className={styles.businessHoursText}>
+                  Monday 08 AM–05 PM<br />
+                  Tuesday 08 AM–05 PM<br />
+                  Wednesday 08 AM–05 PM<br />
+                  Thursday 08 AM–05 PM<br />
+                  Friday 08 AM–05 PM<br />
+                  Saturday 08 AM–05 PM<br />
+                  Sunday Closed
+                </p>
+              </div>
+              {/* Customer service representative image – same treatment as reference */}
+              <div
+                className={styles.customerRepBlock}
+                style={{ backgroundImage: `url(/images/WhatsApp%20Image%202025-11-18%20at%2012.25.43%20PM.jpeg)` }}
+              >
+                <div className={styles.customerRepOverlay} aria-hidden />
+                <span className={styles.customerRepLabel}>customer service representative.</span>
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Contact Form Section */}
-      <section className={styles.contactFormSection}>
-        <div className={styles.container}>
-          <div className={styles.formWrapper}>
+            {/* Right column: form panel */}
+            <div className={styles.contactUsRight}>
+              <div className={styles.formWrapper}>
             <div className={styles.formHeader}>
               <h2>Send Us a Message</h2>
               <p>Use the form below to reach out to us. We&apos;ll get back to you as soon as possible.</p>
@@ -282,7 +245,7 @@ export default function ContactPage() {
                 className={styles.submitButton}
                 disabled={loading}
               >
-                {loading ? 'Sending...' : 'Submit Form'}
+                {loading ? 'Sending...' : 'SUBMIT FORM'}
               </button>
 
               {submitted && (
@@ -304,6 +267,8 @@ export default function ContactPage() {
                 </div>
               )}
             </form>
+              </div>
+            </div>
           </div>
         </div>
       </section>

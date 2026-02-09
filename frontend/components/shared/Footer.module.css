@@ -206,10 +206,12 @@
   width: auto;
   min-width: 72px;
   padding: 6px 10px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #00c3f7;
-  letter-spacing: 0.02em;
+}
+
+.paymentImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* Divider & bottom */
