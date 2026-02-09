@@ -5,33 +5,15 @@ import Image from 'next/image';
 import { useState } from 'react';
 import styles from './Footer.module.css';
 
-/* Payment brand icons – simple, recognizable shapes */
-function VisaIcon() {
-  return (
-    <svg viewBox="0 0 48 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <path d="M19.2 1.6L16 14.4h-3.2L13.6 8c-.4-1.2-1.2-2-2.4-2.4L10.4 14H7.2L10.4 1.6h3.2l.8 4.8c.8.4 1.6 1.2 2 2l1.8-6.8h3.2zm8.8 8.4c0-2-.8-3.2-2.4-3.2-1.2 0-2 .8-2.4 2l-2.4-.4c.4-2.4 2-4 4.8-4 2.8 0 4 1.6 4 3.6 0 3.2-4.4 4.2-4.4 6.4 0 .8.8 1.6 2 1.6 1.2 0 2-.4 2.6-1.2l2.4.4c-.6 2.4-2.2 3.6-5 3.6-2.8 0-4.4-1.6-4.4-3.6 0-3.2 4.4-4.2 4.4-6.4zm12.2 4.4h2.8l-2.4-12.8h-2.6c-.6 0-1 .2-1.2.8l-4.4 12h3.2l.6-1.8h3.8l.4 1.8zm-3-4.8l1.6-4.4 1 4.4h-2.6zm-10.4-7.6l-2.8 12.8h-3.2l2.8-12.8h3.2z" fill="#1A1F71"/>
-    </svg>
-  );
-}
-
-function MastercardIcon() {
-  return (
-    <svg viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <circle cx="11" cy="10" r="8" fill="#EB001B"/>
-      <circle cx="21" cy="10" r="8" fill="#F79E1B"/>
-      <path d="M16 4.4a9.97 9.97 0 0 1 0 11.2 10 10 0 0 1 0-11.2z" fill="#FF5F00"/>
-    </svg>
-  );
-}
-
-function VerveIcon() {
-  return (
-    <svg viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <rect width="40" height="24" rx="4" fill="#000"/>
-      <path d="M12 8h2.5l1.2 5-1.4-5h2.4l1.4 5 1.2-5h2.5l-2 8h-2.4l-1.3-5.2L12 16H9.6l2.4-8zm10.2 5.2c0-1.2.8-2 2-2 .6 0 1 .2 1.3.6l1.8-1c-.6-.6-1.4-1-2.6-1-2 0-3.4 1.4-3.4 3.4s1.4 3.4 3.4 3.4c1.2 0 2-.4 2.6-1l-1.8-1c-.3.4-.7.6-1.3.6-1.2 0-2-.8-2-2zm8.2-3.2h-2.2l-1.4 4.8-1.4-4.8h-2.2l2.2 6.8v1.2h2.2v-1.2l2.2-6.8z" fill="#fff"/>
-    </svg>
-  );
-}
+/* Payment method logos – actual images from the web */
+const PAYMENT_LOGOS = [
+  { name: 'Zap', src: '/images/unnamed%20(2).png', alt: 'Zap' },
+  { name: 'Mastercard', src: 'https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg', alt: 'Mastercard' },
+  { name: 'Transfer', src: 'https://img.icons8.com/color/96/swap.png', alt: 'Bank Transfer' },
+  { name: 'Bank', src: 'https://img.icons8.com/color/96/bank.png', alt: 'Bank' },
+  { name: 'USSD', src: 'https://img.icons8.com/color/96/phone.png', alt: 'USSD' },
+  { name: 'OPay', src: '/images/unnamed.webp', alt: 'OPay' },
+] as const;
 
 /* Social media icons – Instagram, TikTok, Facebook */
 function InstagramIcon() {
@@ -136,22 +118,22 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Payment methods */}
+        {/* Payment methods – Zap, Mastercard, Transfer, Bank, USSD, OPay (images from web, left-aligned) */}
         <div className={styles.paymentSection}>
           <span className={styles.paymentLabel}>We accept</span>
           <div className={styles.paymentList}>
-            <span className={styles.paymentItem} title="Visa">
-              <VisaIcon />
-            </span>
-            <span className={styles.paymentItem} title="Mastercard">
-              <MastercardIcon />
-            </span>
-            <span className={styles.paymentItem} title="Verve">
-              <VerveIcon />
-            </span>
-            <span className={`${styles.paymentItem} ${styles.paymentItemPaystack}`} title="Payment">
-              <Image src="/images/WhatsApp%20Image%202026-02-08%20at%206.49.17%20PM.jpeg" alt="Payment" width={72} height={28} className={styles.paymentImg} />
-            </span>
+            {PAYMENT_LOGOS.map((logo) => (
+              <span key={logo.name} className={styles.paymentItem} title={logo.name}>
+                <Image
+                  src={logo.src}
+                  alt={logo.alt}
+                  width={56}
+                  height={40}
+                  className={styles.paymentImg}
+                  unoptimized={logo.src.startsWith('https://logo.clearbit.com')}
+                />
+              </span>
+            ))}
           </div>
         </div>
 

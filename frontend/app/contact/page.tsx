@@ -104,7 +104,7 @@ export default function ContactPage() {
           <div className={styles.branchesStack}>
             <div
               className={styles.branchBlock}
-              style={{ backgroundImage: `url(/images/WhatsApp%20Image%202025-11-16%20at%2016.02.44_c168ed1b.jpg)` }}
+              style={{ backgroundImage: `url(/images/WhatsApp%20Image%202025-11-13%20at%2020.12.20_08818778.jpg)` }}
             >
               <div className={styles.branchOverlay} aria-hidden />
               <h2 className={styles.branchTitle}>Headquarters Benin City</h2>

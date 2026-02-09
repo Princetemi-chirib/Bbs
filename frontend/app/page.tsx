@@ -49,6 +49,22 @@ const PARTNERS = [
   `${MEDIA}/wp-content/uploads/2025/10/IMG_1839.png`,
   `${MEDIA}/wp-content/uploads/2025/10/images-2.png`,
   `${MEDIA}/wp-content/uploads/2025/10/Airtel_logo-01.png`,
+  /* remaining 15 from Our Partners list */
+  `${MEDIA}/wp-content/uploads/2025/10/unnamed.jpg`,
+  `${MEDIA}/wp-content/uploads/2025/10/65e434238ac0822f965117a26bb6951d.jpg`,
+  `${MEDIA}/wp-content/uploads/2025/10/images-3.png`,
+  `${MEDIA}/wp-content/uploads/2025/10/ke-scbk-logo-min.png`,
+  `${MEDIA}/wp-content/uploads/2025/10/Moniepoint-Logo_White-on-Blue.webp`,
+  `${MEDIA}/wp-content/uploads/2025/10/images-4.png`,
+  `${MEDIA}/wp-content/uploads/2025/10/164894_20755455_3652407_baae68c3_image.jpg`,
+  `${MEDIA}/wp-content/uploads/2025/10/images-5.png`,
+  `${MEDIA}/wp-content/uploads/2025/10/images-6.png`,
+  `${MEDIA}/wp-content/uploads/2025/10/images.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/12/WhatsApp-Image-2025-12-03-at-10.06.12-PM.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/12/WhatsApp-Image-2025-12-03-at-11.16.41-PM.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/12/WhatsApp-Image-2025-12-03-at-11.16.39-PM.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/12/WhatsApp-Image-2025-12-03-at-11.16.38-PM.jpeg`,
+  `${MEDIA}/wp-content/uploads/2025/12/R.jpg`,
 ];
 
 const REVIEWS = [
@@ -132,35 +148,53 @@ export default function Home() {
     return () => ob.disconnect();
   }, []);
 
-  // Gallery: throttled auto-scroll (setInterval) to avoid layout thrash and main-thread jank.
-  // Pauses on user scroll or arrow click so manual scroll is responsive.
+  // Gallery: throttled auto-scroll. Pauses when user scrolls or uses arrows; resumes after scroll settles.
+  const PAUSE_AFTER_SCROLL_MS = 400;
+  const GAP_PX = 20; // 1.25rem between items
+
   useEffect(() => {
-    const g = galleryRef.current;
-    if (!g) return;
+    const el = galleryRef.current;
+    if (!el) return;
+
+    const onScrollOrTouch = () => {
+      galleryPausedUntilRef.current = Date.now() + PAUSE_AFTER_SCROLL_MS;
+    };
+
+    el.addEventListener('scroll', onScrollOrTouch, { passive: true });
+    el.addEventListener('touchstart', onScrollOrTouch, { passive: true });
+
     const step = 2;
     const intervalMs = 45;
     const timer = setInterval(() => {
       if (Date.now() < galleryPausedUntilRef.current) return;
-      const el = galleryRef.current;
-      if (!el) return;
-      const maxScroll = el.scrollWidth - el.clientWidth;
+      const track = galleryRef.current;
+      if (!track) return;
+      const maxScroll = track.scrollWidth - track.clientWidth;
       if (maxScroll <= 0) return;
-      const next = el.scrollLeft + step;
-      el.scrollLeft = next >= maxScroll ? 0 : next;
+      const next = track.scrollLeft + step;
+      track.scrollLeft = next >= maxScroll ? 0 : next;
     }, intervalMs);
-    return () => clearInterval(timer);
+
+    return () => {
+      el.removeEventListener('scroll', onScrollOrTouch);
+      el.removeEventListener('touchstart', onScrollOrTouch);
+      clearInterval(timer);
+    };
   }, []);
 
   const scrollGallery = (direction: 'left' | 'right') => {
-    galleryPausedUntilRef.current = Date.now() + 4000;
+    galleryPausedUntilRef.current = Date.now() + PAUSE_AFTER_SCROLL_MS;
     const g = galleryRef.current;
     if (!g) return;
-    const step = 276 + 20; // item width + gap
+    // Use measured item width + gap so mobile (two-per-row) scrolls one item per tap.
+    const firstItem = g.firstElementChild as HTMLElement | null;
+    const itemWidth = firstItem?.offsetWidth ?? 276;
+    const step = itemWidth + GAP_PX;
     g.scrollBy({ left: direction === 'left' ? -step : step, behavior: 'smooth' });
   };
 
   const pauseGalleryAutoScroll = () => {
-    galleryPausedUntilRef.current = Date.now() + 4000;
+    galleryPausedUntilRef.current = Date.now() + PAUSE_AFTER_SCROLL_MS;
   };
 
   const handleSliderMove = (clientX: number) => {
