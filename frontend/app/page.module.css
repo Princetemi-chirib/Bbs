@@ -565,6 +565,10 @@
   border-radius: 100px;
 }
 
+.galleryArrowIcon {
+  display: block;
+}
+
 /* ----- Partners (matches reference: white bg, black title, light red underline, 5-col grid) ----- */
 .partners {
   padding: clamp(3rem, 6vw, 4rem) 1.5rem;
@@ -887,9 +891,63 @@
     grid-template-columns: 1fr;
   }
 
+  /* Gallery mobile: match reference – light beige bg, two circles with space, dark grey arrows with light grey triangle, left arrow overlaps */
+  .gallery {
+    background: #e6dfd8;
+    padding: 2.5rem 0.5rem;
+  }
+
+  .galleryWrap {
+    position: relative;
+    padding: 0 0.25rem;
+  }
+
+  .galleryArrow,
+  .galleryArrowRight {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    background: #5a5a5a;
+    color: #b8b8b8;
+    z-index: 3;
+  }
+
+  .galleryArrow {
+    left: 4px;
+  }
+
+  .galleryArrowRight {
+    right: 4px;
+    left: auto;
+  }
+
+  .galleryArrow:hover,
+  .galleryArrowRight:hover {
+    background: #4a4a4a;
+    color: #c8c8c8;
+  }
+
+  .galleryTrack {
+    gap: 2rem;
+    padding-left: 0;
+    padding-right: 3rem;
+    min-height: 0;
+  }
+
   .galleryItem {
-    width: calc((100% - 1.25rem) / 2);
-    min-width: 140px;
+    width: calc((100% - 2rem) / 2);
+    min-width: 0;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .galleryItem .galleryImg {
+    aspect-ratio: 1;
+    border-radius: 50%;
   }
 
   /* Our Partners mobile: 5-column grid like reference, card style, no red line */
