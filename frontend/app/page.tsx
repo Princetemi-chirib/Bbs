@@ -3,95 +3,24 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import {
+  SERVICE_IMAGES,
+  PARTNERS,
+  REVIEWS,
+  FEATURE_VIDEOS,
+  BEFORE_IMG,
+  AFTER_IMG,
+} from '@/lib/landing-data';
+import HeroSection from '@/components/landing/HeroSection';
 import styles from './page.module.css';
 
-const MEDIA = 'https://whitesmoke-jackal-101083.hostingersite.com';
-
-const SERVICE_IMAGES = [
-  { src: `${MEDIA}/wp-content/uploads/2025/10/2e7349e0-2da2-4462-a63f-0f39f9adafeb-871x1024.jpeg`, caption: 'Hair Dye' },
-  { src: `${MEDIA}/wp-content/uploads/2025/10/5fbc6405-88de-4f61-a8c1-bb3636a2d27e-863x1024.jpeg`, caption: 'Tapper Fade' },
-  { src: `${MEDIA}/wp-content/uploads/2025/10/a7e754ff-e7b7-4e0f-a40c-69f2a8f15527-1024x988.jpeg`, caption: 'Round Cut' },
-  { src: `${MEDIA}/wp-content/uploads/2025/10/e1d33e39-ab4c-40fb-a699-e4711235d343-936x1024.jpeg`, caption: 'Locks' },
-  { src: `${MEDIA}/wp-content/uploads/2025/10/c6175c55-424d-4864-beb2-01028a3b30d9-944x1024.jpeg`, caption: 'High Tapper' },
-  { src: `${MEDIA}/wp-content/uploads/2025/10/e50c2ed2-3d1b-41e3-b766-8c65deccff67.jpeg`, caption: 'Braids' },
-];
-
-const GALLERY_CAROUSEL = [
-  `${MEDIA}/wp-content/uploads/2025/10/c6175c55-424d-4864-beb2-01028a3b30d9-276x300.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/e25fb414-4c63-47fa-8584-d577356e5da9-300x290.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/e1d33e39-ab4c-40fb-a699-e4711235d343-274x300.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/4925501c-2e21-41b6-b943-7be70428cd97-300x294.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/3ba511bc-2d3d-4cb3-9ee2-1500d1f7771c-269x300.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/f4d0215e-a42b-4a7a-a102-7f8f771ea25f-255x300.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/fb38aac4-11c0-41cb-bace-6430b45387a6-275x300.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/e7c29c32-b537-4a97-b15e-4a0bbf6ef82d-257x300.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/9574667e-e7e3-4c54-baa1-3fe85a175adf-274x300.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/67e08b01-213b-4c65-82c9-11c93244021f-258x300.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/10/e50c2ed2-3d1b-41e3-b766-8c65deccff67-300x300.jpeg`,
-  '/images/WhatsApp%20Image%202025-11-16%20at%2013.31.13_98036f65.jpg',
-  '/images/WhatsApp%20Image%202025-11-16%20at%2016.06.11_14d6b09f.jpg',
-  '/images/WhatsApp%20Image%202025-11-16%20at%2016.06.11_5760e38c.jpg',
-  '/images/WhatsApp%20Image%202025-11-16%20at%2016.06.11_dc8bb37b.jpg',
-  '/images/WhatsApp%20Image%202025-10-08%20at%2012.23.45%20PM.jpeg',
-  '/images/WhatsApp%20Image%202025-10-08%20at%2012.23.46%20PM.jpeg',
-  '/images/WhatsApp%20Image%202025-10-08%20at%2012.23.47%20PM.jpeg',
-  '/images/WhatsApp%20Image%202025-10-08%20at%2012.23.48%20PM.jpeg',
-];
-
-const PARTNERS = [
-  `${MEDIA}/wp-content/uploads/2025/09/IMG_0375.png`,
-  '/images/8f269c47b35f4b5b0128919dad058d02.webp',
-  `${MEDIA}/wp-content/uploads/2025/09/IMG_0376.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/09/images-1.png`,
-  `${MEDIA}/wp-content/uploads/2025/09/Zenith-Bank-logo.png`,
-  `${MEDIA}/wp-content/uploads/2025/09/1hOeKxzZ_400x400.jpg`,
-  `${MEDIA}/wp-content/uploads/2025/10/IMG_1842.png`,
-  `${MEDIA}/wp-content/uploads/2025/10/IMG_1839.png`,
-  `${MEDIA}/wp-content/uploads/2025/10/images-2.png`,
-  `${MEDIA}/wp-content/uploads/2025/10/Airtel_logo-01.png`,
-  /* remaining 15 from Our Partners list */
-  `${MEDIA}/wp-content/uploads/2025/10/unnamed.jpg`,
-  `${MEDIA}/wp-content/uploads/2025/10/65e434238ac0822f965117a26bb6951d.jpg`,
-  `${MEDIA}/wp-content/uploads/2025/10/images-3.png`,
-  `${MEDIA}/wp-content/uploads/2025/10/ke-scbk-logo-min.png`,
-  `${MEDIA}/wp-content/uploads/2025/10/Moniepoint-Logo_White-on-Blue.webp`,
-  `${MEDIA}/wp-content/uploads/2025/10/images-4.png`,
-  `${MEDIA}/wp-content/uploads/2025/10/164894_20755455_3652407_baae68c3_image.jpg`,
-  `${MEDIA}/wp-content/uploads/2025/10/images-5.png`,
-  `${MEDIA}/wp-content/uploads/2025/10/images-6.png`,
-  `${MEDIA}/wp-content/uploads/2025/10/images.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/12/WhatsApp-Image-2025-12-03-at-10.06.12-PM.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/12/WhatsApp-Image-2025-12-03-at-11.16.41-PM.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/12/WhatsApp-Image-2025-12-03-at-11.16.39-PM.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/12/WhatsApp-Image-2025-12-03-at-11.16.38-PM.jpeg`,
-  `${MEDIA}/wp-content/uploads/2025/12/R.jpg`,
-];
-
-const REVIEWS = [
-  { name: 'David Adekunle', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-1.jpeg`, rating: 5, text: "Got the cleanest fade I've had in Benin City. BBS barbers are true professionals. The attention to detail is absolutely unmatched. Worth every penny.", time: '2 weeks ago' },
-  { name: 'wale Ibrahim', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-2.jpeg`, rating: 5, text: 'The service quality in Benin City is outstanding. From the moment I walked in, I was treated like royalty. My haircut was perfect, and the haircut studio has a premium feel. Will definitely be back!', time: '1 month ago' },
-  { name: 'Chinedu Okafor', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-4.jpeg`, rating: 4.5, text: 'Professional service from start to finish. The barbers really know their craft and take their time to get everything perfect. Best haircut experience in Benin City by far.', time: '3 weeks ago' },
-  { name: 'Tunde Balogun', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-5.jpeg`, rating: 5, text: "The hair treatment service changed my hair completely! I've struggled with dryness and breakage for years. After their deep conditioning treatment, my hair feels healthier and looks shinier than ever before.", time: '5 days ago' },
-  { name: 'Hammed Bello', avatar: `${MEDIA}/wp-content/uploads/2025/10/images-3.jpeg`, rating: 5, text: 'The hair fibre replacement procedure exceeded all my expectations. Natural-looking results and the team was so professional throughout. My confidence has returned completely. Highly recommend BBS for this service!', time: '2 months ago' },
-  { name: 'Emeka Nwosu', avatar: `${MEDIA}/wp-content/uploads/2025/10/efffa01b942bd74e.jpeg`, rating: 5, text: "I was nervous about getting hair fibre replacement, but BBS made the whole process comfortable and painless. The results look completely natural – even my family couldn't tell! Worth every investment.", time: '1 week ago' },
-];
-
-const HERO_VIDEO = `${MEDIA}/wp-content/uploads/2025/07/WhatsApp-Video-2025-07-30-at-10.39.46_f8c76c0c.mp4`;
-const FEATURE_VIDEOS = [
-  `${MEDIA}/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_ddqyje96w0duyldas6cq8a-1.mp4`,
-  `${MEDIA}/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_qwsk893v42c62vhgzrruj5-1.mp4`,
-  `${MEDIA}/wp-content/uploads/2025/10/ReactNativeBlobUtilTmp_4zu8nyz8y9gs5oi1gg8tfl.mp4`,
-];
-
-const BEFORE_IMG = `${MEDIA}/wp-content/uploads/2025/09/bfr.jpeg`;
-const AFTER_IMG = `${MEDIA}/wp-content/uploads/2025/09/aft.jpeg`;
+const GallerySection = dynamic(() => import('@/components/landing/GallerySection'), { ssr: true });
 
 export default function Home() {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const galleryRef = useRef<HTMLDivElement>(null);
-  const galleryPausedUntilRef = useRef(0);
   const [counters, setCounters] = useState({ clients: 0, barbers: 0, satisfaction: 0, appointments: 0 });
   // Lazy-load feature videos only when in viewport (keeps design identical, reduces initial load).
   const [featureVideoVisible, setFeatureVideoVisible] = useState<[boolean, boolean, boolean]>([false, false, false]);
@@ -148,55 +77,6 @@ export default function Home() {
     return () => ob.disconnect();
   }, []);
 
-  // Gallery: throttled auto-scroll. Pauses when user scrolls or uses arrows; resumes after scroll settles.
-  const PAUSE_AFTER_SCROLL_MS = 400;
-  const GAP_PX = 20; // 1.25rem between items
-
-  useEffect(() => {
-    const el = galleryRef.current;
-    if (!el) return;
-
-    const onScrollOrTouch = () => {
-      galleryPausedUntilRef.current = Date.now() + PAUSE_AFTER_SCROLL_MS;
-    };
-
-    el.addEventListener('scroll', onScrollOrTouch, { passive: true });
-    el.addEventListener('touchstart', onScrollOrTouch, { passive: true });
-
-    const step = 2;
-    const intervalMs = 45;
-    const timer = setInterval(() => {
-      if (Date.now() < galleryPausedUntilRef.current) return;
-      const track = galleryRef.current;
-      if (!track) return;
-      const maxScroll = track.scrollWidth - track.clientWidth;
-      if (maxScroll <= 0) return;
-      const next = track.scrollLeft + step;
-      track.scrollLeft = next >= maxScroll ? 0 : next;
-    }, intervalMs);
-
-    return () => {
-      el.removeEventListener('scroll', onScrollOrTouch);
-      el.removeEventListener('touchstart', onScrollOrTouch);
-      clearInterval(timer);
-    };
-  }, []);
-
-  const scrollGallery = (direction: 'left' | 'right') => {
-    galleryPausedUntilRef.current = Date.now() + PAUSE_AFTER_SCROLL_MS;
-    const g = galleryRef.current;
-    if (!g) return;
-    // Use measured item width + gap so mobile (two-per-row) scrolls one item per tap.
-    const firstItem = g.firstElementChild as HTMLElement | null;
-    const itemWidth = firstItem?.offsetWidth ?? 276;
-    const step = itemWidth + GAP_PX;
-    g.scrollBy({ left: direction === 'left' ? -step : step, behavior: 'smooth' });
-  };
-
-  const pauseGalleryAutoScroll = () => {
-    galleryPausedUntilRef.current = Date.now() + PAUSE_AFTER_SCROLL_MS;
-  };
-
   const handleSliderMove = (clientX: number) => {
     if (!containerRef.current) return;
     const r = containerRef.current.getBoundingClientRect();
@@ -225,20 +105,7 @@ export default function Home() {
 
   return (
     <div className={styles.home}>
-      {/* Hero - exact copy from current site */}
-      <section className={styles.hero}>
-        <div className={styles.heroVideo}>
-          <video autoPlay loop muted playsInline preload="metadata">
-            <source src={HERO_VIDEO} type="video/mp4" />
-          </video>
-        </div>
-        <div className={styles.heroOverlay} />
-        <div className={styles.heroContent}>
-          <h5 className={styles.heroPrefix}>NEED A HAIRCUT ?</h5>
-          <h1 className={styles.heroTitle}>The Art of the Perfect Cut.</h1>
-          <Link href="/book" className={styles.heroCtaBtn}>BOOK NOW</Link>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* The Barber Comes to You – two-column: text left, 3×2 image grid right */}
       <section className={styles.serviceIntro}>
@@ -372,29 +239,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Gallery carousel */}
-      <section className={styles.gallery}>
-        <div className={styles.galleryWrap}>
-          <button type="button" className={styles.galleryArrow} aria-label="Scroll gallery left" onClick={() => scrollGallery('left')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          </button>
-          <div ref={galleryRef} className={styles.galleryTrack}>
-            {GALLERY_CAROUSEL.map((src, i) => (
-              <div key={i} className={styles.galleryItem}>
-                <Image src={src} alt={`Gallery ${i + 1}`} width={276} height={300} className={styles.galleryImg} sizes="276px" loading="lazy" />
-              </div>
-            ))}
-          </div>
-          <button type="button" className={styles.galleryArrowRight} aria-label="Scroll gallery right" onClick={() => scrollGallery('right')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-          </button>
-        </div>
-      </section>
+      <GallerySection />
 
       {/* OUR PARTNERS */}
       <section className={styles.partners}>
         <div className={styles.partnersInner}>
-          <h6 className={styles.partnersTitle}>OUR PARTNERS</h6>
+          <div className={styles.partnersTitleWrap}>
+            <h2 className={styles.partnersTitle}>OUR PARTNERS</h2>
+            <span className={styles.partnersTitleLine} aria-hidden />
+          </div>
           <div className={styles.partnersGrid}>
             {PARTNERS.map((logo, i) => (
               <div key={i} className={styles.partnerLogo}>

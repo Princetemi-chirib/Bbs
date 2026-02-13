@@ -612,6 +612,8 @@ export default function AdminOrdersPage() {
                       <td style={{ whiteSpace: 'nowrap' }}>
                         <strong>₦{Number(order.totalAmount || 0).toLocaleString()}</strong>
                       </td>
+
+                      
                       <td style={{ whiteSpace: 'nowrap', color: '#6c757d' }}>₦0</td>
                       <td>
                         {!order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && (
