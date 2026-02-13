@@ -892,8 +892,27 @@
     min-width: 140px;
   }
 
+  /* Our Partners mobile: 5-column grid like reference, card style, no red line */
+  .partnersTitleLine {
+    display: none;
+  }
+
   .partnersGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem 0.5rem;
+  }
+
+  .partnerLogo {
+    background: #ffffff;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    padding: 0.5rem;
+    min-height: 52px;
+  }
+
+  .partnerLogo .partnerImg {
+    max-height: 40px;
   }
 
   .whatWeDoCards {
