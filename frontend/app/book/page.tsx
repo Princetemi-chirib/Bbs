@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useCartStore, OrderItem } from '@/lib/store/cartStore';
 import { productApi } from '@/lib/api';
 import { getSlotsLeftForToday } from '@/lib/utils';
@@ -20,9 +21,23 @@ interface Service {
 
 function BeforeAfterSlider({ beforeImage, afterImage }: { beforeImage: string; afterImage: string }) {
   const [splitPosition, setSplitPosition] = useState(50);
+  const [inView, setInView] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e?.isIntersecting) setInView(true);
+      },
+      { rootMargin: '80px', threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   const update = (clientX: number) => {
     const el = containerRef.current;
@@ -90,10 +105,32 @@ function BeforeAfterSlider({ beforeImage, afterImage }: { beforeImage: string; a
       onClick={onContainerClick}
     >
       <div className={`${styles.baLayer} ${styles.baBefore}`}>
-        <img src={beforeImage} alt="Before" className={styles.baImage} loading="lazy" />
+        <div className={styles.baImageWrap}>
+          {inView && (
+            <Image
+              src={beforeImage}
+              alt="Before"
+              fill
+              className={styles.baImage}
+              sizes="(max-width: 768px) 100vw, 400px"
+              loading="lazy"
+            />
+          )}
+        </div>
       </div>
       <div className={`${styles.baLayer} ${styles.baAfter}`}>
-        <img src={afterImage} alt="After" className={styles.baImage} loading="lazy" />
+        <div className={styles.baImageWrap}>
+          {inView && (
+            <Image
+              src={afterImage}
+              alt="After"
+              fill
+              className={styles.baImage}
+              sizes="(max-width: 768px) 100vw, 400px"
+              loading="lazy"
+            />
+          )}
+        </div>
       </div>
       <div className={styles.baSliderLine} aria-hidden="true" />
       <div

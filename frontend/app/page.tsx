@@ -196,10 +196,10 @@ export default function Home() {
             onClick={(e) => !isDragging && handleSliderMove(e.clientX)}
           >
             <div className={styles.beforeWrap} style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}>
-              <Image src={BEFORE_IMG} alt="Before" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" />
+              <Image src={BEFORE_IMG} alt="Before" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" loading="lazy" />
             </div>
             <div className={styles.afterWrap} style={{ clipPath: `polygon(${sliderPosition}% 0, 100% 0, 100% 100%, ${sliderPosition}% 100%)` }}>
-              <Image src={AFTER_IMG} alt="After" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" />
+              <Image src={AFTER_IMG} alt="After" fill className={styles.sliderImg} sizes="(max-width: 480px) 100vw, 420px" loading="lazy" fetchPriority="low" />
             </div>
             <div className={styles.sliderLine} style={{ left: `${sliderPosition}%` }} />
             <div className={styles.sliderHandle} style={{ left: `${sliderPosition}%` }} onMouseDown={onDown} onTouchStart={onDown}>
