@@ -508,7 +508,7 @@ export default function AdminBarbersPage() {
                 {newStaff.map((barber) => (
                   <tr key={barber.id}>
                     <td className={styles.barberId}>{barber.barberId}</td>
-                    <td>
+                    <td className={styles.namePhotoCell}>
                       <div className={styles.barberInfo}>
                         {barber.avatarUrl ? (
                           <Image
@@ -647,7 +647,7 @@ export default function AdminBarbersPage() {
                 {oldStaff.map((barber) => (
                   <tr key={barber.id}>
                     <td className={styles.barberId}>{barber.barberId}</td>
-                    <td>
+                    <td className={styles.namePhotoCell}>
                       <div className={styles.barberInfo}>
                         {barber.avatarUrl ? (
                           <Image

@@ -651,6 +651,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.barberInfo > div {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .barberAvatar {
@@ -679,17 +686,27 @@
   font-weight: 600;
   color: #39413f;
   margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .barberEmail {
   font-size: 0.85rem;
   color: #6c757d;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .barberId {
   font-family: 'Courier New', monospace;
   font-size: 0.85rem;
   color: #6c757d;
+}
+
+.namePhotoCell {
+  max-width: 220px;
 }
 
 /* Status Badges */
