@@ -1,3 +1,9 @@
+/* Contact page accent (warm gold for CTAs and focus) */
+.contactPage {
+  --contact-accent: #b8860b;
+  --contact-accent-hover: #9a7209;
+}
+
 .container {
   max-width: 1400px;
   margin: 0 auto;
@@ -5,9 +11,17 @@
   width: 100%;
 }
 
-/* Hero Section */
+.containerFull {
+  max-width: none;
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  margin: 0 auto;
+}
+
+/* Hero Section – reduced height, accent line, Poppins */
 .heroSection {
-  padding: 140px 0;
+  padding: 88px 0 72px;
   background: var(--bg-dark);
   text-align: center;
   position: relative;
@@ -17,6 +31,16 @@
   max-width: 700px;
   margin: 0 auto;
   animation: fadeInUp 0.8s ease-out;
+}
+
+.heroContent::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 4px;
+  margin: 24px auto 0;
+  background: linear-gradient(90deg, var(--contact-accent), var(--contact-accent-hover));
+  border-radius: 2px;
 }
 
 @keyframes fadeInUp {
@@ -31,33 +55,52 @@
 }
 
 .heroContent h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  font-weight: 600;
-  margin-bottom: 32px;
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 700;
+  margin-bottom: 16px;
   color: var(--text-primary);
-  letter-spacing: -1.5px;
+  letter-spacing: -0.5px;
   line-height: 1.2;
 }
 
 .heroContent p {
-  font-size: 1.2rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem;
   color: rgba(57, 65, 63, 0.8);
-  line-height: 1.8;
+  line-height: 1.7;
   font-weight: 400;
 }
 
-/* Branch images – full width, sticky on scroll */
+/* Branch images – section heading, then full width sticky blocks */
 .branchesSection {
-  padding: 80px 0 120px;
+  padding: 64px 0 96px;
   background: var(--bg-dark);
 }
 
 .branchesSection .container {
-  max-width: none;
-  padding-left: 0;
-  padding-right: 0;
+  max-width: 1400px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
+
+.branchesSectionTitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.branchesSectionSub {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: rgba(57, 65, 63, 0.75);
+  margin: 0 0 40px 0;
+  line-height: 1.6;
+}
+
 
 .branchBlock {
   position: sticky;
@@ -133,16 +176,16 @@
   }
 }
 
-/* Contact Us – two columns: left (info + customer rep image), right (form) – match reference */
+/* Contact Us – white section, two columns, clear hierarchy */
 .contactUsSection {
-  padding: 120px 0;
-  background: var(--bg-dark);
+  padding: 96px 0 104px;
+  background: #ffffff;
 }
 
 .contactUsColumns {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 48px;
+  gap: 56px;
   max-width: 1200px;
   margin: 0 auto;
   align-items: start;
@@ -151,13 +194,13 @@
 .contactUsLeft {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
   overflow: visible;
 }
 
 .contactUsTitle {
   font-family: 'Poppins', sans-serif;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -166,6 +209,7 @@
 }
 
 .contactUsIntro {
+  font-family: 'Inter', sans-serif;
   font-size: 1.05rem;
   color: rgba(57, 65, 63, 0.75);
   line-height: 1.7;
@@ -173,35 +217,58 @@
   font-weight: 400;
 }
 
+.contactDetailsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contactDetailsGroupTitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(57, 65, 63, 0.6);
+  margin: 0 0 4px 0;
+}
+
 .contactDetail {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(57, 65, 63, 0.08);
+}
+
+.contactDetail:last-of-type {
+  border-bottom: none;
 }
 
 .contactDetailIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(57, 65, 63, 0.55);
+  color: var(--contact-accent);
   flex-shrink: 0;
 }
 
 .contactDetailLink {
   color: var(--text-primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   transition: color 0.2s;
 }
 
 .contactDetailLink:hover {
-  color: rgba(57, 65, 63, 0.85);
+  color: var(--contact-accent);
 }
 
 .businessHoursBlock {
   margin: 0;
+  padding-top: 8px;
 }
 
 .businessHoursTitle {
@@ -221,18 +288,19 @@
   font-weight: 400;
 }
 
-/* Customer service representative image – small size, left column */
+/* Customer service representative – reduced prominence */
 .customerRepBlock {
   position: relative;
   width: 100%;
-  height: 200px;
-  min-height: 200px;
+  height: 180px;
+  min-height: 180px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
   border-radius: 12px;
-  margin-top: 8px;
+  margin-top: 4px;
+  opacity: 0.92;
 }
 
 .customerRepOverlay {
@@ -264,11 +332,11 @@
 
 .formWrapper {
   width: 100%;
-  background: rgba(220, 210, 204, 0.9);
-  border: 1px solid rgba(57, 65, 63, 0.12);
-  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(57, 65, 63, 0.1);
+  border-radius: 20px;
   padding: 48px 40px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .formHeader {
@@ -346,8 +414,8 @@
 
 .formInput:focus,
 .formTextarea:focus {
-  border-color: var(--primary-gold);
-  box-shadow: 0 0 0 4px rgba(57, 65, 63, 0.08);
+  border-color: var(--contact-accent);
+  box-shadow: 0 0 0 4px rgba(184, 134, 11, 0.12);
   background: #ffffff;
 }
 
@@ -357,26 +425,26 @@
 }
 
 .submitButton {
-  background: #39413f;
+  background: var(--contact-accent);
   color: #ffffff;
   border: none;
-  border-radius: 14px;
-  padding: 18px 36px;
+  border-radius: 12px;
+  padding: 16px 32px;
   font-weight: 700;
   font-size: 0.9rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   font-family: 'Poppins', sans-serif;
   margin-top: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 12px rgba(184, 134, 11, 0.25);
 }
 
 .submitButton:hover:not(:disabled) {
-  background: #2d3332;
+  background: var(--contact-accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 16px rgba(184, 134, 11, 0.3);
 }
 
 .submitButton:active {
@@ -384,15 +452,27 @@
 }
 
 .successMessage {
-  background: rgba(76, 175, 80, 0.95);
+  background: rgba(46, 125, 50, 0.95);
   color: #ffffff;
-  padding: 18px 24px;
-  border-radius: 14px;
+  padding: 16px 20px;
+  border-radius: 12px;
   text-align: center;
   font-weight: 500;
-  margin-top: 12px;
+  font-size: 0.95rem;
+  margin-top: 16px;
   animation: fadeIn 0.3s ease-out;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2);
+}
+
+.errorMessage {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #b91c1c;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
 @keyframes fadeIn {
@@ -406,10 +486,33 @@
   }
 }
 
-/* FAQ Section */
+/* FAQ Section – distinct background, section title */
 .faqSection {
-  padding: 120px 0;
-  background: var(--bg-dark);
+  padding: 96px 0 104px;
+  background: #f5f5f4;
+}
+
+.faqSectionHeader {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 48px;
+}
+
+.faqSectionTitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.5px;
+}
+
+.faqSectionIntro {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: rgba(57, 65, 63, 0.75);
+  line-height: 1.7;
+  margin: 0;
 }
 
 .faqList {
@@ -421,16 +524,17 @@
 }
 
 .faqItem {
-  background: var(--bg-card);
-  border: 1px solid rgba(57, 65, 63, 0.12);
-  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(57, 65, 63, 0.1);
+  border-radius: 14px;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .faqItem:hover {
-  border-color: rgba(57, 65, 63, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-color: rgba(57, 65, 63, 0.18);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
 }
 
 .faqQuestion {
@@ -452,7 +556,7 @@
 }
 
 .faqQuestion.active {
-  background: rgba(57, 65, 63, 0.05);
+  background: rgba(184, 134, 11, 0.06);
 }
 
 .faqIcon {
@@ -464,7 +568,7 @@
   justify-content: center;
   background: rgba(57, 65, 63, 0.06);
   border-radius: 8px;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .faqQuestion:hover .faqIcon {
@@ -474,12 +578,16 @@
 .faqIcon svg {
   width: 18px;
   height: 18px;
-  fill: rgba(57, 65, 63, 0.8);
-  transition: all 0.3s ease;
+  fill: rgba(57, 65, 63, 0.75);
+  transition: all 0.25s ease;
+}
+
+.faqQuestion.active .faqIcon {
+  background: rgba(184, 134, 11, 0.12);
 }
 
 .faqQuestion.active .faqIcon svg {
-  fill: var(--primary-gold);
+  fill: var(--contact-accent);
 }
 
 .faqQuestionText {
