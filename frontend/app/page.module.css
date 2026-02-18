@@ -353,7 +353,7 @@
   border-radius: 20px;
   overflow: hidden;
   cursor: ew-resize;
-  touch-action: none;
+  touch-action: pan-y;
   user-select: none;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
