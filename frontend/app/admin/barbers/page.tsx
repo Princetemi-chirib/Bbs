@@ -286,19 +286,26 @@ export default function AdminBarbersPage() {
   };
 
   if (loading && !metrics) {
-    return <div className={styles.loading}>Loading barber management...</div>;
+    return <div className={styles.loading}>Loading staff management...</div>;
   }
 
   const filteredBarbers = metrics?.barbers || [];
+
+  // New staff: added in the last 1 month. Old staff: more than 1 month ago.
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  const oneMonthAgoStr = oneMonthAgo.toISOString();
+  const newStaff = filteredBarbers.filter((b) => (b.createdAt || '') >= oneMonthAgoStr);
+  const oldStaff = filteredBarbers.filter((b) => (b.createdAt || '') < oneMonthAgoStr);
 
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div className={styles.pageHeaderContent}>
           <div>
-            <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: 'Barbers' }]} />
-            <h1 className={styles.pageTitle}>Barbers</h1>
-            <p className={styles.pageSubtitle}>Manage barbers, track performance, and review applications.</p>
+            <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: 'Staff' }]} />
+            <h1 className={styles.pageTitle}>Staff</h1>
+            <p className={styles.pageSubtitle}>Manage staff, track performance, and review applications.</p>
           </div>
           {isAdmin() && (
             <button onClick={() => setShowAddForm(!showAddForm)} className={styles.addButton}>
@@ -314,7 +321,7 @@ export default function AdminBarbersPage() {
           <section className={styles.metricsSection}>
             <div className={styles.metricsGrid}>
               <div className={styles.metricCard}>
-                <div className={styles.metricLabel}>Total Active Barbers</div>
+                <div className={styles.metricLabel}>Total Active Staff</div>
                 <div className={styles.metricValue}>{metrics.summary.activeBarbers}</div>
                 <div className={styles.metricSubtext}>of {metrics.summary.totalBarbers} total</div>
               </div>
@@ -322,7 +329,7 @@ export default function AdminBarbersPage() {
                 <div className={styles.metricLabel}>Inactive / Suspended</div>
                 <div className={styles.metricValue}>{metrics.summary.inactiveBarbers + metrics.summary.suspendedBarbers}</div>
                 <div className={styles.metricSubtext}>
-                  {metrics.summary.inactiveBarbers} inactive, {metrics.summary.suspendedBarbers} suspended
+                  {metrics.summary.inactiveBarbers} inactive, {metrics.summary.suspendedBarbers} suspended staff
                 </div>
               </div>
               <div className={styles.metricCard}>
@@ -333,7 +340,7 @@ export default function AdminBarbersPage() {
               <div className={styles.metricCard}>
                 <div className={styles.metricLabel}>Average Rating</div>
                 <div className={styles.metricValue}>{metrics.summary.averageRating.toFixed(1)}</div>
-                <div className={styles.metricSubtext}>Across all barbers</div>
+                <div className={styles.metricSubtext}>Across all staff</div>
               </div>
               <div className={styles.metricCard}>
                 <div className={styles.metricLabel}>Total Revenue</div>
@@ -341,9 +348,9 @@ export default function AdminBarbersPage() {
                 <div className={styles.metricSubtext}>All time</div>
               </div>
               <div className={styles.metricCard}>
-                <div className={styles.metricLabel}>Avg Orders/Barber</div>
+                <div className={styles.metricLabel}>Avg Orders/Staff</div>
                 <div className={styles.metricValue}>{metrics.summary.avgOrdersPerBarber.toFixed(1)}</div>
-                <div className={styles.metricSubtext}>Average per barber</div>
+                <div className={styles.metricSubtext}>Average per staff member</div>
               </div>
               <div className={styles.metricCard}>
                 <div className={styles.metricLabel}>No-Show / Late Rate</div>
@@ -477,14 +484,15 @@ export default function AdminBarbersPage() {
           </section>
         )}
 
-        {/* Barber List Table */}
+        {/* New Staff (added in last 1 month) */}
         <section className={styles.section}>
-          <h2>All Barbers ({filteredBarbers.length})</h2>
+          <h2>New Staff ({newStaff.length})</h2>
+          <p className={styles.sectionSubtitle}>Added in the last 1 month</p>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Barber ID</th>
+                  <th>Staff ID</th>
                   <th>Name & Photo</th>
                   <th>Employment Status</th>
                   <th>Skills / Services</th>
@@ -497,7 +505,7 @@ export default function AdminBarbersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredBarbers.map((barber) => (
+                {newStaff.map((barber) => (
                   <tr key={barber.id}>
                     <td className={styles.barberId}>{barber.barberId}</td>
                     <td>
@@ -609,8 +617,147 @@ export default function AdminBarbersPage() {
                 ))}
               </tbody>
             </table>
-            {filteredBarbers.length === 0 && (
-              <div className={styles.empty}>No barbers found matching the filters.</div>
+            {newStaff.length === 0 && (
+              <div className={styles.empty}>No new staff in the last 1 month.</div>
+            )}
+          </div>
+        </section>
+
+        {/* Old Staff (added more than 1 month ago) */}
+        <section className={styles.section}>
+          <h2>Old Staff ({oldStaff.length})</h2>
+          <p className={styles.sectionSubtitle}>Added more than 1 month ago</p>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Staff ID</th>
+                  <th>Name & Photo</th>
+                  <th>Employment Status</th>
+                  <th>Skills / Services</th>
+                  <th>Rating</th>
+                  <th>Total Orders</th>
+                  <th>Revenue/Day</th>
+                  <th>No-Show Rate</th>
+                  <th>Last Active</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {oldStaff.map((barber) => (
+                  <tr key={barber.id}>
+                    <td className={styles.barberId}>{barber.barberId}</td>
+                    <td>
+                      <div className={styles.barberInfo}>
+                        {barber.avatarUrl ? (
+                          <Image
+                            src={barber.avatarUrl}
+                            alt={barber.name}
+                            width={40}
+                            height={40}
+                            className={styles.barberAvatar}
+                            unoptimized
+                          />
+                        ) : (
+                          <div className={styles.barberAvatarPlaceholder}>
+                            {barber.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <div className={styles.barberName}>{barber.name}</div>
+                          <div className={styles.barberEmail}>{barber.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`${styles.statusBadge} ${getStatusBadgeClass(barber.status)}`}>
+                        {barber.status.replace('_', ' ')}
+                      </span>
+                      {barber.isOnline && <span className={styles.onlineBadge}>Online</span>}
+                    </td>
+                    <td>
+                      <div className={styles.specialties}>
+                        {barber.specialties.length > 0 ? (
+                          barber.specialties.map((spec, idx) => (
+                            <span key={idx} className={styles.specialtyTag}>{spec}</span>
+                          ))
+                        ) : (
+                          <span className={styles.noSpecialties}>No skills listed</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className={styles.rating}>
+                        <span className={styles.ratingStars}>
+                          {'★'.repeat(Math.floor(barber.ratingAvg))}
+                          {'☆'.repeat(5 - Math.floor(barber.ratingAvg))}
+                        </span>
+                        <span className={styles.ratingValue}>{barber.ratingAvg.toFixed(1)}</span>
+                        <span className={styles.reviewCount}>({barber.totalReviews})</span>
+                      </div>
+                    </td>
+                    <td>{barber.totalOrders}</td>
+                    <td>{formatCurrency(barber.revenuePerDay)}</td>
+                    <td>
+                      <span className={barber.noShowRate > 10 ? styles.highNoShow : styles.lowNoShow}>
+                        {barber.noShowRate.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td>{formatDate(barber.lastActiveDate)}</td>
+                    <td>
+                      <div className={styles.quickActions}>
+                        <button
+                          onClick={() => router.push(`/admin/barbers/${barber.id}`)}
+                          className={styles.viewButton}
+                          title="View Profile"
+                        >
+                          👁️
+                        </button>
+                        {isAdmin() && (
+                          <>
+                            {barber.status === 'ACTIVE' ? (
+                              <button
+                                onClick={() => {
+                                  setActionBarber(barber);
+                                  setActionType('suspend');
+                                }}
+                                className={styles.suspendButton}
+                                title="Suspend"
+                              >
+                                ⏸️
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setActionBarber(barber);
+                                  setActionType('activate');
+                                }}
+                                className={styles.activateButton}
+                                title="Activate"
+                              >
+                                ▶️
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setActionBarber(barber);
+                                setActionType('terminate');
+                              }}
+                              className={styles.terminateButton}
+                              title="Terminate"
+                            >
+                              🗑️
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {oldStaff.length === 0 && (
+              <div className={styles.empty}>No old staff (all staff were added in the last 1 month).</div>
             )}
           </div>
         </section>
@@ -625,9 +772,9 @@ export default function AdminBarbersPage() {
         }}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3>
-              {actionType === 'suspend' && 'Suspend Barber'}
-              {actionType === 'terminate' && 'Terminate Barber'}
-              {actionType === 'activate' && 'Activate Barber'}
+              {actionType === 'suspend' && 'Suspend Staff'}
+              {actionType === 'terminate' && 'Terminate Staff'}
+              {actionType === 'activate' && 'Activate Staff'}
             </h3>
             <p>
               {actionType === 'suspend' && `Are you sure you want to suspend ${actionBarber.name}?`}

@@ -55,7 +55,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
     ],
   },
   { type: 'link', href: '/admin/customers', label: 'Customers', Icon: Users, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
-  { type: 'link', href: '/admin/barbers', label: 'Barbers', Icon: Scissors, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+  { type: 'link', href: '/admin/barbers', label: 'Staff', Icon: Scissors, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
   { type: 'link', href: '/admin/services', label: 'Services', Icon: Sparkles, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
   { type: 'link', href: '/admin/reviews', label: 'Reviews', Icon: Star, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
   {

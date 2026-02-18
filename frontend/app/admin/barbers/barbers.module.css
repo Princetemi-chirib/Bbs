@@ -87,6 +87,12 @@
   letter-spacing: -0.3px;
 }
 
+.sectionSubtitle {
+  margin: -16px 0 20px 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
 /* Form */
 .form {
   margin-top: 0;

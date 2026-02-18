@@ -136,7 +136,7 @@ export default function BarberDetailPage() {
         <div className={styles.pageHeaderContent}>
           <div>
             <Link href="/admin/barbers" className={styles.backLink}>
-              ← Back to Barbers
+              ← Back to Staff
             </Link>
             <h1 className={styles.pageTitle}>{detail.barber.user.name}</h1>
             <p className={styles.pageSubtitle}>Barber ID: {detail.barber.barberId}</p>
