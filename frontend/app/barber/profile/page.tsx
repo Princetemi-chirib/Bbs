@@ -27,7 +27,9 @@ export default function BarberProfilePage() {
 
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     phone: '',
+    nin: '',
     bio: '',
     experienceYears: '',
     specialties: [] as string[],
@@ -38,6 +40,15 @@ export default function BarberProfilePage() {
     currentSpecialty: '',
     currentLanguage: '',
   });
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   const [availability, setAvailability] = useState<any[]>([]);
 
@@ -55,7 +66,9 @@ export default function BarberProfilePage() {
         setProfile(prof);
         setFormData({
           name: prof.name || '',
+          email: prof.email || '',
           phone: prof.phone || '',
+          nin: prof.nin || '',
           bio: prof.bio || '',
           experienceYears: prof.experienceYears?.toString() || '',
           specialties: prof.specialties || [],
@@ -193,7 +206,9 @@ export default function BarberProfilePage() {
         method: 'PUT',
         body: JSON.stringify({
           name: formData.name,
+          email: formData.email,
           phone: formData.phone,
+          nin: formData.nin || undefined,
           bio: formData.bio,
           experienceYears: formData.experienceYears ? parseInt(formData.experienceYears) : undefined,
           specialties: formData.specialties,
@@ -253,6 +268,42 @@ export default function BarberProfilePage() {
       ...formData,
       languagesSpoken: formData.languagesSpoken.filter((_, i) => i !== index),
     });
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('New password and confirm password do not match.');
+      return;
+    }
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters long.');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const response = await fetchAuth('/api/v1/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setPasswordSuccess('Password changed successfully.');
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setTimeout(() => setPasswordSuccess(''), 3000);
+      } else {
+        setPasswordError(data.error?.message || 'Failed to change password.');
+      }
+    } catch (err: any) {
+      setPasswordError(err.message || 'Failed to change password.');
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const updateAvailability = (dayOfWeek: number, field: string, value: any) => {
@@ -341,7 +392,7 @@ export default function BarberProfilePage() {
             <h2 className={styles.sectionTitle}>Personal Information</h2>
             <div className={styles.formGrid}>
               <div className={styles.formGroup}>
-                <label>Name *</label>
+                <label>Full name *</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -350,14 +401,82 @@ export default function BarberProfilePage() {
                 />
               </div>
               <div className={styles.formGroup}>
-                <label>Phone</label>
+                <label>Phone number</label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
+              <div className={styles.formGroup}>
+                <label>Email address *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>NIN</label>
+                <input
+                  type="text"
+                  value={formData.nin}
+                  onChange={(e) => setFormData({ ...formData, nin: e.target.value })}
+                  placeholder="National Identification Number"
+                />
+              </div>
             </div>
+          </section>
+
+          {/* Change Password */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Change password</h2>
+            {passwordError && (
+              <div className={styles.alert} style={{ background: '#fee', borderColor: '#fcc', color: '#c33', marginBottom: 16 }}>
+                {passwordError}
+              </div>
+            )}
+            {passwordSuccess && (
+              <div className={styles.alert} style={{ background: '#efe', borderColor: '#cfc', color: '#3c3', marginBottom: 16 }}>
+                {passwordSuccess}
+              </div>
+            )}
+            <form onSubmit={handleChangePassword} className={styles.passwordForm}>
+              <div className={styles.formGroup}>
+                <label>Current password</label>
+                <input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  autoComplete="current-password"
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>New password</label>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  autoComplete="new-password"
+                  minLength={8}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Confirm new password</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  autoComplete="new-password"
+                />
+              </div>
+              <div className={styles.formActions}>
+                <button type="submit" className={styles.saveButton} disabled={changingPassword}>
+                  {changingPassword ? 'Updating...' : 'Change password'}
+                </button>
+              </div>
+            </form>
           </section>
 
           {/* Professional Information */}

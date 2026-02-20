@@ -22,6 +22,7 @@ async function getBarberFromRequest(request: NextRequest) {
                 name: true,
                 email: true,
                 phone: true,
+                nin: true,
                 avatarUrl: true,
               },
             },
@@ -66,6 +67,7 @@ export async function GET(request: NextRequest) {
         name: barber.user.name,
         email: barber.user.email,
         phone: barber.user.phone,
+        nin: barber.user.nin ?? null,
         avatarUrl: barber.user.avatarUrl,
         bio: barber.bio,
         experienceYears: barber.experienceYears,
@@ -105,7 +107,9 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const {
       name,
+      email,
       phone,
+      nin,
       avatarUrl,
       bio,
       experienceYears,
@@ -118,14 +122,16 @@ export async function PUT(request: NextRequest) {
     } = body;
 
     // Update user info
-    if (name || phone || avatarUrl !== undefined) {
+    const userUpdateData: { name?: string; email?: string; phone?: string | null; nin?: string | null; avatarUrl?: string | null } = {};
+    if (name) userUpdateData.name = name;
+    if (email !== undefined) userUpdateData.email = email;
+    if (phone !== undefined) userUpdateData.phone = phone;
+    if (nin !== undefined) userUpdateData.nin = nin || null;
+    if (avatarUrl !== undefined) userUpdateData.avatarUrl = avatarUrl;
+    if (Object.keys(userUpdateData).length > 0) {
       await prisma.user.update({
         where: { id: barber.userId },
-        data: {
-          ...(name && { name }),
-          ...(phone !== undefined && { phone }),
-          ...(avatarUrl !== undefined && { avatarUrl }),
-        },
+        data: userUpdateData,
       });
     }
 
@@ -195,6 +201,7 @@ export async function PUT(request: NextRequest) {
             name: true,
             email: true,
             phone: true,
+            nin: true,
             avatarUrl: true,
           },
         },
@@ -212,6 +219,7 @@ export async function PUT(request: NextRequest) {
         name: updatedBarber!.user.name,
         email: updatedBarber!.user.email,
         phone: updatedBarber!.user.phone,
+        nin: updatedBarber!.user.nin ?? null,
         avatarUrl: updatedBarber!.user.avatarUrl,
         bio: updatedBarber!.bio,
         experienceYears: updatedBarber!.experienceYears,
