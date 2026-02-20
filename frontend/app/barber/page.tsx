@@ -86,7 +86,7 @@ export default function BarberDashboard() {
 
   const loadStats = async () => {
     try {
-      const response = await fetchAuth('/api/v1/barber/earnings?period=all');
+      const response = await fetchAuth('/api/v1/barber/dashboard-stats');
       const data = await response.json();
       if (data.success) {
         setStats(data.data);
@@ -255,22 +255,43 @@ export default function BarberDashboard() {
       )}
 
       {/* Stats Overview */}
-      {stats && (
-        <div className={styles.mainContent}>
-          <div className={styles.pageContent}>
-            <div className={styles.statsGrid}>
-              <div className={styles.statCard}>
-                <div className={styles.statNumber}>₦{stats.totalEarnings?.toLocaleString() || '0'}</div>
-                <div className={styles.statLabel}>Total Earnings</div>
+      <div className={styles.mainContent}>
+        <div className={styles.pageContent}>
+          <h2 className={styles.pageHeader}>Dashboard overview</h2>
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={styles.statNumber}>₦{(stats?.totalEarnings ?? 0).toLocaleString()}</div>
+              <div className={styles.statLabel}>Total earnings</div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statNumber}>₦{(stats?.weeklyEarnings ?? 0).toLocaleString()}</div>
+              <div className={styles.statLabel}>Total weekly earnings</div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statNumber}>₦{(stats?.monthlyEarnings ?? 0).toLocaleString()}</div>
+              <div className={styles.statLabel}>Total monthly earnings</div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statNumber}>
+                {stats?.starRating != null ? Number(stats.starRating).toFixed(1) : '0.0'}
+                <span className={styles.statStar}> ★</span>
               </div>
-              <div className={styles.statCard}>
-                <div className={styles.statNumber}>{stats.orderCount || 0}</div>
-                <div className={styles.statLabel}>Completed Orders</div>
-              </div>
+              <div className={styles.statLabel}>Total star rating status</div>
+              {stats?.totalReviews != null && stats.totalReviews > 0 && (
+                <div className={styles.statSub}>{stats.totalReviews} reviews</div>
+              )}
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statNumber}>{stats?.jobsCompleted ?? 0}</div>
+              <div className={styles.statLabel}>Total job completed</div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statNumber}>{stats?.jobsIncompleted ?? 0}</div>
+              <div className={styles.statLabel}>Total job incompleted</div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Bottom Navigation */}
       <div className={styles.bottomNav}>

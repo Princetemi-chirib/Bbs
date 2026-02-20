@@ -188,16 +188,16 @@ export default function ContactPage() {
             {/* Right column: form panel */}
             <div className={styles.contactUsRight}>
               <div className={styles.formWrapper}>
-            <div className={styles.formHeader}>
-              <h2>Send Us a Message</h2>
-              <p>Use the form below to reach out to us. We&apos;ll get back to you as soon as possible.</p>
-            </div>
+                <div className={styles.formHeader}>
+                  <h2>Send Us a Message</h2>
+                  <p>Use the form below to reach out to us. We&apos;ll get back to you as soon as possible.</p>
+                </div>
 
-            <form onSubmit={handleSubmit} className={styles.contactForm}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="firstName">First Name</label>
-                  <input
+                <form onSubmit={handleSubmit} className={styles.contactForm}>
+                  <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="firstName">First Name</label>
+                    <input
                     type="text"
                     id="firstName"
                     name="firstName"
@@ -205,11 +205,11 @@ export default function ContactPage() {
                     onChange={handleChange}
                     required
                     className={styles.formInput}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="lastName">Last Name</label>
-                  <input
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="lastName">Last Name</label>
+                    <input
                     type="text"
                     id="lastName"
                     name="lastName"
@@ -217,13 +217,13 @@ export default function ContactPage() {
                     onChange={handleChange}
                     required
                     className={styles.formInput}
-                  />
-                </div>
-              </div>
+                    />
+                  </div>
+                  </div>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="email">Email</label>
-                <input
+                <div className={styles.formGroup}>
+                  <label htmlFor="email">Email</label>
+                  <input
                   type="email"
                   id="email"
                   name="email"
@@ -231,12 +231,12 @@ export default function ContactPage() {
                   onChange={handleChange}
                   required
                   className={styles.formInput}
-                />
-              </div>
+                  />
+                </div>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="message">Message</label>
-                <textarea
+                <div className={styles.formGroup}>
+                  <label htmlFor="message">Message</label>
+                  <textarea
                   id="message"
                   name="message"
                   value={formData.message}
@@ -244,29 +244,30 @@ export default function ContactPage() {
                   required
                   rows={6}
                   className={styles.formTextarea}
-                />
-              </div>
-
-              <button 
-                type="submit" 
-                className={styles.submitButton}
-                disabled={loading}
-              >
-                {loading ? 'Sending...' : 'SUBMIT FORM'}
-              </button>
-
-              {submitted && (
-                <div className={styles.successMessage}>
-                  The form has been submitted successfully! We will get back to you soon.
+                  />
                 </div>
-              )}
 
-              {error && (
-                <div className={styles.errorMessage}>
-                  {error}
-                </div>
-              )}
-            </form>
+                <button
+                  type="submit"
+                  className={styles.submitButton}
+                  disabled={loading}
+                  aria-busy={loading}
+                >
+                  {loading ? 'Sending...' : 'SUBMIT FORM'}
+                </button>
+
+                {submitted && (
+                  <div className={styles.successMessage} role="status" aria-live="polite">
+                    The form has been submitted successfully! We will get back to you soon.
+                  </div>
+                )}
+
+                {error && (
+                  <div className={styles.errorMessage} role="alert">
+                    {error}
+                  </div>
+                )}
+                </form>
               </div>
             </div>
           </div>
