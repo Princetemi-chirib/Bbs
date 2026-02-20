@@ -52,7 +52,7 @@ export default function CartPage() {
               <div key={item.key} className={styles.cartItem}>
                 <div className={styles.itemImage}>
                   <Image
-                    src={item.beforeImage}
+                    src={item.afterImage}
                     alt={item.title}
                     fill
                     className={styles.image}

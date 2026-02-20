@@ -10,6 +10,7 @@ const PAYMENT_LOGOS = [
   { name: 'Visa', src: '/images/Logo-VISA-transparent-PNG.png', alt: 'Visa' },
   { name: 'Zap', src: '/images/unnamed%20(2).png', alt: 'Zap' },
   { name: 'Mastercard', src: 'https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg', alt: 'Mastercard' },
+  { name: 'PalmPay', src: '/images/images.png', alt: 'PalmPay' },
   { name: 'Transfer', src: 'https://img.icons8.com/color/96/swap.png', alt: 'Bank Transfer' },
   { name: 'Bank', src: 'https://img.icons8.com/color/96/bank.png', alt: 'Bank' },
   { name: 'USSD', src: 'https://img.icons8.com/color/96/phone.png', alt: 'USSD' },
