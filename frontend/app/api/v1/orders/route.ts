@@ -393,12 +393,22 @@ export async function POST(request: NextRequest) {
           paymentLink,
         });
 
-        await emailService.sendEmail({
+        const customerEmailResult = await emailService.sendEmail({
           to: order.customerEmail,
           subject: `Order Confirmation - ${order.orderNumber}`,
           html: customerEmailHtml,
           text: customerEmailText,
         });
+
+        if (customerEmailResult.success) {
+          await prisma.order.update({
+            where: { id: order.id },
+            data: { emailSent: true },
+          });
+          console.log(`[Order ${order.orderNumber}] Customer confirmation email sent to ${order.customerEmail}`);
+        } else {
+          console.error(`[Order ${order.orderNumber}] Customer confirmation email FAILED: ${customerEmailResult.error}`);
+        }
 
         // Send admin notification email
         const adminEmail = process.env.ADMIN_EMAIL || 'admin@bbslimited.online';
@@ -490,14 +500,17 @@ ${order.additionalNotes ? `Additional Notes: ${order.additionalNotes}` : ''}
 View order in dashboard: ${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/admin/orders
         `;
 
-        await emailService.sendEmail({
+        const adminEmailResult = await emailService.sendEmail({
           to: adminEmail,
           subject: `New Order: ${order.orderNumber} - ₦${Number(order.totalAmount).toLocaleString()}`,
           html: adminEmailHtml,
           text: adminEmailText,
         });
-      } catch (emailError) {
-        console.error('Failed to send emails:', emailError);
+        if (!adminEmailResult.success) {
+          console.error(`[Order ${order.orderNumber}] Admin notification email FAILED: ${adminEmailResult.error}`);
+        }
+      } catch (emailError: any) {
+        console.error(`[Order ${order.orderNumber}] Failed to send order emails:`, emailError?.message || emailError);
         // Don't fail the order creation if email fails
       }
     })();
