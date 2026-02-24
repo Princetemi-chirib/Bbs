@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { fetchAuth, isAdmin, hasRole } from '@/lib/auth';
@@ -27,6 +27,7 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [selectedBarber, setSelectedBarber] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const [markingPaidOrderId, setMarkingPaidOrderId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
   
@@ -58,6 +59,8 @@ export default function AdminOrdersPage() {
     quantity: 1,
   });
 
+  const createFormRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     loadOrders();
     loadBarbers();
@@ -77,6 +80,13 @@ export default function AdminOrdersPage() {
       setShowCreateForm(true);
     }
   }, [searchParams]);
+
+  // Scroll create form into view when opened so user doesn't have to scroll down
+  useEffect(() => {
+    if (showCreateForm && createFormRef.current) {
+      createFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showCreateForm]);
 
   const loadOrders = async () => {
     try {
@@ -127,6 +137,26 @@ export default function AdminOrdersPage() {
       }
     } catch (err) {
       console.error('Failed to load barbers:', err);
+    }
+  };
+
+  const handleMarkAsPaid = async (orderId: string) => {
+    setMarkingPaidOrderId(orderId);
+    try {
+      const response = await fetchAuth(`/api/v1/admin/orders/${orderId}/mark-paid`, {
+        method: 'PATCH',
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Order marked as paid. You can now assign a barber.');
+        loadOrders();
+      } else {
+        alert(data.error?.message || 'Failed to mark order as paid');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to mark order as paid');
+    } finally {
+      setMarkingPaidOrderId(null);
     }
   };
 
@@ -361,6 +391,251 @@ export default function AdminOrdersPage() {
       </header>
 
       <main className={styles.main}>
+        {/* Create New Order – at top when open so no scrolling needed */}
+        {showCreateForm && (
+          <section ref={createFormRef} className={styles.section}>
+            <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Create New Order</h2>
+            
+            <div className={styles.formGrid}>
+              <div>
+                <label className={styles.label}>Customer Name *</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={formData.customerName}
+                  onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                  placeholder="John Doe"
+                />
+              </div>
+              
+              <div>
+                <label className={styles.label}>Customer Email *</label>
+                <input
+                  type="email"
+                  className={styles.input}
+                  value={formData.customerEmail}
+                  onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                  placeholder="customer@example.com"
+                />
+              </div>
+              
+              <div>
+                <label className={styles.label}>Customer Phone *</label>
+                <input
+                  type="tel"
+                  className={styles.input}
+                  value={formData.customerPhone}
+                  onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                  placeholder="08012345678"
+                />
+              </div>
+              
+              <div>
+                <label className={styles.label}>City *</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="Lagos"
+                />
+              </div>
+              
+              <div>
+                <label className={styles.label}>Location *</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  placeholder="Ikeja"
+                />
+              </div>
+              
+              <div>
+                <label className={styles.label}>Address</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="123 Main Street"
+                />
+              </div>
+              
+              <div>
+                <label className={styles.label}>Payment Reference</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={formData.paymentReference}
+                  onChange={(e) => setFormData({ ...formData, paymentReference: e.target.value })}
+                  placeholder="Optional"
+                />
+              </div>
+              
+              <div>
+                <label className={styles.label}>Payment Method</label>
+                <select
+                  className={styles.input}
+                  value={formData.paymentMethod}
+                  onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                >
+                  <option value="cash">Cash</option>
+                  <option value="paystack">Paystack</option>
+                </select>
+                {formData.paymentMethod === 'paystack' && (
+                  <p className={styles.helperText}>Customer will receive an email with a Paystack payment link. After they pay, the order is marked as paid automatically.</p>
+                )}
+                {formData.paymentMethod === 'cash' && (
+                  <p className={styles.helperText}>Customer will pay by cash. Use &quot;Mark as paid&quot; in the orders list once payment is received.</p>
+                )}
+              </div>
+            </div>
+
+            <div style={{ marginTop: '24px' }}>
+              <label className={styles.label}>Additional Notes</label>
+              <textarea
+                className={styles.input}
+                value={formData.additionalNotes}
+                onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
+                placeholder="Any special instructions..."
+                rows={3}
+              />
+            </div>
+
+            <div style={{ marginTop: '32px', borderTop: '1px solid #e5e5e5', paddingTop: '24px' }}>
+              <h3 className={styles.sectionTitle} style={{ fontSize: '1.25rem', marginBottom: '16px' }}>Order Items</h3>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '12px', marginBottom: '16px', alignItems: 'end' }}>
+                <div>
+                  <label className={styles.label}>Product *</label>
+                  <select
+                    className={styles.input}
+                    value={currentItem.productId}
+                    onChange={(e) => setCurrentItem({ ...currentItem, productId: e.target.value })}
+                  >
+                    <option value="">Select Product</option>
+                    {products.filter(p => p.isActive).map(product => (
+                      <option key={product.id} value={product.id}>
+                        {product.title} - ₦{product.adultPrice?.toLocaleString() || '0'}
+                        {product.kidsPrice ? ` / ₦${product.kidsPrice.toLocaleString()} (Kids)` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className={styles.label}>Age Group</label>
+                  <select
+                    className={styles.input}
+                    value={currentItem.ageGroup}
+                    onChange={(e) => setCurrentItem({ ...currentItem, ageGroup: e.target.value as any })}
+                    disabled={!currentItem.productId || !products.find(p => p.id === currentItem.productId)?.kidsPrice}
+                  >
+                    <option value="fixed">Fixed</option>
+                    <option value="adults">Adults</option>
+                    <option value="kids">Kids</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className={styles.label}>Quantity</label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={currentItem.quantity}
+                    onChange={(e) => setCurrentItem({ ...currentItem, quantity: parseInt(e.target.value) || 1 })}
+                    min="1"
+                  />
+                </div>
+                
+                <button
+                  onClick={handleAddItem}
+                  className={styles.primaryBtn}
+                  disabled={!currentItem.productId}
+                >
+                  Add
+                </button>
+              </div>
+
+              {orderItems.length > 0 && (
+                <div style={{ marginTop: '16px' }}>
+                  <table className={styles.itemsTable}>
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Age Group</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orderItems.map((item, index) => (
+                        <tr key={index}>
+                          <td>{item.title}</td>
+                          <td>{item.ageGroup === 'kids' ? 'Kids' : item.ageGroup === 'adults' ? 'Adults' : 'Fixed'}</td>
+                          <td>{item.quantity}</td>
+                          <td>₦{item.unitPrice.toLocaleString()}</td>
+                          <td>₦{item.totalPrice.toLocaleString()}</td>
+                          <td>
+                            <button
+                              onClick={() => handleRemoveItem(index)}
+                              className={styles.dangerLink}
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={4} style={{ textAlign: 'right', fontWeight: 700, paddingTop: '12px' }}>Total:</td>
+                        <td style={{ fontWeight: 700, paddingTop: '12px' }}>₦{totalAmount.toLocaleString()}</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
+
+              <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={handleCreateOrder}
+                  className={styles.primaryBtn}
+                  disabled={creating || orderItems.length === 0}
+                >
+                  {creating ? 'Creating...' : 'Create Order & Send Email'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setFormData({
+                      customerName: '',
+                      customerEmail: '',
+                      customerPhone: '',
+                      city: '',
+                      location: '',
+                      address: '',
+                      additionalNotes: '',
+                      paymentReference: '',
+                      paymentMethod: 'cash',
+                      paymentStatus: 'COMPLETED',
+                    });
+                    setOrderItems([]);
+                  }}
+                  className={styles.ghostBtn}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Order Overview Metrics */}
         <section className={styles.section}>
           <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Summary</h2>
@@ -616,6 +891,16 @@ export default function AdminOrdersPage() {
                       
                       <td style={{ whiteSpace: 'nowrap', color: '#6c757d' }}>₦0</td>
                       <td>
+                        {(order.paymentStatus === 'PENDING' || order.paymentStatus === 'pending') && String(order.paymentMethod || '').toLowerCase() === 'cash' && (
+                          <button
+                            onClick={() => handleMarkAsPaid(order.id)}
+                            disabled={markingPaidOrderId === order.id}
+                            className={styles.primaryBtn}
+                            style={{ padding: '6px 12px', fontSize: '0.85rem', marginRight: '8px' }}
+                          >
+                            {markingPaidOrderId === order.id ? '...' : 'Mark as paid'}
+                          </button>
+                        )}
                         {!order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && (
                           <button
                             onClick={() => setSelectedOrder(order.id === selectedOrder ? null : order.id)}
@@ -710,245 +995,6 @@ export default function AdminOrdersPage() {
           );
         })()}
 
-        {showCreateForm && (
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Create New Order</h2>
-            
-            <div className={styles.formGrid}>
-              <div>
-                <label className={styles.label}>Customer Name *</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={formData.customerName}
-                  onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                  placeholder="John Doe"
-                />
-              </div>
-              
-              <div>
-                <label className={styles.label}>Customer Email *</label>
-                <input
-                  type="email"
-                  className={styles.input}
-                  value={formData.customerEmail}
-                  onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
-                  placeholder="customer@example.com"
-                />
-              </div>
-              
-              <div>
-                <label className={styles.label}>Customer Phone *</label>
-                <input
-                  type="tel"
-                  className={styles.input}
-                  value={formData.customerPhone}
-                  onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                  placeholder="08012345678"
-                />
-              </div>
-              
-              <div>
-                <label className={styles.label}>City *</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="Lagos"
-                />
-              </div>
-              
-              <div>
-                <label className={styles.label}>Location *</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Ikeja"
-                />
-              </div>
-              
-              <div>
-                <label className={styles.label}>Address</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="123 Main Street"
-                />
-              </div>
-              
-              <div>
-                <label className={styles.label}>Payment Reference</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={formData.paymentReference}
-                  onChange={(e) => setFormData({ ...formData, paymentReference: e.target.value })}
-                  placeholder="Optional"
-                />
-              </div>
-              
-              <div>
-                <label className={styles.label}>Payment Method</label>
-                <select
-                  className={styles.input}
-                  value={formData.paymentMethod}
-                  onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                >
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
-                  <option value="transfer">Transfer</option>
-                  <option value="paystack">Paystack</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '24px' }}>
-              <label className={styles.label}>Additional Notes</label>
-              <textarea
-                className={styles.input}
-                value={formData.additionalNotes}
-                onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-                placeholder="Any special instructions..."
-                rows={3}
-              />
-            </div>
-
-            <div style={{ marginTop: '32px', borderTop: '1px solid #e5e5e5', paddingTop: '24px' }}>
-              <h3 className={styles.sectionTitle} style={{ fontSize: '1.25rem', marginBottom: '16px' }}>Order Items</h3>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '12px', marginBottom: '16px', alignItems: 'end' }}>
-                <div>
-                  <label className={styles.label}>Product *</label>
-                  <select
-                    className={styles.input}
-                    value={currentItem.productId}
-                    onChange={(e) => setCurrentItem({ ...currentItem, productId: e.target.value })}
-                  >
-                    <option value="">Select Product</option>
-                    {products.filter(p => p.isActive).map(product => (
-                      <option key={product.id} value={product.id}>
-                        {product.title} - ₦{product.adultPrice?.toLocaleString() || '0'}
-                        {product.kidsPrice ? ` / ₦${product.kidsPrice.toLocaleString()} (Kids)` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className={styles.label}>Age Group</label>
-                  <select
-                    className={styles.input}
-                    value={currentItem.ageGroup}
-                    onChange={(e) => setCurrentItem({ ...currentItem, ageGroup: e.target.value as any })}
-                    disabled={!currentItem.productId || !products.find(p => p.id === currentItem.productId)?.kidsPrice}
-                  >
-                    <option value="fixed">Fixed</option>
-                    <option value="adults">Adults</option>
-                    <option value="kids">Kids</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className={styles.label}>Quantity</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    value={currentItem.quantity}
-                    onChange={(e) => setCurrentItem({ ...currentItem, quantity: parseInt(e.target.value) || 1 })}
-                    min="1"
-                  />
-                </div>
-                
-                <button
-                  onClick={handleAddItem}
-                  className={styles.primaryBtn}
-                  disabled={!currentItem.productId}
-                >
-                  Add
-                </button>
-              </div>
-
-              {orderItems.length > 0 && (
-                <div style={{ marginTop: '16px' }}>
-                  <table className={styles.itemsTable}>
-                    <thead>
-                      <tr>
-                        <th>Product</th>
-                        <th>Age Group</th>
-                        <th>Qty</th>
-                        <th>Unit Price</th>
-                        <th>Total</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orderItems.map((item, index) => (
-                        <tr key={index}>
-                          <td>{item.title}</td>
-                          <td>{item.ageGroup === 'kids' ? 'Kids' : item.ageGroup === 'adults' ? 'Adults' : 'Fixed'}</td>
-                          <td>{item.quantity}</td>
-                          <td>₦{item.unitPrice.toLocaleString()}</td>
-                          <td>₦{item.totalPrice.toLocaleString()}</td>
-                          <td>
-                            <button
-                              onClick={() => handleRemoveItem(index)}
-                              className={styles.dangerLink}
-                            >
-                              Remove
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <td colSpan={4} style={{ textAlign: 'right', fontWeight: 700, paddingTop: '12px' }}>Total:</td>
-                        <td style={{ fontWeight: 700, paddingTop: '12px' }}>₦{totalAmount.toLocaleString()}</td>
-                        <td></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              )}
-
-              <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
-                <button
-                  onClick={handleCreateOrder}
-                  className={styles.primaryBtn}
-                  disabled={creating || orderItems.length === 0}
-                >
-                  {creating ? 'Creating...' : 'Create Order & Send Email'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setFormData({
-                      customerName: '',
-                      customerEmail: '',
-                      customerPhone: '',
-                      city: '',
-                      location: '',
-                      address: '',
-                      additionalNotes: '',
-                      paymentReference: '',
-                      paymentMethod: 'cash',
-                      paymentStatus: 'COMPLETED',
-                    });
-                    setOrderItems([]);
-                  }}
-                  className={styles.ghostBtn}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
       </main>
     </div>
   );

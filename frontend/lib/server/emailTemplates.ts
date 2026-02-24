@@ -143,6 +143,10 @@ interface OrderConfirmationEmailData {
   address?: string;
   phone: string;
   paymentReference?: string;
+  /** Payment method: 'paystack' | 'cash' | etc. */
+  paymentMethod?: string;
+  /** When set (e.g. for Paystack), show "Pay now" button. */
+  paymentLink?: string;
 }
 
 export const emailTemplates = {
@@ -195,6 +199,22 @@ export const emailTemplates = {
           </td>
           <td style="padding: 12px; border-bottom: 1px solid ${BRAND_COLORS.border}; text-align: right;">
             ${data.paymentReference}
+          </td>
+        </tr>
+        ` : ''}
+        ${data.paymentLink ? `
+        <tr>
+          <td colspan="2" style="padding: 20px 12px; border-bottom: 1px solid ${BRAND_COLORS.border}; text-align: center;">
+            <p style="margin: 0 0 15px 0; color: ${BRAND_COLORS.textSecondary}; font-size: 16px;">Complete your payment securely with Paystack:</p>
+            <a href="${data.paymentLink}" style="display: inline-block; background: ${BRAND_COLORS.primary}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">Pay ₦${data.total.toLocaleString()} now</a>
+            <p style="margin: 12px 0 0 0; color: ${BRAND_COLORS.textMuted}; font-size: 14px;">After payment, your order will be confirmed and we will assign a barber.</p>
+          </td>
+        </tr>
+        ` : ''}
+        ${!data.paymentLink && (data.paymentMethod || '').toLowerCase() === 'cash' ? `
+        <tr>
+          <td colspan="2" style="padding: 16px 12px; border-bottom: 1px solid ${BRAND_COLORS.border}; background-color: ${BRAND_COLORS.bgLight}; border-radius: 4px;">
+            <p style="margin: 0; color: ${BRAND_COLORS.textSecondary}; font-size: 15px;">You have chosen to pay by <strong>cash</strong>. Our team will confirm your order once payment is received. You can then expect a barber to be assigned shortly.</p>
           </td>
         </tr>
         ` : ''}
@@ -311,6 +331,7 @@ Order Reference: ${data.orderReference}
 ${data.paymentReference ? `Payment Reference: ${data.paymentReference}\n` : ''}City: ${data.city}
 Service Location: ${data.location}
 ${data.address ? `Address: ${data.address}\n` : ''}Phone: ${data.phone}
+${data.paymentLink ? `\nPAY NOW (Paystack):\n${data.paymentLink}\n\nAfter payment, your order will be confirmed.\n` : (data.paymentMethod || '').toLowerCase() === 'cash' ? '\nYou have chosen to pay by CASH. Our team will confirm once payment is received.\n' : ''}
 
 ORDER ITEMS:
 ${itemsList}

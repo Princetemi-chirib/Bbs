@@ -8,8 +8,10 @@ import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
+const PAYSTACK_SECRET = () => process.env.PAYSTACK_SECRET_KEY || process.env.PAYSTACK_SECRET || '';
+
 async function verifyPaystackPayment(reference: string, expectedAmountNaira: number) {
-  const secretKey = process.env.PAYSTACK_SECRET_KEY || process.env.PAYSTACK_SECRET || '';
+  const secretKey = PAYSTACK_SECRET();
   if (!secretKey) {
     return { verified: false, reason: 'PAYSTACK_SECRET_KEY not configured' as const };
   }
@@ -20,7 +22,6 @@ async function verifyPaystackPayment(reference: string, expectedAmountNaira: num
         Authorization: `Bearer ${secretKey}`,
         'Content-Type': 'application/json',
       },
-      // Avoid cached verification responses in edge cases
       cache: 'no-store',
     });
 
@@ -48,6 +49,50 @@ async function verifyPaystackPayment(reference: string, expectedAmountNaira: num
     return { verified: true as const };
   } catch (e: any) {
     return { verified: false, reason: e?.message || 'Paystack verification error' as const };
+  }
+}
+
+/** Initialize Paystack transaction and return payment URL for customer. Amount in Naira. */
+async function initializePaystackTransaction(params: {
+  email: string;
+  amountNaira: number;
+  reference: string;
+  callbackUrl?: string;
+}): Promise<{ authorizationUrl: string; reference: string } | { error: string }> {
+  const secretKey = PAYSTACK_SECRET();
+  if (!secretKey) {
+    return { error: 'PAYSTACK_SECRET_KEY not configured' };
+  }
+  const amountKobo = Math.round(Number(params.amountNaira) * 100);
+  if (!Number.isFinite(amountKobo) || amountKobo <= 0) {
+    return { error: 'Invalid amount' };
+  }
+  try {
+    const res = await fetch('https://api.paystack.co/transaction/initialize', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: params.email,
+        amount: amountKobo,
+        reference: params.reference,
+        callback_url: params.callbackUrl || undefined,
+      }),
+    });
+    const payload = (await res.json()) as any;
+    if (!res.ok || !payload?.status) {
+      return { error: payload?.message || 'Paystack initialize failed' };
+    }
+    const authUrl = payload?.data?.authorization_url;
+    const ref = payload?.data?.reference || params.reference;
+    if (!authUrl) {
+      return { error: 'No authorization_url in response' };
+    }
+    return { authorizationUrl: authUrl, reference: ref };
+  } catch (e: any) {
+    return { error: e?.message || 'Paystack request failed' };
   }
 }
 
@@ -146,27 +191,33 @@ export async function POST(request: NextRequest) {
 
     // Generate unique order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    const method = String(paymentMethod || '').toLowerCase().trim();
 
     // Payment verification (prevents spoofing paid orders)
     let paymentStatus: 'PAID' | 'PENDING' = 'PENDING';
     let orderStatus: 'CONFIRMED' | 'PENDING' = 'PENDING';
+    let orderPaymentReference: string | null = null;
 
-    if (paymentReference) {
-      const method = String(paymentMethod || '').toLowerCase().trim();
+    // Admin/Rep creating order: Cash = PENDING (admin marks as paid later). Paystack = PENDING + we send payment link in email.
+    if (adminOrRep && (method === 'cash' || method === 'paystack')) {
+      paymentStatus = 'PENDING';
+      orderStatus = 'PENDING';
+      orderPaymentReference = method === 'paystack' ? orderNumber : null;
+    } else if (paymentReference) {
       if (method === 'paystack') {
         const verification = await verifyPaystackPayment(String(paymentReference), Number(totalAmount));
         if (verification.verified) {
           paymentStatus = 'PAID';
           orderStatus = 'CONFIRMED';
+          orderPaymentReference = paymentReference;
         } else {
           console.warn(`⚠️ Paystack verification failed for ${paymentReference}: ${verification.reason}`);
         }
       } else if (!isCustomerActor) {
-        // Allow trusted dashboard actors to mark payments for non-paystack/manual methods
         paymentStatus = 'PAID';
         orderStatus = 'CONFIRMED';
+        orderPaymentReference = paymentReference;
       } else {
-        // Customer-submitted non-paystack references should not mark the order as paid automatically
         console.warn(`⚠️ Customer order submitted with unverified payment method: ${paymentMethod || 'unknown'}`);
       }
     }
@@ -256,7 +307,7 @@ export async function POST(request: NextRequest) {
         address: address || null,
         additionalNotes: additionalNotes || null,
         totalAmount,
-        paymentReference: paymentReference || null,
+        paymentReference: orderPaymentReference || paymentReference || null,
         paymentMethod: paymentMethod || null,
         paymentStatus,
         status: orderStatus,
@@ -284,7 +335,24 @@ export async function POST(request: NextRequest) {
     // Send emails in background (don't wait for them)
     (async () => {
       try {
-        // Send customer confirmation email
+        let paymentLink: string | undefined;
+        const paymentMethodForEmail = String(order.paymentMethod || '').toLowerCase().trim();
+
+        if (paymentMethodForEmail === 'paystack' && order.paymentReference) {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+          const initResult = await initializePaystackTransaction({
+            email: order.customerEmail,
+            amountNaira: Number(order.totalAmount),
+            reference: order.paymentReference,
+            callbackUrl: `${baseUrl.replace(/\/$/, '')}/order-success?ref=${encodeURIComponent(order.paymentReference)}`,
+          });
+          if (!('error' in initResult)) {
+            paymentLink = initResult.authorizationUrl;
+          } else {
+            console.error('Paystack initialize failed for order', order.orderNumber, initResult.error);
+          }
+        }
+
         const customerEmailHtml = emailTemplates.orderConfirmation({
           customerName: order.customerName,
           customerEmail: order.customerEmail,
@@ -301,6 +369,8 @@ export async function POST(request: NextRequest) {
           address: order.address || undefined,
           phone: order.customerPhone,
           paymentReference: order.paymentReference || undefined,
+          paymentMethod: paymentMethodForEmail || undefined,
+          paymentLink,
         });
 
         const customerEmailText = emailTemplates.orderConfirmationText({
@@ -319,6 +389,8 @@ export async function POST(request: NextRequest) {
           address: order.address || undefined,
           phone: order.customerPhone,
           paymentReference: order.paymentReference || undefined,
+          paymentMethod: paymentMethodForEmail || undefined,
+          paymentLink,
         });
 
         await emailService.sendEmail({
