@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function OrderSuccessPage() {
+function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const ref = searchParams?.get('ref');
 
@@ -54,5 +55,24 @@ export default function OrderSuccessPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'system-ui, sans-serif',
+        background: 'linear-gradient(180deg, #f5f5f4 0%, #e8e6e4 100%)',
+      }}>
+        <p style={{ color: '#666' }}>Loading...</p>
+      </div>
+    }>
+      <OrderSuccessContent />
+    </Suspense>
   );
 }
