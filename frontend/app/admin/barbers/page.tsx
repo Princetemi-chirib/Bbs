@@ -316,6 +316,56 @@ export default function AdminBarbersPage() {
       </header>
 
       <main className={styles.main}>
+        {/* Add Staff Form - at top so visible without scrolling */}
+        {showAddForm && isAdmin() && (
+          <section className={styles.formSection}>
+            <h2>Add New Staff</h2>
+            <p style={{ marginBottom: '24px', color: '#6c757d' }}>
+              Enter the staff member's name and email. They will receive an invitation email with a link to complete their application.
+            </p>
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Full Name *</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter full name"
+                    required
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Email Address *</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="Enter email address"
+                    required
+                  />
+                </div>
+              </div>
+              <div className={styles.formActions}>
+                <button type="submit" className={styles.submitButton}>
+                  Send Invitation
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setEditingBarber(null);
+                    setFormData({ name: '', email: '' });
+                  }}
+                  className={styles.cancelButton}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
         {/* High-Level Summary Metrics */}
         {metrics && (
           <section className={styles.metricsSection}>
@@ -815,56 +865,6 @@ export default function AdminBarbersPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Add Staff Form */}
-      {showAddForm && isAdmin() && (
-        <section className={styles.formSection}>
-          <h2>Add New Staff</h2>
-          <p style={{ marginBottom: '24px', color: '#6c757d' }}>
-            Enter the staff member's name and email. They will receive an invitation email with a link to complete their application.
-          </p>
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
-                <label>Full Name *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter full name"
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Email Address *</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Enter email address"
-                  required
-                />
-              </div>
-            </div>
-            <div className={styles.formActions}>
-              <button type="submit" className={styles.submitButton}>
-                Send Invitation
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddForm(false);
-                  setEditingBarber(null);
-                  setFormData({ name: '', email: '' });
-                }}
-                className={styles.cancelButton}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </section>
       )}
     </div>
   );

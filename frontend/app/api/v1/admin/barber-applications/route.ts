@@ -163,36 +163,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create application
+    // Create application (use only Prisma field names: barberLicenceNumber, not barberLicence)
     const fullName = `${firstName} ${lastName}${otherName ? ' ' + otherName : ''}`;
-    
-    // Prepare data object
-    const applicationData: any = {
-      email: email.toLowerCase(),
-      firstName,
-      lastName,
-      otherName: otherName || null,
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-      name: fullName, // Keep for backward compatibility
-      phone,
-      state: state || null,
-      address,
-      maritalStatus: maritalStatus || null,
-      ninNumber: ninNumber || null,
-      gender: gender || null,
-      experienceYears: experienceYears ? parseInt(experienceYears.toString()) : null,
-      barberLicence: barberLicence || null,
-      specialties: Array.isArray(specialties) && specialties.length > 0 ? specialties : [],
-      portfolioUrl: portfolioUrl || null,
-      whyJoinNetwork: whyJoinNetwork || null,
-      applicationLetterUrl: applicationLetterUrl || null,
-      cvUrl: cvUrl || null,
-      status: 'PENDING',
-      userId: userId || null, // Link to user account if invitation token was provided
-    };
-    
+    const licenceNumber = body.barberLicence ?? barberLicence ?? null;
+
     const application = await prisma.barberApplication.create({
-      data: applicationData,
+      data: {
+        email: email.toLowerCase(),
+        firstName,
+        lastName,
+        otherName: otherName || null,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+        name: fullName,
+        phone,
+        state: state || null,
+        address,
+        maritalStatus: maritalStatus || null,
+        ninNumber: ninNumber || null,
+        gender: gender || null,
+        experienceYears: experienceYears ? parseInt(experienceYears.toString()) : null,
+        barberLicenceNumber: licenceNumber,
+        specialties: Array.isArray(specialties) && specialties.length > 0 ? specialties : [],
+        portfolioUrl: portfolioUrl || null,
+        whyJoinNetwork: whyJoinNetwork || null,
+        applicationLetterUrl: applicationLetterUrl || null,
+        cvUrl: cvUrl || null,
+        status: 'PENDING',
+        userId: userId || null,
+      },
     });
 
     // Send email to admin
@@ -231,7 +229,7 @@ export async function POST(request: NextRequest) {
                   ${state ? `<div class="detail-row"><span class="detail-label">State of Residence:</span> ${state}</div>` : ''}
                   <div class="detail-row"><span class="detail-label">Location/Address:</span> ${address}</div>
                   ${experienceYears ? `<div class="detail-row"><span class="detail-label">Years of Experience:</span> ${experienceYears}</div>` : ''}
-                  ${barberLicence ? `<div class="detail-row"><span class="detail-label">Barber Licence:</span> ${barberLicence}</div>` : ''}
+                  ${barberLicence ? `<div class="detail-row"><span class="detail-label">Barber Licence No.:</span> ${barberLicence}</div>` : ''}
                   ${specialties && specialties.length > 0 ? `<div class="detail-row"><span class="detail-label">Skills:</span> ${specialties.join(', ')}</div>` : ''}
                   ${portfolioUrl ? `<div class="detail-row"><span class="detail-label">Social Media/Portfolio:</span> <a href="${portfolioUrl}" target="_blank">${portfolioUrl}</a></div>` : ''}
                   ${whyJoinNetwork ? `<div class="detail-row"><span class="detail-label">Why Join Network:</span> ${whyJoinNetwork}</div>` : ''}
