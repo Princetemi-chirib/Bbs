@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
             applicationLetterUrl: true,
             cvUrl: true,
             barberLicenceUrl: true,
+            barberLicenceNumber: true,
             dateOfBirth: true,
             maritalStatus: true,
             ninNumber: true,

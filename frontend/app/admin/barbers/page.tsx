@@ -55,6 +55,7 @@ export default function AdminBarbersPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBarber, setEditingBarber] = useState<string | null>(null);
+  const [reviewingApplication, setReviewingApplication] = useState<any | null>(null);
   const [decliningAppId, setDecliningAppId] = useState<string | null>(null);
   const [declineReason, setDeclineReason] = useState('');
   const [declining, setDeclining] = useState(false);
@@ -130,6 +131,7 @@ export default function AdminBarbersPage() {
       const data = await response.json();
       if (data.success) {
         alert('Application approved! The barber has been sent an email with a password setup link.');
+        setReviewingApplication(null);
         loadData();
       } else {
         alert(data.error?.message || 'Failed to approve application');
@@ -195,9 +197,10 @@ export default function AdminBarbersPage() {
       const data = await response.json();
       if (data.success) {
         alert('Application declined. The applicant has been notified via email.');
+        setReviewingApplication(null);
         setDecliningAppId(null);
         setDeclineReason('');
-        loadApplications();
+        loadData();
       } else {
         alert(data.error?.message || 'Failed to decline application');
       }
@@ -482,50 +485,15 @@ export default function AdminBarbersPage() {
                     <p><strong>Location:</strong> {app.state || 'N/A'}, {app.city || 'N/A'} - {app.address}</p>
                     {app.experienceYears && <p><strong>Experience:</strong> {app.experienceYears} years</p>}
                   </div>
-                  {app.status === 'PENDING' && decliningAppId !== app.id && isAdmin() && (
+                  {app.status === 'PENDING' && isAdmin() && (
                     <div className={styles.actionButtons}>
                       <button
-                        onClick={() => handleApproveApplication(app.id)}
-                        className={styles.approveButton}
+                        type="button"
+                        onClick={() => setReviewingApplication(app)}
+                        className={styles.reviewButton}
                       >
-                        ✓ Approve
+                        Review application
                       </button>
-                      <button
-                        onClick={() => setDecliningAppId(app.id)}
-                        className={styles.declineButton}
-                      >
-                        ✗ Decline
-                      </button>
-                    </div>
-                  )}
-                  {app.status === 'PENDING' && decliningAppId === app.id && isAdmin() && (
-                    <div className={styles.declineForm}>
-                      <textarea
-                        value={declineReason}
-                        onChange={(e) => setDeclineReason(e.target.value)}
-                        placeholder="Enter reason for declining this application..."
-                        rows={4}
-                        className={styles.declineReasonInput}
-                      />
-                      <div className={styles.declineActions}>
-                        <button
-                          onClick={() => handleDeclineApplication(app.id)}
-                          disabled={declining || !declineReason.trim()}
-                          className={styles.confirmDeclineButton}
-                        >
-                          {declining ? 'Declining...' : 'Confirm Decline'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDecliningAppId(null);
-                            setDeclineReason('');
-                          }}
-                          disabled={declining}
-                          className={styles.cancelDeclineButton}
-                        >
-                          Cancel
-                        </button>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -812,6 +780,189 @@ export default function AdminBarbersPage() {
           </div>
         </section>
       </main>
+
+      {/* Review Application Modal - full details then Approve / Decline */}
+      {reviewingApplication && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => {
+            setReviewingApplication(null);
+            setDecliningAppId(null);
+            setDeclineReason('');
+          }}
+        >
+          <div className={styles.reviewModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.reviewModalHeader}>
+              <h2>Review application</h2>
+              <button
+                type="button"
+                className={styles.reviewModalClose}
+                onClick={() => {
+                  setReviewingApplication(null);
+                  setDecliningAppId(null);
+                  setDeclineReason('');
+                }}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.reviewModalBody}>
+              <section className={styles.reviewSection}>
+                <h3>Personal</h3>
+                <dl className={styles.reviewDl}>
+                  <dt>Name</dt>
+                  <dd>{reviewingApplication.name || `${reviewingApplication.firstName || ''} ${reviewingApplication.lastName || ''}`.trim() || '—'}</dd>
+                  {reviewingApplication.otherName && (
+                    <>
+                      <dt>Other name</dt>
+                      <dd>{reviewingApplication.otherName}</dd>
+                    </>
+                  )}
+                  <dt>Email</dt>
+                  <dd><a href={`mailto:${reviewingApplication.email}`}>{reviewingApplication.email}</a></dd>
+                  <dt>Phone</dt>
+                  <dd><a href={`tel:${reviewingApplication.phone}`}>{reviewingApplication.phone}</a></dd>
+                  <dt>Date of birth</dt>
+                  <dd>{reviewingApplication.dateOfBirth ? new Date(reviewingApplication.dateOfBirth).toLocaleDateString() : '—'}</dd>
+                  <dt>Gender</dt>
+                  <dd>{reviewingApplication.gender || '—'}</dd>
+                  <dt>Marital status</dt>
+                  <dd>{reviewingApplication.maritalStatus || '—'}</dd>
+                  <dt>NIN</dt>
+                  <dd>{reviewingApplication.ninNumber || '—'}</dd>
+                </dl>
+              </section>
+              <section className={styles.reviewSection}>
+                <h3>Location</h3>
+                <dl className={styles.reviewDl}>
+                  <dt>State</dt>
+                  <dd>{reviewingApplication.state || '—'}</dd>
+                  {reviewingApplication.city && (
+                    <>
+                      <dt>City</dt>
+                      <dd>{reviewingApplication.city}</dd>
+                    </>
+                  )}
+                  <dt>Address</dt>
+                  <dd>{reviewingApplication.address || '—'}</dd>
+                </dl>
+              </section>
+              <section className={styles.reviewSection}>
+                <h3>Experience & skills</h3>
+                <dl className={styles.reviewDl}>
+                  <dt>Experience (years)</dt>
+                  <dd>{reviewingApplication.experienceYears != null ? reviewingApplication.experienceYears : '—'}</dd>
+                  <dt>Specialties</dt>
+                  <dd>{Array.isArray(reviewingApplication.specialties) && reviewingApplication.specialties.length > 0 ? reviewingApplication.specialties.join(', ') : '—'}</dd>
+                  <dt>Barber licence no.</dt>
+                  <dd>{reviewingApplication.barberLicenceNumber || '—'}</dd>
+                </dl>
+              </section>
+              <section className={styles.reviewSection}>
+                <h3>Documents</h3>
+                <dl className={styles.reviewDl}>
+                  <dt>Application letter</dt>
+                  <dd>
+                    {reviewingApplication.applicationLetterUrl ? (
+                      <a href={reviewingApplication.applicationLetterUrl} target="_blank" rel="noopener noreferrer">View / download</a>
+                    ) : '—'}
+                  </dd>
+                  <dt>CV</dt>
+                  <dd>
+                    {reviewingApplication.cvUrl ? (
+                      <a href={reviewingApplication.cvUrl} target="_blank" rel="noopener noreferrer">View / download</a>
+                    ) : '—'}
+                  </dd>
+                  {reviewingApplication.portfolioUrl && (
+                    <>
+                      <dt>Portfolio</dt>
+                      <dd><a href={reviewingApplication.portfolioUrl} target="_blank" rel="noopener noreferrer">View</a></dd>
+                    </>
+                  )}
+                  {reviewingApplication.barberLicenceUrl && (
+                    <>
+                      <dt>Barber licence (file)</dt>
+                      <dd><a href={reviewingApplication.barberLicenceUrl} target="_blank" rel="noopener noreferrer">View / download</a></dd>
+                    </>
+                  )}
+                </dl>
+              </section>
+              <section className={styles.reviewSection}>
+                <h3>Why join the network</h3>
+                <p className={styles.reviewWhyJoin}>{reviewingApplication.whyJoinNetwork || '—'}</p>
+              </section>
+              <section className={styles.reviewSection}>
+                <p className={styles.reviewMeta}>Applied {reviewingApplication.createdAt ? new Date(reviewingApplication.createdAt).toLocaleString() : '—'}</p>
+              </section>
+            </div>
+            <div className={styles.reviewModalFooter}>
+              {reviewingApplication.status !== 'PENDING' ? (
+                <p className={styles.reviewStatusNote}>This application is already {reviewingApplication.status.toLowerCase()}.</p>
+              ) : decliningAppId !== reviewingApplication.id ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleApproveApplication(reviewingApplication.id)}
+                    className={styles.approveButton}
+                  >
+                    ✓ Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDecliningAppId(reviewingApplication.id)}
+                    className={styles.declineButton}
+                  >
+                    ✗ Decline
+                  </button>
+                </>
+              ) : (
+                <div className={styles.reviewDeclineBlock}>
+                  <label className={styles.reviewDeclineLabel}>Reason for declining *</label>
+                  <textarea
+                    value={declineReason}
+                    onChange={(e) => setDeclineReason(e.target.value)}
+                    placeholder="Enter reason for declining this application..."
+                    rows={4}
+                    className={styles.declineReasonInput}
+                  />
+                  <div className={styles.declineActions}>
+                    <button
+                      onClick={() => handleDeclineApplication(reviewingApplication.id)}
+                      disabled={declining || !declineReason.trim()}
+                      className={styles.confirmDeclineButton}
+                    >
+                      {declining ? 'Declining...' : 'Confirm Decline'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDecliningAppId(null);
+                        setDeclineReason('');
+                      }}
+                      disabled={declining}
+                      className={styles.cancelDeclineButton}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+              <button
+                type="button"
+                className={styles.reviewModalCloseButton}
+                onClick={() => {
+                  setReviewingApplication(null);
+                  setDecliningAppId(null);
+                  setDeclineReason('');
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action Modal */}
       {actionBarber && actionType && (

@@ -283,6 +283,24 @@
   margin-top: 16px;
 }
 
+.reviewButton {
+  padding: 12px 24px;
+  background: #39413f;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reviewButton:hover {
+  background: #2a312f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(57, 65, 63, 0.2);
+}
+
 .approveButton {
   flex: 1;
   padding: 12px 20px;
@@ -849,6 +867,158 @@
 .terminateButton:hover {
   background: #f8d7da;
   transform: scale(1.1);
+}
+
+/* Review Application Modal */
+.reviewModal {
+  background: white;
+  border-radius: 12px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.reviewModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.reviewModalHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #39413f;
+}
+
+.reviewModalClose {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0 8px;
+  border-radius: 4px;
+}
+
+.reviewModalClose:hover {
+  color: #39413f;
+  background: #f0f0f0;
+}
+
+.reviewModalBody {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.reviewSection {
+  margin-bottom: 24px;
+}
+
+.reviewSection:last-of-type {
+  margin-bottom: 0;
+}
+
+.reviewSection h3 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #39413f;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reviewDl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px 16px;
+  align-items: baseline;
+  font-size: 0.95rem;
+}
+
+.reviewDl dt {
+  margin: 0;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.reviewDl dd {
+  margin: 0;
+  color: #39413f;
+}
+
+.reviewDl dd a {
+  color: #39413f;
+  text-decoration: underline;
+}
+
+.reviewDl dd a:hover {
+  color: #2a312f;
+}
+
+.reviewWhyJoin {
+  margin: 0;
+  color: #5a625f;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.reviewMeta {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.reviewModalFooter {
+  padding: 20px 24px;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.reviewStatusNote {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+.reviewDeclineBlock {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.reviewDeclineLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #39413f;
+  font-size: 0.9rem;
+}
+
+.reviewModalCloseButton {
+  margin-left: auto;
+  padding: 10px 20px;
+  background: #e5e5e5;
+  color: #39413f;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.reviewModalCloseButton:hover {
+  background: #d0d0d0;
 }
 
 /* Modal */
