@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { emailService } from '@/lib/server/emailService';
 import { verifyAdmin } from '@/app/api/v1/utils/auth';
+import { logRecruitmentAction } from '@/lib/server/recruitmentAudit';
 
 export const dynamic = 'force-dynamic';
 
@@ -225,6 +226,12 @@ export async function POST(
         reviewedBy: admin.id,
         reviewedAt: new Date(),
       },
+    });
+
+    await logRecruitmentAction({
+      applicationId: applicationId,
+      action: 'APPROVED',
+      performedById: admin.id,
     });
 
     return NextResponse.json({

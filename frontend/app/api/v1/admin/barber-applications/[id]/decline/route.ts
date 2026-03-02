@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/server/emailService';
 import { verifyAdmin } from '@/app/api/v1/utils/auth';
+import { logRecruitmentAction } from '@/lib/server/recruitmentAudit';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,13 @@ export async function POST(
         reviewedBy: admin.id,
         reviewedAt: new Date(),
       },
+    });
+
+    await logRecruitmentAction({
+      applicationId: applicationId,
+      action: 'REJECTED',
+      performedById: admin.id,
+      metadata: { declineReason: declineReason.trim() },
     });
 
     // Send rejection email to applicant

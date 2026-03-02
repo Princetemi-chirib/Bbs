@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/server/emailService';
 import { verifyAdmin } from '@/app/api/v1/utils/auth';
+import { logRecruitmentAction } from '@/lib/server/recruitmentAudit';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,16 +16,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { searchParams } = new URL(request.url);
+    const statusFilter = searchParams.get('status'); // PENDING | APPROVED | REJECTED | all
+
+    const where = statusFilter && statusFilter !== 'all'
+      ? { status: statusFilter }
+      : {};
+
     // Query applications - handle missing city column gracefully until migration runs
     let applications;
     try {
       applications = await prisma.barberApplication.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
       });
     } catch (dbError: any) {
       // If city column doesn't exist yet, use explicit select without city
       if (dbError.message?.includes('city') || dbError.code === 'P2003') {
         applications = await prisma.barberApplication.findMany({
+          where,
           orderBy: { createdAt: 'desc' },
           select: {
             id: true,
@@ -192,6 +202,12 @@ export async function POST(request: NextRequest) {
         status: 'PENDING',
         userId: userId || null,
       },
+    });
+
+    await logRecruitmentAction({
+      applicationId: application.id,
+      action: 'SUBMITTED',
+      performedById: null,
     });
 
     // Send email to admin

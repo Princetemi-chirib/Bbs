@@ -56,6 +56,16 @@ export default function AdminBarbersPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBarber, setEditingBarber] = useState<string | null>(null);
   const [reviewingApplication, setReviewingApplication] = useState<any | null>(null);
+  const [recruitmentHistory, setRecruitmentHistory] = useState<any[]>([]);
+  const [applicationHistory, setApplicationHistory] = useState<any[]>([]);
+  const [showAddRecruitmentModal, setShowAddRecruitmentModal] = useState(false);
+  const [addRecruitmentForm, setAddRecruitmentForm] = useState({
+    firstName: '', lastName: '', otherName: '', email: '', phone: '', address: '', state: '', city: '',
+    ninNumber: '', gender: '', maritalStatus: '', dateOfBirth: '', experienceYears: '', barberLicence: '',
+    whyJoinNetwork: '', portfolioUrl: '', applicationLetterUrl: '', cvUrl: '',
+  });
+  const [addingRecruitment, setAddingRecruitment] = useState(false);
+  const [deletingAppId, setDeletingAppId] = useState<string | null>(null);
   const [decliningAppId, setDecliningAppId] = useState<string | null>(null);
   const [declineReason, setDeclineReason] = useState('');
   const [declining, setDeclining] = useState(false);
@@ -79,6 +89,7 @@ export default function AdminBarbersPage() {
     loadData();
   }, [statusFilter, startDate, endDate]);
 
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -86,6 +97,7 @@ export default function AdminBarbersPage() {
         loadMetrics(),
         loadApplications(),
       ]);
+      if (isAdmin()) loadRecruitmentHistory();
     } finally {
       setLoading(false);
     }
@@ -120,6 +132,27 @@ export default function AdminBarbersPage() {
     }
   };
 
+  const loadRecruitmentHistory = async () => {
+    try {
+      const response = await fetchAuth('/api/v1/admin/barber-applications/history?limit=30');
+      const data = await response.json();
+      if (data.success) setRecruitmentHistory(data.data || []);
+    } catch (err) {
+      console.error('Failed to load recruitment history:', err);
+    }
+  };
+
+  const loadApplicationHistory = async (applicationId: string) => {
+    try {
+      const response = await fetchAuth(`/api/v1/admin/barber-applications/${applicationId}/history`);
+      const data = await response.json();
+      if (data.success) setApplicationHistory(data.data || []);
+      else setApplicationHistory([]);
+    } catch {
+      setApplicationHistory([]);
+    }
+  };
+
   const handleApproveApplication = async (applicationId: string) => {
     if (!confirm('Approve this application and create barber account? The barber will receive an email with a password setup link.')) return;
 
@@ -133,6 +166,7 @@ export default function AdminBarbersPage() {
         alert('Application approved! The barber has been sent an email with a password setup link.');
         setReviewingApplication(null);
         loadData();
+        loadRecruitmentHistory();
       } else {
         alert(data.error?.message || 'Failed to approve application');
       }
@@ -201,6 +235,7 @@ export default function AdminBarbersPage() {
         setDecliningAppId(null);
         setDeclineReason('');
         loadData();
+        loadRecruitmentHistory();
       } else {
         alert(data.error?.message || 'Failed to decline application');
       }
@@ -208,6 +243,65 @@ export default function AdminBarbersPage() {
       alert(err.message || 'An error occurred');
     } finally {
       setDeclining(false);
+    }
+  };
+
+  const handleDeleteApplication = async (applicationId: string) => {
+    if (!confirm('Delete this recruitment record? This cannot be undone.')) return;
+    setDeletingAppId(applicationId);
+    try {
+      const response = await fetchAuth(`/api/v1/admin/barber-applications/${applicationId}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (data.success) {
+        setReviewingApplication(null);
+        loadData();
+        loadRecruitmentHistory();
+      } else {
+        alert(data.error?.message || 'Failed to delete');
+      }
+    } catch (err: any) {
+      alert(err?.message || 'An error occurred');
+    } finally {
+      setDeletingAppId(null);
+    }
+  };
+
+  const handleAddRecruitment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { firstName, lastName, email, phone, address } = addRecruitmentForm;
+    if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !phone?.trim() || !address?.trim()) {
+      alert('First name, last name, email, phone, and address are required.');
+      return;
+    }
+    setAddingRecruitment(true);
+    try {
+      const response = await fetchAuth('/api/v1/admin/barber-applications/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...addRecruitmentForm,
+          experienceYears: addRecruitmentForm.experienceYears ? parseInt(String(addRecruitmentForm.experienceYears), 10) : null,
+          dateOfBirth: addRecruitmentForm.dateOfBirth || undefined,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Recruitment record created. You can review and approve or decline it from the list.');
+        setShowAddRecruitmentModal(false);
+        setAddRecruitmentForm({
+          firstName: '', lastName: '', otherName: '', email: '', phone: '', address: '', state: '', city: '',
+          ninNumber: '', gender: '', maritalStatus: '', dateOfBirth: '', experienceYears: '', barberLicence: '',
+          whyJoinNetwork: '', portfolioUrl: '', applicationLetterUrl: '', cvUrl: '',
+        });
+        loadData();
+        loadRecruitmentHistory();
+      } else {
+        alert(data.error?.message || 'Failed to create');
+      }
+    } catch (err: any) {
+      alert(err?.message || 'An error occurred');
+    } finally {
+      setAddingRecruitment(false);
     }
   };
 
@@ -464,12 +558,28 @@ export default function AdminBarbersPage() {
           </div>
         </section>
 
-        {/* Applications Section */}
-        {applications.length > 0 && (
-          <section className={styles.section}>
-            <h2>Pending Applications ({applications.length})</h2>
+        {/* Staff recruitment: New (Pending) and Old (Approved/Declined) */}
+        <section className={styles.section}>
+          <div className={styles.sectionHeaderRow}>
+            <h2>Staff recruitment</h2>
+            {isAdmin() && (
+              <button
+                type="button"
+                onClick={() => setShowAddRecruitmentModal(true)}
+                className={styles.addButton}
+              >
+                + Add new recruitment
+              </button>
+            )}
+          </div>
+
+          {/* New recruitment (Pending) */}
+          <h3 className={styles.recruitmentSubheading}>New recruitment (pending)</h3>
+          {applications.filter((a) => a.status === 'PENDING').length === 0 ? (
+            <p className={styles.emptyRecruitment}>No pending applications.</p>
+          ) : (
             <div className={styles.applicationsList}>
-              {applications.map((app) => (
+              {applications.filter((a) => a.status === 'PENDING').map((app) => (
                 <div key={app.id} className={styles.applicationCard}>
                   <div className={styles.appHeader}>
                     <div>
@@ -483,13 +593,16 @@ export default function AdminBarbersPage() {
                   </div>
                   <div className={styles.appDetails}>
                     <p><strong>Location:</strong> {app.state || 'N/A'}, {app.city || 'N/A'} - {app.address}</p>
-                    {app.experienceYears && <p><strong>Experience:</strong> {app.experienceYears} years</p>}
+                    {app.experienceYears != null && <p><strong>Experience:</strong> {app.experienceYears} years</p>}
                   </div>
-                  {app.status === 'PENDING' && isAdmin() && (
+                  {isAdmin() && (
                     <div className={styles.actionButtons}>
                       <button
                         type="button"
-                        onClick={() => setReviewingApplication(app)}
+                        onClick={() => {
+                          setReviewingApplication(app);
+                          loadApplicationHistory(app.id);
+                        }}
                         className={styles.reviewButton}
                       >
                         Review application
@@ -498,6 +611,88 @@ export default function AdminBarbersPage() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Old recruitment (Approved / Declined) */}
+          <h3 className={styles.recruitmentSubheading}>Old recruitment (approved / declined)</h3>
+          {applications.filter((a) => a.status !== 'PENDING').length === 0 ? (
+            <p className={styles.emptyRecruitment}>No processed applications yet.</p>
+          ) : (
+            <div className={styles.applicationsList}>
+              {applications.filter((a) => a.status !== 'PENDING').map((app) => (
+                <div key={app.id} className={styles.applicationCard}>
+                  <div className={styles.appHeader}>
+                    <div>
+                      <strong>{app.name}</strong>
+                      <span>{app.email}</span>
+                      <span>{app.phone}</span>
+                    </div>
+                    <div>
+                      <span className={styles.statusBadge}>{app.status}</span>
+                    </div>
+                  </div>
+                  <div className={styles.appDetails}>
+                    <p><strong>Location:</strong> {app.state || 'N/A'}, {app.city || 'N/A'} - {app.address}</p>
+                    {app.experienceYears != null && <p><strong>Experience:</strong> {app.experienceYears} years</p>}
+                  </div>
+                  {isAdmin() && (
+                    <div className={styles.actionButtons}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReviewingApplication(app);
+                          loadApplicationHistory(app.id);
+                        }}
+                        className={styles.reviewButton}
+                      >
+                        View details
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteApplication(app.id)}
+                        disabled={deletingAppId === app.id}
+                        className={styles.declineButton}
+                      >
+                        {deletingAppId === app.id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Staff recruitment history */}
+        {isAdmin() && recruitmentHistory.length > 0 && (
+          <section className={styles.section}>
+            <h2>Staff recruitment history</h2>
+            <p className={styles.sectionSubtitle}>Recent actions on recruitment applications</p>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Date & time</th>
+                    <th>Application</th>
+                    <th>Action</th>
+                    <th>By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recruitmentHistory.map((log) => (
+                    <tr key={log.id}>
+                      <td>{new Date(log.performedAt).toLocaleString()}</td>
+                      <td>
+                        <span>{log.applicationName || '—'}</span>
+                        <span className={styles.historyEmail}>{log.applicationEmail}</span>
+                      </td>
+                      <td><span className={styles.statusBadge}>{log.action}</span></td>
+                      <td>{log.performedBy?.name || log.performedBy?.email || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </section>
         )}
@@ -895,6 +1090,23 @@ export default function AdminBarbersPage() {
               <section className={styles.reviewSection}>
                 <p className={styles.reviewMeta}>Applied {reviewingApplication.createdAt ? new Date(reviewingApplication.createdAt).toLocaleString() : '—'}</p>
               </section>
+              {applicationHistory.length > 0 && (
+                <section className={styles.reviewSection}>
+                  <h3>History</h3>
+                  <ul className={styles.reviewHistoryList}>
+                    {applicationHistory.map((log) => (
+                      <li key={log.id}>
+                        <strong>{log.action}</strong>
+                        {log.performedAt && ` — ${new Date(log.performedAt).toLocaleString()}`}
+                        {log.performedBy?.name && ` by ${log.performedBy.name}`}
+                        {log.metadata?.declineReason && (
+                          <span className={styles.historyDeclineReason}> Reason: {String(log.metadata.declineReason)}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
             </div>
             <div className={styles.reviewModalFooter}>
               {reviewingApplication.status !== 'PENDING' ? (
@@ -948,6 +1160,16 @@ export default function AdminBarbersPage() {
                   </div>
                 </div>
               )}
+              {isAdmin() && reviewingApplication.status === 'PENDING' && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteApplication(reviewingApplication.id)}
+                  disabled={deletingAppId === reviewingApplication.id}
+                  className={styles.reviewDeleteButton}
+                >
+                  {deletingAppId === reviewingApplication.id ? 'Deleting...' : 'Delete recruitment'}
+                </button>
+              )}
               <button
                 type="button"
                 className={styles.reviewModalCloseButton}
@@ -960,6 +1182,106 @@ export default function AdminBarbersPage() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add new recruitment modal */}
+      {showAddRecruitmentModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowAddRecruitmentModal(false)}
+        >
+          <div className={styles.reviewModal} style={{ maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.reviewModalHeader}>
+              <h2>Add new recruitment</h2>
+              <button type="button" className={styles.reviewModalClose} onClick={() => setShowAddRecruitmentModal(false)} aria-label="Close">×</button>
+            </div>
+            <form onSubmit={handleAddRecruitment} className={styles.reviewModalBody}>
+              <p className={styles.sectionSubtitle}>Create a recruitment record manually. Required: first name, last name, email, phone, address.</p>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>First name *</label>
+                  <input value={addRecruitmentForm.firstName} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, firstName: e.target.value })} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Last name *</label>
+                  <input value={addRecruitmentForm.lastName} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, lastName: e.target.value })} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Other name</label>
+                  <input value={addRecruitmentForm.otherName} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, otherName: e.target.value })} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Email *</label>
+                  <input type="email" value={addRecruitmentForm.email} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, email: e.target.value })} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Phone *</label>
+                  <input value={addRecruitmentForm.phone} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, phone: e.target.value })} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Address *</label>
+                  <input value={addRecruitmentForm.address} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, address: e.target.value })} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>State</label>
+                  <input value={addRecruitmentForm.state} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, state: e.target.value })} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>City</label>
+                  <input value={addRecruitmentForm.city} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, city: e.target.value })} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>NIN</label>
+                  <input value={addRecruitmentForm.ninNumber} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, ninNumber: e.target.value })} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Gender</label>
+                  <input value={addRecruitmentForm.gender} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, gender: e.target.value })} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Marital status</label>
+                  <input value={addRecruitmentForm.maritalStatus} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, maritalStatus: e.target.value })} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Date of birth</label>
+                  <input type="date" value={addRecruitmentForm.dateOfBirth} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, dateOfBirth: e.target.value })} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Experience (years)</label>
+                  <input type="number" min={0} value={addRecruitmentForm.experienceYears} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, experienceYears: e.target.value })} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Barber licence no.</label>
+                  <input value={addRecruitmentForm.barberLicence} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, barberLicence: e.target.value })} />
+                </div>
+                <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                  <label>Why join network</label>
+                  <textarea value={addRecruitmentForm.whyJoinNetwork} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, whyJoinNetwork: e.target.value })} rows={2} />
+                </div>
+                <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                  <label>Application letter URL</label>
+                  <input value={addRecruitmentForm.applicationLetterUrl} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, applicationLetterUrl: e.target.value })} placeholder="https://..." />
+                </div>
+                <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                  <label>CV URL</label>
+                  <input value={addRecruitmentForm.cvUrl} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, cvUrl: e.target.value })} placeholder="https://..." />
+                </div>
+                <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                  <label>Portfolio URL</label>
+                  <input value={addRecruitmentForm.portfolioUrl} onChange={(e) => setAddRecruitmentForm({ ...addRecruitmentForm, portfolioUrl: e.target.value })} placeholder="https://..." />
+                </div>
+              </div>
+              <div className={styles.reviewModalFooter}>
+                <button type="submit" className={styles.submitButton} disabled={addingRecruitment}>
+                  {addingRecruitment ? 'Creating...' : 'Create recruitment'}
+                </button>
+                <button type="button" className={styles.reviewModalCloseButton} onClick={() => setShowAddRecruitmentModal(false)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

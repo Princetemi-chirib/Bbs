@@ -457,10 +457,26 @@ model BarberApplication {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  auditLogs       BarberApplicationAuditLog[]
 
   @@map("barber_applications")
   @@index([email])
   @@index([status])
+}
+
+// Staff recruitment history (audit log)
+model BarberApplicationAuditLog {
+  id                String   @id @default(uuid())
+  applicationId     String   @map("application_id")
+  action            String   // SUBMITTED | REVIEWED | APPROVED | REJECTED | DELETED | CREATED_MANUAL
+  performedById     String?  @map("performed_by_id")
+  performedAt       DateTime @default(now()) @map("performed_at")
+  metadata          Json?    // e.g. { declineReason }, { source: 'manual' }
+  application       BarberApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("barber_application_audit_logs")
+  @@index([applicationId])
+  @@index([performedAt])
 }
 
 model Product {
