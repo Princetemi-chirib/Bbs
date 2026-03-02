@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 export type RecruitmentAuditAction =
@@ -20,7 +21,7 @@ export async function logRecruitmentAction(params: {
         applicationId: params.applicationId,
         action: params.action,
         performedById: params.performedById,
-        metadata: params.metadata ?? undefined,
+        metadata: (params.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
       },
     });
   } catch (e) {
