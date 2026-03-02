@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchAuth, isAdmin } from '@/lib/auth';
 import Image from 'next/image';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
@@ -50,6 +50,7 @@ type Barber = {
 
 export default function AdminBarbersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [metrics, setMetrics] = useState<BarberMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<any[]>([]);
@@ -88,6 +89,22 @@ export default function AdminBarbersPage() {
   useEffect(() => {
     loadData();
   }, [statusFilter, startDate, endDate]);
+
+  // Deep link: open add recruitment modal when ?add=recruitment
+  useEffect(() => {
+    if (searchParams?.get('add') === 'recruitment' && isAdmin()) {
+      setShowAddRecruitmentModal(true);
+    }
+  }, [searchParams]);
+
+  // Deep link: scroll to recruitment section when ?section=recruitment
+  useEffect(() => {
+    if (searchParams?.get('section') !== 'recruitment') return;
+    const el = document.getElementById('section-recruitment');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [searchParams, loading]);
 
 
   const loadData = async () => {
@@ -559,7 +576,7 @@ export default function AdminBarbersPage() {
         </section>
 
         {/* Staff recruitment: New (Pending) and Old (Approved/Declined) */}
-        <section className={styles.section}>
+        <section id="section-recruitment" className={styles.section}>
           <div className={styles.sectionHeaderRow}>
             <h2>Staff recruitment</h2>
             {isAdmin() && (

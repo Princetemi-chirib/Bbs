@@ -66,8 +66,8 @@ export default function Footer() {
               <li><Link href="/">Home</Link></li>
               <li><Link href="/book">Book a service</Link></li>
               <li><Link href="/contact">Contact</Link></li>
-              <li><Link href="/become-barber">Become a barber</Link></li>
-              <li><Link href="/barber-recruit">Barber recruit</Link></li>
+              <li><Link href="/become-barber">Become an apprentice</Link></li>
+              <li><Link href="/barber-recruit">Staff recruitment</Link></li>
             </ul>
           </div>
 

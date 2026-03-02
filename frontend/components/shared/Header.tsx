@@ -8,8 +8,8 @@ import { usePathname } from 'next/navigation';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/contact', label: 'Contact' },
-  { href: '/barber-recruit', label: 'Barber Recruit' },
-  { href: '/become-barber', label: 'Become A Barber' },
+  { href: '/barber-recruit', label: 'Staff recruitment' },
+  { href: '/become-barber', label: 'Become an apprentice' },
 ];
 
 export default function Header() {

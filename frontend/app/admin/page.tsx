@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Scissors, Package, Wallet, Star, ArrowRight } from 'lucide-react';
+import { Scissors, Package, Wallet, Star, ArrowRight, Users, TrendingUp, AlertCircle } from 'lucide-react';
 import { fetchAuth } from '@/lib/auth';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './admin.module.css';
@@ -21,6 +21,13 @@ const FRIENDLY_STATUS: Record<string, string> = {
 function friendlyStatus(s: string) {
   return FRIENDLY_STATUS[s] || s;
 }
+
+const QUICK_LINKS = [
+  { href: '/admin/orders', label: 'Orders', Icon: Package },
+  { href: '/admin/barbers', label: 'Staff', Icon: Scissors },
+  { href: '/admin/customers', label: 'Customers', Icon: Users },
+  { href: '/admin/financials', label: 'Financials', Icon: TrendingUp },
+];
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -72,159 +79,169 @@ export default function AdminDashboard() {
   ) ?? [];
   const unassignedCount = unassignedInRecent.length;
   const hasUnassigned = unassignedCount > 0;
+  const orderStatusItems = stats?.orderStatusBreakdown || stats?.ordersByStatus || [];
 
   return (
     <div className={styles.dashboard}>
       <header className={styles.pageHeader}>
         <AdminBreadcrumbs items={[{ label: 'Dashboard' }]} />
-        <div className={styles.headerRow}>
-          <div>
-            <h1 className={styles.pageTitle}>Dashboard</h1>
-            <p className={styles.pageSubtitle}>
-              What needs your attention — orders, revenue, and recent activity.
-            </p>
-          </div>
-          {hasUnassigned && (
-            <Link href="/admin/orders" className={styles.primaryCta}>
-              Assign orders <ArrowRight size={18} />
-            </Link>
-          )}
-        </div>
+        <h1 className={styles.pageTitle}>Dashboard</h1>
+        <p className={styles.pageSubtitle}>
+          Key metrics, order pipeline, and recent activity at a glance.
+        </p>
+        {hasUnassigned && (
+          <Link href="/admin/orders" className={styles.primaryCta}>
+            <AlertCircle size={18} aria-hidden />
+            Assign {unassignedCount} order{unassignedCount !== 1 ? 's' : ''} <ArrowRight size={18} />
+          </Link>
+        )}
       </header>
 
       <main className={styles.main}>
-        {/* Quick attention */}
+        {/* Quick links */}
+        <nav className={styles.quickLinks} aria-label="Quick navigation">
+          {QUICK_LINKS.map(({ href, label, Icon }) => (
+            <Link key={href} href={href} className={styles.quickLink}>
+              <Icon size={20} aria-hidden />
+              <span>{label}</span>
+            </Link>
+          ))}
+        </nav>
+
+        {/* Alert: unassigned orders */}
         {unassignedCount > 0 && (
-          <section className={styles.quickAction}>
-            <p className={styles.quickActionText}>
-              <strong>{unassignedCount}</strong> order{unassignedCount !== 1 ? 's' : ''} may need a barber assigned.
-            </p>
-            <Link href="/admin/orders" className={styles.quickActionLink}>
-              Go to Orders <ArrowRight size={16} />
+          <section className={styles.alertBanner} role="alert">
+            <div className={styles.alertContent}>
+              <AlertCircle size={22} aria-hidden />
+              <div>
+                <strong>{unassignedCount} order{unassignedCount !== 1 ? 's' : ''}</strong> paid but not yet assigned to a barber.
+                Assign them so barbers can accept and fulfill.
+              </div>
+            </div>
+            <Link href="/admin/orders?view=assignment" className={styles.alertCta}>
+              Assign now <ArrowRight size={18} />
             </Link>
           </section>
         )}
 
-        {/* Stats Grid */}
-        <section className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statCardHeader}>
-              <div className={styles.statIcon} style={{ background: 'rgba(70, 180, 80, 0.1)' }}>
-                <Scissors size={24} aria-hidden />
+        {/* Key metrics */}
+        <section className={styles.section} aria-labelledby="metrics-heading">
+          <h2 id="metrics-heading" className={styles.sectionTitle}>Key metrics</h2>
+          <p className={styles.sectionDesc}>Overview of your business performance.</p>
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={styles.statIcon} data-theme="staff" aria-hidden>
+                <Scissors size={24} />
               </div>
-              <div className={styles.statCardContent}>
-                <h3 className={styles.statLabel}>Total barbers</h3>
-                <p className={styles.statNumber}>{stats?.stats.totalBarbers || 0}</p>
-                <span className={styles.statSubtext}>
-                  {stats?.stats.activeBarbers || 0} active
-                </span>
+              <div className={styles.statBody}>
+                <span className={styles.statLabel}>Total staff</span>
+                <span className={styles.statNumber}>{stats?.stats.totalBarbers ?? 0}</span>
+                <span className={styles.statSubtext}>{stats?.stats.activeBarbers ?? 0} active</span>
               </div>
             </div>
-          </div>
-
-          <div className={styles.statCard}>
-            <div className={styles.statCardHeader}>
-              <div className={styles.statIcon} style={{ background: 'rgba(57, 65, 63, 0.1)' }}>
-                <Package size={24} aria-hidden />
+            <div className={styles.statCard}>
+              <div className={styles.statIcon} data-theme="orders" aria-hidden>
+                <Package size={24} />
               </div>
-              <div className={styles.statCardContent}>
-                <h3 className={styles.statLabel}>Total orders</h3>
-                <p className={styles.statNumber}>{stats?.stats.totalOrders || 0}</p>
+              <div className={styles.statBody}>
+                <span className={styles.statLabel}>Total orders</span>
+                <span className={styles.statNumber}>{stats?.stats.totalOrders ?? 0}</span>
                 <span className={styles.statSubtext}>All time</span>
               </div>
             </div>
-          </div>
-
-          {stats?.stats.totalRevenue !== null && stats?.stats.totalRevenue !== undefined && (
+            {stats?.stats.totalRevenue != null && (
+              <div className={styles.statCard}>
+                <div className={styles.statIcon} data-theme="revenue" aria-hidden>
+                  <Wallet size={24} />
+                </div>
+                <div className={styles.statBody}>
+                  <span className={styles.statLabel}>Total revenue</span>
+                  <span className={styles.statNumber}>₦{(stats.stats.totalRevenue as number).toLocaleString()}</span>
+                  <span className={styles.statSubtext}>Lifetime</span>
+                </div>
+              </div>
+            )}
             <div className={styles.statCard}>
-              <div className={styles.statCardHeader}>
-                <div className={styles.statIcon} style={{ background: 'rgba(220, 210, 204, 0.3)' }}>
-                  <span>💰</span>
-                </div>
-                <div className={styles.statCardContent}>
-                  <h3 className={styles.statLabel}>Total revenue</h3>
-                  <p className={styles.statNumber}>₦{stats?.stats.totalRevenue?.toLocaleString() || '0'}</p>
-                  <span className={styles.statSubtext}>Lifetime earnings</span>
-                </div>
+              <div className={styles.statIcon} data-theme="rating" aria-hidden>
+                <Star size={24} />
               </div>
-            </div>
-          )}
-
-          <div className={styles.statCard}>
-            <div className={styles.statCardHeader}>
-              <div className={styles.statIcon} style={{ background: 'rgba(255, 193, 7, 0.1)' }}>
-                <Star size={24} aria-hidden />
-              </div>
-              <div className={styles.statCardContent}>
-                <h3 className={styles.statLabel}>Average rating</h3>
-                <p className={styles.statNumber}>{stats?.stats.averageRating || '0.00'}</p>
+              <div className={styles.statBody}>
+                <span className={styles.statLabel}>Average rating</span>
+                <span className={styles.statNumber}>{stats?.stats.averageRating ?? '0.00'}</span>
                 <span className={styles.statSubtext}>Out of 5.0</span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Order Status Breakdown */}
-        {(stats?.orderStatusBreakdown?.length || stats?.ordersByStatus?.length) && (
-          <section className={styles.statusBreakdown}>
-            <h2 className={styles.sectionTitle}>Orders by status</h2>
-            <div className={styles.statusGrid}>
-              {(stats?.orderStatusBreakdown || stats?.ordersByStatus || []).map((item: any) => (
-                <div key={item.status} className={styles.statusCard}>
-                  <span className={styles.statusLabel}>{friendlyStatus(item.status)}</span>
-                  <span className={styles.statusCount}>{item.count}</span>
+        {/* Order pipeline + Recent orders in two columns on large screens */}
+        <div className={styles.twoCol}>
+          {/* Order pipeline */}
+          {orderStatusItems.length > 0 && (
+            <section className={styles.section} aria-labelledby="pipeline-heading">
+              <h2 id="pipeline-heading" className={styles.sectionTitle}>Order pipeline</h2>
+              <p className={styles.sectionDesc}>Current distribution by status.</p>
+              <div className={styles.pipelineCard}>
+                <ul className={styles.pipelineList}>
+                  {orderStatusItems.map((item: any) => (
+                    <li key={item.status} className={styles.pipelineItem}>
+                      <span className={styles.pipelineLabel}>{friendlyStatus(item.status)}</span>
+                      <span className={styles.pipelineCount}>{item.count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {/* Recent orders */}
+          <section className={styles.section} aria-labelledby="recent-heading">
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2 id="recent-heading" className={styles.sectionTitle}>Recent orders</h2>
+                <p className={styles.sectionDesc}>Latest 10 orders.</p>
+              </div>
+              <Link href="/admin/orders" className={styles.sectionLink}>View all</Link>
+            </div>
+            <div className={styles.recentCard}>
+              {stats?.recentOrders?.length > 0 ? (
+                <>
+                  <div className={styles.recentTableHeader}>
+                    <span>Order</span>
+                    <span>Customer</span>
+                    <span>Amount</span>
+                    <span>Barber</span>
+                    <span>Status</span>
+                  </div>
+                  <ul className={styles.recentList}>
+                    {stats.recentOrders.map((order: any) => (
+                      <li key={order.id}>
+                        <Link href="/admin/orders" className={styles.recentRow}>
+                          <span className={styles.recentOrderNum}>{order.orderNumber}</span>
+                          <span className={styles.recentCustomer}>{order.customerName}</span>
+                          <span className={styles.recentAmount}>₦{Number(order.totalAmount).toLocaleString()}</span>
+                          <span className={styles.recentBarber}>
+                            {order.assignedBarberName || (order.assignedBarberId ? 'Assigned' : '—')}
+                          </span>
+                          <span className={styles.recentStatus}>
+                            <span className={`${styles.statusBadge} ${styles[`status${order.status}`]}`}>
+                              {friendlyStatus(order.status)}
+                            </span>
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <div className={styles.emptyState}>
+                  <p>No recent orders.</p>
+                  <Link href="/admin/orders" className={styles.emptyStateLink}>Go to Orders</Link>
                 </div>
-              ))}
+              )}
             </div>
           </section>
-        )}
-
-        {/* Recent Orders */}
-        <section className={styles.recentOrders}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Recent orders</h2>
-            <Link href="/admin/orders" className={styles.sectionLink}>View all</Link>
-          </div>
-          <div className={styles.ordersList}>
-            {stats?.recentOrders?.length > 0 ? (
-              stats.recentOrders.map((order: any) => (
-                <Link key={order.id} href="/admin/orders" className={styles.orderCardLink}>
-                  <div className={styles.orderCard}>
-                    <div className={styles.orderInfo}>
-                      <div className={styles.orderPrimary}>
-                        <strong className={styles.orderNumber}>{order.orderNumber}</strong>
-                        <span className={styles.customerName}>{order.customerName}</span>
-                      </div>
-                      <div className={styles.orderSecondary}>
-                        <span className={styles.orderAmount}>₦{Number(order.totalAmount).toLocaleString()}</span>
-                        {order.assignedBarberName ? (
-                          <span className={styles.barberInfo}>Barber: {order.assignedBarberName}</span>
-                        ) : order.assignedBarberId ? (
-                          <span className={styles.barberInfo}>Barber assigned</span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className={styles.orderStatus}>
-                      <span className={`${styles.statusBadge} ${styles[`status${order.status}`]}`}>
-                        {friendlyStatus(order.status)}
-                      </span>
-                      {order.jobStatus && (
-                        <span className={`${styles.jobStatusBadge} ${styles[`jobStatus${order.jobStatus}`]}`}>
-                          {friendlyStatus(order.jobStatus)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className={styles.emptyState}>
-                <p>No recent orders.</p>
-                <Link href="/admin/orders" className={styles.emptyStateLink}>Go to Orders</Link>
-              </div>
-            )}
-          </div>
-        </section>
+        </div>
       </main>
     </div>
   );

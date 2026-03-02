@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { fetchAuth, isAdmin, hasRole } from '@/lib/auth';
+import { fetchAuth, isAdmin, hasRole, isViewOnly } from '@/lib/auth';
 import { orderApi, productApi } from '@/lib/api';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './orders.module.css';
@@ -37,7 +37,9 @@ export default function AdminOrdersPage() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
   const [serviceTypeFilter, setServiceTypeFilter] = useState('');
-  const [unassignedOnly, setUnassignedOnly] = useState(false);
+  // View mode: 'assignment' = New order (unassigned only); otherwise All orders (assigned only)
+  const viewAssignment = searchParams?.get('view') === 'assignment';
+  const unassignedOnly = viewAssignment; // for preset button highlight and backwards compat
   
   // Order form state
   const [formData, setFormData] = useState({
@@ -74,9 +76,13 @@ export default function AdminOrdersPage() {
     }
   }, [selectedOrder]);
 
-  // Open create form when URL has ?create=1
+  // Open create form when URL has ?create=1 (view-only users cannot create; redirect away)
   useEffect(() => {
     if (searchParams?.get('create') === '1') {
+      if (isViewOnly()) {
+        router.replace('/admin/orders');
+        return;
+      }
       setShowCreateForm(true);
     }
   }, [searchParams]);
@@ -273,47 +279,43 @@ export default function AdminOrdersPage() {
     }
   };
 
-  // Filter orders based on filters
-  const filteredOrders = orders.filter((order) => {
-    // Unassigned only: paid orders with no barber
-    if (unassignedOnly) {
-      if (!order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED')) return true;
-      return false;
-    }
-
-    // Date range filter: Start = local start-of-day, End = local end-of-day
-    if (dateRange.start || dateRange.end) {
-      const orderDate = new Date(order.createdAt);
-      if (orderDate.toString() === 'Invalid Date') return false;
-      if (dateRange.start) {
-        const start = new Date(dateRange.start + 'T00:00:00');
-        if (!isNaN(start.getTime()) && orderDate < start) return false;
+  // Filter orders: first by date/status/etc., then by view (All orders = assigned only, New order = unassigned only)
+  const filteredOrders = orders
+    .filter((order) => {
+      // Date range filter: Start = local start-of-day, End = local end-of-day
+      if (dateRange.start || dateRange.end) {
+        const orderDate = new Date(order.createdAt);
+        if (orderDate.toString() === 'Invalid Date') return false;
+        if (dateRange.start) {
+          const start = new Date(dateRange.start + 'T00:00:00');
+          if (!isNaN(start.getTime()) && orderDate < start) return false;
+        }
+        if (dateRange.end) {
+          const end = new Date(dateRange.end + 'T23:59:59.999');
+          if (!isNaN(end.getTime()) && orderDate > end) return false;
+        }
       }
-      if (dateRange.end) {
-        const end = new Date(dateRange.end + 'T23:59:59.999');
-        if (!isNaN(end.getTime()) && orderDate > end) return false;
+      // Order status filter
+      if (orderStatusFilter && order.status !== orderStatusFilter) return false;
+      // Payment status filter
+      if (paymentStatusFilter && order.paymentStatus !== paymentStatusFilter) return false;
+      // Payment method filter
+      if (paymentMethodFilter && order.paymentMethod !== paymentMethodFilter) return false;
+      // Service type filter (check if any item matches)
+      if (serviceTypeFilter && order.items) {
+        const hasService = order.items.some((item: any) =>
+          item.title?.toLowerCase().includes(serviceTypeFilter.toLowerCase())
+        );
+        if (!hasService) return false;
       }
-    }
-    
-    // Order status filter
-    if (orderStatusFilter && order.status !== orderStatusFilter) return false;
-    
-    // Payment status filter
-    if (paymentStatusFilter && order.paymentStatus !== paymentStatusFilter) return false;
-    
-    // Payment method filter
-    if (paymentMethodFilter && order.paymentMethod !== paymentMethodFilter) return false;
-    
-    // Service type filter (check if any item matches)
-    if (serviceTypeFilter && order.items) {
-      const hasService = order.items.some((item: any) => 
-        item.title?.toLowerCase().includes(serviceTypeFilter.toLowerCase())
-      );
-      if (!hasService) return false;
-    }
-    
-    return true;
-  });
+      return true;
+    })
+    .filter((order) => {
+      // All orders (sidebar): show only assigned orders; unassigned are not listed here
+      if (!viewAssignment) return !!order.assignedBarberId;
+      // New order (sidebar): show only unassigned, paid orders ready for assignment
+      return (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && !order.assignedBarberId;
+    });
 
   // Calculate metrics
   const metrics = {
@@ -349,7 +351,7 @@ export default function AdminOrdersPage() {
   const setPresetToday = () => {
     const today = new Date().toISOString().slice(0, 10);
     setDateRange({ start: today, end: today });
-    setUnassignedOnly(false);
+    router.replace('/admin/orders');
   };
   const setPresetWeek = () => {
     const now = new Date();
@@ -360,11 +362,15 @@ export default function AdminOrdersPage() {
       start: start.toISOString().slice(0, 10),
       end: end.toISOString().slice(0, 10),
     });
-    setUnassignedOnly(false);
+    router.replace('/admin/orders');
   };
   const setPresetUnassigned = () => {
-    setUnassignedOnly(true);
     setDateRange({ start: '', end: '' });
+    router.replace('/admin/orders?view=assignment');
+  };
+  const setPresetAllTime = () => {
+    setDateRange({ start: '', end: '' });
+    router.replace('/admin/orders');
   };
 
   return (
@@ -378,7 +384,7 @@ export default function AdminOrdersPage() {
               View orders, assign barbers, and track status. Use filters or quick presets below.
             </p>
           </div>
-          {hasRole('REP') && (
+          {!isViewOnly() && (hasRole('REP') || hasRole('ADMIN') || hasRole('MANAGER')) && (
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
               className={styles.primaryBtn}
@@ -391,8 +397,8 @@ export default function AdminOrdersPage() {
       </header>
 
       <main className={styles.main}>
-        {/* Create New Order – at top when open so no scrolling needed */}
-        {showCreateForm && (
+        {/* Create New Order – at top when open so no scrolling needed (hidden for view-only) */}
+        {showCreateForm && !isViewOnly() && (
           <section ref={createFormRef} className={styles.section}>
             <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Create New Order</h2>
             
@@ -700,7 +706,7 @@ export default function AdminOrdersPage() {
             <button
               type="button"
               className={!unassignedOnly && !dateRange.start && !dateRange.end ? styles.presetBtnActive : styles.presetBtn}
-              onClick={() => { setDateRange({ start: '', end: '' }); setUnassignedOnly(false); }}
+              onClick={setPresetAllTime}
             >
               All time
             </button>
@@ -787,6 +793,7 @@ export default function AdminOrdersPage() {
                 setPaymentStatusFilter('');
                 setPaymentMethodFilter('');
                 setServiceTypeFilter('');
+                router.replace('/admin/orders');
               }}
               className={styles.ghostBtn}
               style={{ marginTop: '16px' }}
@@ -891,7 +898,7 @@ export default function AdminOrdersPage() {
                       
                       <td style={{ whiteSpace: 'nowrap', color: '#6c757d' }}>₦0</td>
                       <td>
-                        {(order.paymentStatus === 'PENDING' || order.paymentStatus === 'pending') && String(order.paymentMethod || '').toLowerCase() === 'cash' && (
+                        {!isViewOnly() && (order.paymentStatus === 'PENDING' || order.paymentStatus === 'pending') && String(order.paymentMethod || '').toLowerCase() === 'cash' && (
                           <button
                             onClick={() => handleMarkAsPaid(order.id)}
                             disabled={markingPaidOrderId === order.id}
@@ -901,7 +908,7 @@ export default function AdminOrdersPage() {
                             {markingPaidOrderId === order.id ? '...' : 'Mark as paid'}
                           </button>
                         )}
-                        {!order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && (
+                        {!isViewOnly() && !order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && (
                           <button
                             onClick={() => setSelectedOrder(order.id === selectedOrder ? null : order.id)}
                             className={styles.assignButton}

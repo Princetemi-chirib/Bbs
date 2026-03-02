@@ -51,11 +51,23 @@ const ALL_NAV_ITEMS: NavItem[] = [
     roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'],
     children: [
       { href: '/admin/orders', label: 'All orders' },
+      { href: '/admin/orders?view=assignment', label: 'New order' },
       { href: '/admin/orders?create=1', label: 'Create order' },
     ],
   },
   { type: 'link', href: '/admin/customers', label: 'Customers', Icon: Users, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
-  { type: 'link', href: '/admin/barbers', label: 'Staff', Icon: Scissors, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+  {
+    type: 'parent',
+    href: '/admin/barbers',
+    label: 'Staff',
+    Icon: Scissors,
+    roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'],
+    children: [
+      { href: '/admin/barbers', label: 'Staff overview' },
+      { href: '/admin/barbers?add=recruitment', label: 'Add new recruitment' },
+      { href: '/admin/barbers?section=recruitment', label: 'Recruitment list' },
+    ],
+  },
   { type: 'link', href: '/admin/services', label: 'Services', Icon: Sparkles, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
   { type: 'link', href: '/admin/reviews', label: 'Reviews', Icon: Star, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
   {
@@ -85,12 +97,20 @@ function isPathActive(pathname: string, href: string, searchParams?: string | nu
     const baseMatch = pathname === '/admin/orders' || pathname?.startsWith('/admin/orders');
     if (href === '/admin/orders') return baseMatch && !searchParams;
     if (href === '/admin/orders?create=1') return pathname === '/admin/orders' && searchParams === 'create=1';
+    if (href === '/admin/orders?view=assignment') return pathname === '/admin/orders' && (searchParams?.includes('view=assignment') ?? false);
     return baseMatch;
   }
   if (href.startsWith('/admin/financials')) {
     if (pathname !== '/admin/financials') return false;
     const tab = href.includes('tab=') ? href.split('tab=')[1]?.split('&')[0] : '';
     return !tab || (searchParams?.includes(`tab=${tab}`) ?? false);
+  }
+  if (href.startsWith('/admin/barbers')) {
+    if (pathname !== '/admin/barbers' && !pathname?.startsWith('/admin/barbers/')) return false;
+    if (href === '/admin/barbers') return pathname === '/admin/barbers' && !searchParams;
+    if (href === '/admin/barbers?add=recruitment') return pathname === '/admin/barbers' && (searchParams?.includes('add=recruitment') ?? false);
+    if (href === '/admin/barbers?section=recruitment') return pathname === '/admin/barbers' && (searchParams?.includes('section=recruitment') ?? false);
+    return pathname === '/admin/barbers' || pathname?.startsWith('/admin/barbers/');
   }
   return pathname === href || (href !== '/admin' && pathname?.startsWith(href));
 }
@@ -224,19 +244,25 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
                     </div>
                     {isExpanded && (
                       <ul className={styles.subNav}>
-                        {item.children.map((sub) => {
-                          const isSubActive = isPathActive(path, sub.href, searchParams);
-                          return (
-                            <li key={sub.href}>
-                              <Link
-                                href={sub.href}
-                                className={`${styles.subNavItem} ${isSubActive ? styles.subNavItemActive : ''}`}
-                              >
-                                {sub.label}
-                              </Link>
-                            </li>
-                          );
-                        })}
+                        {item.children
+                          .filter((sub) => {
+                            // View-only (VIEWER): hide "Create order" — orders are view-only for them
+                            if (userRole === 'VIEWER' && sub.href.includes('create=1')) return false;
+                            return true;
+                          })
+                          .map((sub) => {
+                            const isSubActive = isPathActive(path, sub.href, searchParams);
+                            return (
+                              <li key={sub.href}>
+                                <Link
+                                  href={sub.href}
+                                  className={`${styles.subNavItem} ${isSubActive ? styles.subNavItemActive : ''}`}
+                                >
+                                  {sub.label}
+                                </Link>
+                              </li>
+                            );
+                          })}
                       </ul>
                     )}
                   </div>

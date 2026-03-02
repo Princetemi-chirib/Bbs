@@ -13,7 +13,7 @@ function BarberRecruitPageContent() {
         <div className={styles.container}>
           <div className={styles.heroContent}>
             <div className={styles.heroBadge}>Join Our Elite Team</div>
-            <h1>Join Our Barber Team</h1>
+            <h1>Join Our Team</h1>
             <p>Ready to take your barbering career to the next level? Join our prestigious team of master barbers where your skills will be celebrated and your growth unlimited.</p>
             <div className={styles.heroCta}>
               <Link href="#apply" className={styles.btnPrimary}>

@@ -71,7 +71,7 @@ export default function NotFound() {
             </Link>
             <Link href="/barber-recruit" className={styles.linkCard}>
               <div className={styles.linkIcon}><Scissors size={24} aria-hidden /></div>
-              <div className={styles.linkText}>Join as Barber</div>
+              <div className={styles.linkText}>Staff recruitment</div>
             </Link>
           </div>
         </div>
