@@ -95,7 +95,7 @@
   }
 
   .pageTitle {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
   }
 }
 
@@ -107,7 +107,7 @@
 
 .pageTitle {
   margin: 0 0 8px 0;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #39413f;
   letter-spacing: -0.5px;
@@ -116,7 +116,7 @@
 .pageSubtitle {
   margin: 0;
   color: #6c757d;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 480px) {
@@ -142,7 +142,7 @@
   }
 
   .pageTitle {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
   }
 }
 
@@ -362,7 +362,7 @@
 
 .kpiValue {
   margin: 0 0 4px 0;
-  font-size: 2rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #39413f;
   line-height: 1.2;
@@ -404,7 +404,7 @@
   }
 
   .kpiValue {
-    font-size: 1.75rem;
+    font-size: 1.25rem;
   }
 
   .kpiLabel {
@@ -440,7 +440,7 @@
   }
 
   .kpiValue {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
   }
 
   .kpiLabel {
@@ -491,7 +491,7 @@
 .chartTitle {
   margin: 0 0 24px 0;
   color: #39413f;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
@@ -526,7 +526,7 @@
   }
 
   .chartTitle {
-    font-size: 0.95rem;
+    font-size: 1rem;
     margin-bottom: 12px;
     word-wrap: break-word;
     line-height: 1.3;
@@ -608,7 +608,7 @@
   }
 
   .chartTitle {
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     margin-bottom: 10px;
     word-wrap: break-word;
     line-height: 1.2;
@@ -695,7 +695,7 @@
 .sectionTitle {
   margin: 0 0 24px 0;
   color: #39413f;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
@@ -742,7 +742,7 @@
 
 .summaryValue {
   color: #39413f;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
 }
 
@@ -767,7 +767,7 @@
   }
 
   .sectionTitle {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
 
   .summaryItem {
@@ -775,7 +775,7 @@
   }
 
   .summaryValue {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
 }
 
@@ -785,7 +785,7 @@
   }
 
   .sectionTitle {
-    font-size: 1.1rem;
+    font-size: 1rem;
     margin-bottom: 16px;
   }
 
@@ -802,7 +802,7 @@
   }
 
   .summaryValue {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 }
 
