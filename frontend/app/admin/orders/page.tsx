@@ -76,10 +76,10 @@ export default function AdminOrdersPage() {
     }
   }, [selectedOrder]);
 
-  // Open create form when URL has ?create=1 (view-only users cannot create; redirect away)
+  // Open create form when URL has ?create=1 (view-only and admin cannot create; redirect away)
   useEffect(() => {
     if (searchParams?.get('create') === '1') {
-      if (isViewOnly()) {
+      if (isViewOnly() || isAdmin()) {
         router.replace('/admin/orders');
         return;
       }
@@ -384,7 +384,7 @@ export default function AdminOrdersPage() {
               View orders, assign barbers, and track status. Use filters or quick presets below.
             </p>
           </div>
-          {!isViewOnly() && (hasRole('REP') || hasRole('ADMIN') || hasRole('MANAGER')) && (
+          {!isViewOnly() && (hasRole('REP') || hasRole('MANAGER')) && (
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
               className={styles.primaryBtn}
@@ -398,7 +398,7 @@ export default function AdminOrdersPage() {
 
       <main className={styles.main}>
         {/* Create New Order – at top when open so no scrolling needed (hidden for view-only) */}
-        {showCreateForm && !isViewOnly() && (
+        {showCreateForm && !isViewOnly() && (hasRole('REP') || hasRole('MANAGER')) && (
           <section ref={createFormRef} className={styles.section}>
             <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Create New Order</h2>
             
@@ -898,7 +898,7 @@ export default function AdminOrdersPage() {
                       
                       <td style={{ whiteSpace: 'nowrap', color: '#6c757d' }}>₦0</td>
                       <td>
-                        {!isViewOnly() && (order.paymentStatus === 'PENDING' || order.paymentStatus === 'pending') && String(order.paymentMethod || '').toLowerCase() === 'cash' && (
+                        {(hasRole('REP') || hasRole('MANAGER')) && (order.paymentStatus === 'PENDING' || order.paymentStatus === 'pending') && String(order.paymentMethod || '').toLowerCase() === 'cash' && (
                           <button
                             onClick={() => handleMarkAsPaid(order.id)}
                             disabled={markingPaidOrderId === order.id}
@@ -908,7 +908,7 @@ export default function AdminOrdersPage() {
                             {markingPaidOrderId === order.id ? '...' : 'Mark as paid'}
                           </button>
                         )}
-                        {!isViewOnly() && !order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && (
+                        {hasRole('REP') && !order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && (
                           <button
                             onClick={() => setSelectedOrder(order.id === selectedOrder ? null : order.id)}
                             className={styles.assignButton}
@@ -926,8 +926,8 @@ export default function AdminOrdersPage() {
           </div>
         </section>
 
-        {/* Assignment Modal/Form for selected order */}
-        {selectedOrder && (() => {
+        {/* Assignment Modal/Form for selected order (only Customer Rep can assign) */}
+        {hasRole('REP') && selectedOrder && (() => {
           const orderToAssign = orders.find(o => o.id === selectedOrder);
           if (!orderToAssign) return null;
           

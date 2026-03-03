@@ -22,6 +22,13 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+    // Only Customer Rep (REP) can assign orders; Admin and Manager cannot
+    if (authUser.role !== 'REP') {
+      return NextResponse.json(
+        { success: false, error: { message: 'Only Customer Rep can assign orders.' } },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
     const { orderId, barberId } = body;

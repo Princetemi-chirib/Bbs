@@ -26,6 +26,13 @@ export async function PATCH(
         { status: 403 }
       );
     }
+    // Super admin has view-only orders; only REP and MANAGER can mark as paid
+    if (auth.role === 'ADMIN') {
+      return NextResponse.json(
+        { success: false, error: { message: 'Super admin has view-only access to orders.' } },
+        { status: 403 }
+      );
+    }
 
     const { id } = await params;
     if (!id) {

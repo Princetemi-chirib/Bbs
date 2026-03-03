@@ -55,9 +55,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
       { href: '/admin/orders', label: 'All orders' },
       { href: '/admin/orders?view=dashboard', label: 'Order dashboard' },
       { href: '/admin/orders?view=history', label: 'Order history' },
-      { href: '/admin/orders?view=assignment', label: 'New order', roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
+      { href: '/admin/orders?view=assignment', label: 'New order', roles: ['MANAGER', 'VIEWER'] },
       { href: '/admin/orders?view=assignment', label: 'Assign order', roles: ['REP'] },
-      { href: '/admin/orders?create=1', label: 'Create order' },
+      { href: '/admin/orders?create=1', label: 'Create order', roles: ['REP', 'MANAGER'] },
     ],
   },
   { type: 'link', href: '/admin/customers', label: 'Customers', Icon: Users, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
@@ -253,8 +253,10 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
                       <ul className={styles.subNav}>
                         {item.children
                           .filter((sub) => {
-                            // View-only (VIEWER): hide "Create order" — orders are view-only for them
+                            // View-only (VIEWER): hide "Create order"
                             if (userRole === 'VIEWER' && sub.href.includes('create=1')) return false;
+                            // Admin (ADMIN): hide "Create order" and "New order" — only REP can assign; create is REP/MANAGER only
+                            if (userRole === 'ADMIN' && (sub.href.includes('create=1') || sub.label === 'New order')) return false;
                             // Role-specific sub-items: show only if current role is included
                             if (sub.roles?.length && userRole) return sub.roles.includes(userRole);
                             if (sub.roles?.length) return false;
