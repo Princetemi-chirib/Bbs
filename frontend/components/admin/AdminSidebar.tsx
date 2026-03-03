@@ -30,6 +30,8 @@ type Role = 'ADMIN' | 'REP' | 'MANAGER' | 'VIEWER';
 interface SubItem {
   href: string;
   label: string;
+  /** If set, this sub-item is only shown for these roles. */
+  roles?: Role[];
 }
 
 interface NavItem {
@@ -51,7 +53,10 @@ const ALL_NAV_ITEMS: NavItem[] = [
     roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'],
     children: [
       { href: '/admin/orders', label: 'All orders' },
-      { href: '/admin/orders?view=assignment', label: 'New order' },
+      { href: '/admin/orders?view=dashboard', label: 'Order dashboard' },
+      { href: '/admin/orders?view=history', label: 'Order history' },
+      { href: '/admin/orders?view=assignment', label: 'New order', roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
+      { href: '/admin/orders?view=assignment', label: 'Assign order', roles: ['REP'] },
       { href: '/admin/orders?create=1', label: 'Create order' },
     ],
   },
@@ -98,6 +103,8 @@ function isPathActive(pathname: string, href: string, searchParams?: string | nu
     if (href === '/admin/orders') return baseMatch && !searchParams;
     if (href === '/admin/orders?create=1') return pathname === '/admin/orders' && searchParams === 'create=1';
     if (href === '/admin/orders?view=assignment') return pathname === '/admin/orders' && (searchParams?.includes('view=assignment') ?? false);
+    if (href === '/admin/orders?view=dashboard') return pathname === '/admin/orders' && (searchParams?.includes('view=dashboard') ?? false);
+    if (href === '/admin/orders?view=history') return pathname === '/admin/orders' && (searchParams?.includes('view=history') ?? false);
     return baseMatch;
   }
   if (href.startsWith('/admin/financials')) {
@@ -248,6 +255,9 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
                           .filter((sub) => {
                             // View-only (VIEWER): hide "Create order" — orders are view-only for them
                             if (userRole === 'VIEWER' && sub.href.includes('create=1')) return false;
+                            // Role-specific sub-items: show only if current role is included
+                            if (sub.roles?.length && userRole) return sub.roles.includes(userRole);
+                            if (sub.roles?.length) return false;
                             return true;
                           })
                           .map((sub) => {
