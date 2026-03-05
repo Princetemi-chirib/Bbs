@@ -480,7 +480,7 @@ export default function AdminOrdersPage() {
         {showCreateForm && !isViewOnly() && (hasRole('REP') || hasRole('MANAGER')) && (
           <section ref={createFormRef} className={styles.section}>
             <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>4. Create new order manually</h2>
-            <p className={styles.sectionSubtext} style={{ marginBottom: 16 }}>Choose booking type: individual, family (20% off), or enterprise contract.</p>
+            <p className={styles.sectionSubtext} style={{ marginBottom: 16 }}>Choose booking type. Family and enterprise options are coming soon.</p>
             <div className={styles.formGrid}>
               <div>
                 <label className={styles.label}>Booking type *</label>
@@ -490,8 +490,8 @@ export default function AdminOrdersPage() {
                   onChange={(e) => setBookingType(e.target.value as BookingType)}
                 >
                   <option value="individual">Individual booking</option>
-                  <option value="family">Family booking (20% off)</option>
-                  <option value="enterprise">Enterprise contract booking</option>
+                  <option value="family" disabled>Family booking (20% off) (Coming soon)</option>
+                  <option value="enterprise" disabled>Enterprise contract booking (Coming soon)</option>
                 </select>
               </div>
               <div>
