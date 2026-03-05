@@ -103,6 +103,9 @@ export default function AdminOrdersPage() {
         return;
       }
       setShowCreateForm(true);
+    } else {
+      // Close create form when another subsection is opened (URL no longer has create=1)
+      setShowCreateForm(false);
     }
   }, [searchParams]);
 

@@ -134,6 +134,24 @@
   color: #fff;
 }
 
+.viewTabComingSoon {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: #e5e5e5;
+  color: #9ca3af;
+  cursor: default;
+  pointer-events: none;
+}
+
+.comingSoonPlaceholder {
+  text-align: center;
+  padding: 48px 24px;
+  color: #9ca3af;
+  font-size: 1rem;
+}
+
 .repRatingSummary {
   display: flex;
   flex-wrap: wrap;

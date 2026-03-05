@@ -35,6 +35,8 @@ interface SubItem {
   label: string;
   /** If set, this sub-item is only shown for these roles. */
   roles?: Role[];
+  /** If true, show as disabled/greyed with "(Coming soon)". */
+  comingSoon?: boolean;
 }
 
 interface NavItem {
@@ -80,7 +82,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
       { href: '/admin/barbers', label: 'Total staff' },
       { href: '/admin/barbers?view=talent', label: 'Staff talent list' },
       { href: '/admin/barbers?view=ratings', label: 'Average rating' },
-      { href: '/admin/barbers?view=location', label: 'Location tracking' },
+      { href: '/admin/barbers?view=location', label: 'Location tracking (Coming soon)', comingSoon: true },
     ],
   },
   { type: 'link', href: '/admin/customers', label: 'Customers', Icon: Users, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
@@ -296,7 +298,16 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
                             return true;
                           })
                           .map((sub) => {
-                            const isSubActive = isPathActive(path, sub.href, searchParams);
+                            const isSubActive = !sub.comingSoon && isPathActive(path, sub.href, searchParams);
+                            if (sub.comingSoon) {
+                              return (
+                                <li key={sub.href}>
+                                  <span className={`${styles.subNavItem} ${styles.subNavItemComingSoon}`} aria-disabled="true">
+                                    {sub.label}
+                                  </span>
+                                </li>
+                              );
+                            }
                             return (
                               <li key={sub.href}>
                                 <Link

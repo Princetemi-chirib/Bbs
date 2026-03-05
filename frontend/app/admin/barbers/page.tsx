@@ -107,6 +107,14 @@ export default function AdminBarbersPage() {
     }
   }, [searchParams, loading]);
 
+  // Staff Target Tracking: when view tab changes, scroll to top so the selected section is visible
+  useEffect(() => {
+    const view = searchParams?.get('view') ?? '';
+    if (hasRole('REP') && ['', 'talent', 'ratings', 'location'].includes(view)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [searchParams?.get('view')]);
+
 
   const loadData = async () => {
     try {
@@ -449,7 +457,7 @@ export default function AdminBarbersPage() {
             <Link href="/admin/barbers" className={viewMode === '' ? styles.viewTabActive : styles.viewTab}>Total staff</Link>
             <Link href="/admin/barbers?view=talent" className={viewMode === 'talent' ? styles.viewTabActive : styles.viewTab}>Staff talent list</Link>
             <Link href="/admin/barbers?view=ratings" className={viewMode === 'ratings' ? styles.viewTabActive : styles.viewTab}>Average rating</Link>
-            <Link href="/admin/barbers?view=location" className={viewMode === 'location' ? styles.viewTabActive : styles.viewTab}>Location tracking</Link>
+            <span className={styles.viewTabComingSoon} aria-disabled="true">Location tracking (Coming soon)</span>
           </nav>
         )}
       </header>
@@ -661,28 +669,14 @@ export default function AdminBarbersPage() {
           </section>
         )}
 
-        {/* REP: Location tracking view */}
+        {/* REP: Location tracking view - Coming soon */}
         {isRepView && viewMode === 'location' && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Location tracking</h2>
-            <p className={styles.sectionSubtitle}>Staff grouped by location (state, city).</p>
-            <div className={styles.locationGroups}>
-              {Object.entries(locationGroups).sort(([a], [b]) => a.localeCompare(b)).map(([locationKey, barbers]) => (
-                <div key={locationKey} className={styles.locationGroup}>
-                  <h3 className={styles.locationGroupTitle}>{locationKey || 'Unknown'}</h3>
-                  <ul className={styles.locationGroupList}>
-                    {barbers.map((barber) => (
-                      <li key={barber.id}>
-                        <span>{barber.name}</span>
-                        <span className={styles.statusBadgeSmall}>{barber.status.replace('_', ' ')}</span>
-                        <button type="button" onClick={() => router.push(`/admin/barbers/${barber.id}`)} className={styles.viewButtonSmall}>View</button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+            <p className={styles.sectionSubtitle}>This view is coming soon. Staff grouped by location (state, city) will be available here.</p>
+            <div className={styles.comingSoonPlaceholder}>
+              <p>Coming soon</p>
             </div>
-            {Object.keys(locationGroups).length === 0 && <p className={styles.emptyRecruitment}>No staff data.</p>}
           </section>
         )}
 
