@@ -35,7 +35,7 @@ import {
   Settings,
   type LucideIcon,
 } from 'lucide-react';
-import { fetchAuth, isAdmin, isViewOnly } from '@/lib/auth';
+import { fetchAuth, isAdmin, isViewOnly, hasRole } from '@/lib/auth';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './financials.module.css';
 import {
@@ -100,6 +100,14 @@ export default function AdminFinancialsPage() {
       setActiveTabInternal(tab as TabId);
     }
   }, [searchParams]);
+
+  // Customer Rep does not have access to Financials; redirect to dashboard
+  useEffect(() => {
+    if (hasRole('REP')) {
+      router.replace('/admin');
+    }
+  }, [router]);
+
   const [txSearch, setTxSearch] = useState('');
   const [txSearchInput, setTxSearchInput] = useState('');
   const [txPage, setTxPage] = useState(1);
@@ -744,6 +752,10 @@ export default function AdminFinancialsPage() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (hasRole('REP')) {
+    return null;
+  }
 
   if (loading) {
     return (

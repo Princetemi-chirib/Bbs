@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Scissors, Package, Wallet, Star, ArrowRight, Users, TrendingUp, AlertCircle } from 'lucide-react';
-import { fetchAuth } from '@/lib/auth';
+import { fetchAuth, hasRole } from '@/lib/auth';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './admin.module.css';
 
@@ -98,9 +98,9 @@ export default function AdminDashboard() {
       </header>
 
       <main className={styles.main}>
-        {/* Quick links */}
+        {/* Quick links (Financials hidden for Customer Rep) */}
         <nav className={styles.quickLinks} aria-label="Quick navigation">
-          {QUICK_LINKS.map(({ href, label, Icon }) => (
+          {QUICK_LINKS.filter((link) => !(link.href === '/admin/financials' && hasRole('REP'))).map(({ href, label, Icon }) => (
             <Link key={href} href={href} className={styles.quickLink}>
               <Icon size={20} aria-hidden />
               <span>{label}</span>

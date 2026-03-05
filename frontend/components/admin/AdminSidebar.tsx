@@ -106,7 +106,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
     type: 'parent',
     label: 'Financials',
     Icon: Wallet,
-    roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'],
+    roles: ['ADMIN', 'MANAGER', 'VIEWER'],
     children: [
       { href: '/admin/financials?tab=overview', label: 'Overview' },
       { href: '/admin/financials?tab=financial', label: 'Revenue' },
