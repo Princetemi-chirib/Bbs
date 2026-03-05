@@ -122,6 +122,24 @@
   cursor: pointer;
 }
 
+.showMoreBtn {
+  margin-left: 8px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #39413f;
+  background: transparent;
+  color: #39413f;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.showMoreBtn:hover {
+  background: #39413f;
+  color: #fff;
+}
+
 .statusLegend {
   display: flex;
   flex-wrap: wrap;

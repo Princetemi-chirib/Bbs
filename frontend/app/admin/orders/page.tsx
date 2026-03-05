@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { fetchAuth, isAdmin, hasRole, isViewOnly } from '@/lib/auth';
+import { getAdminDisplaySettings } from '@/lib/adminSettings';
 import { orderApi, productApi } from '@/lib/api';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './orders.module.css';
@@ -30,7 +31,8 @@ export default function AdminOrdersPage() {
   const [markingPaidOrderId, setMarkingPaidOrderId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
-  
+  const [showAllOrders, setShowAllOrders] = useState(false);
+
   // Filters
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [orderStatusFilter, setOrderStatusFilter] = useState('');
@@ -82,6 +84,16 @@ export default function AdminOrdersPage() {
       loadBarbers();
     }
   }, [selectedOrder]);
+
+  // Customer Rep: default order view from settings when no view in URL
+  useEffect(() => {
+    if (hasRole('REP') && !searchParams?.get('view') && !searchParams?.get('create')) {
+      const { defaultOrderView } = getAdminDisplaySettings();
+      if (defaultOrderView && defaultOrderView !== 'overview') {
+        router.replace(`/admin/orders?view=${encodeURIComponent(defaultOrderView)}`);
+      }
+    }
+  }, [searchParams, router]);
 
   // Open create form when URL has ?create=1 (view-only and admin cannot create; redirect away)
   useEffect(() => {
@@ -353,6 +365,11 @@ export default function AdminOrdersPage() {
 
   // Assigned orders are those with a barber assigned
   const assignedOrders = filteredOrders.filter((order) => order.assignedBarberId);
+
+  // Display limit from settings (orders per page)
+  const ordersPerPage = typeof window !== 'undefined' ? getAdminDisplaySettings().ordersPerPage : 25;
+  const displayedOrders = showAllOrders ? filteredOrders : filteredOrders.slice(0, ordersPerPage);
+  const hasMoreOrders = filteredOrders.length > ordersPerPage && !showAllOrders;
 
   const createOrderSubtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
   const createOrderTotal = bookingType === 'family' ? Math.round(createOrderSubtotal * 0.8) : createOrderSubtotal;
@@ -782,7 +799,7 @@ export default function AdminOrdersPage() {
                   </thead>
                   <tbody>
                     {filteredOrders
-                      .slice(0, 10)
+                      .slice(0, ordersPerPage)
                       .map((order: any) => (
                         <tr key={order.id}>
                           <td>{order.orderNumber}</td>
@@ -933,6 +950,16 @@ export default function AdminOrdersPage() {
             <h2 className={styles.sectionTitle}>Order list</h2>
             <span className={styles.sectionBadge}>{filteredOrders.length} orders</span>
           </div>
+          {filteredOrders.length > ordersPerPage && (
+            <p className={styles.sectionSubtext} style={{ marginBottom: '8px' }}>
+              Showing {showAllOrders ? filteredOrders.length : ordersPerPage} of {filteredOrders.length} orders.
+              {hasMoreOrders && (
+                <button type="button" className={styles.showMoreBtn} onClick={() => setShowAllOrders(true)}>
+                  Show all
+                </button>
+              )}
+            </p>
+          )}
           <div className={styles.statusLegend}>
             <span className={styles.statusLegendItem}><span className={styles.legendDot} style={{ background: '#fff3cd' }} /> Pending</span>
             <span className={styles.statusLegendItem}><span className={styles.legendDot} style={{ background: '#d1ecf1' }} /> Completed</span>
@@ -964,7 +991,7 @@ export default function AdminOrdersPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((order) => (
+                  displayedOrders.map((order) => (
                     <tr key={order.id}>
                       <td>
                         <strong>{order.orderNumber}</strong>

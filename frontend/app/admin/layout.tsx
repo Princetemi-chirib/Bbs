@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import SettingsApply from '@/components/admin/SettingsApply';
 import { useRouter } from 'next/navigation';
 import { clearAuthData } from '@/lib/auth';
 import styles from './admin-layout.module.css';
@@ -21,6 +22,7 @@ export default function AdminLayout({
 
   return (
     <AuthGuard requiredRole="ADMIN_OR_REP">
+      <SettingsApply />
       <div className={styles.adminContainer}>
         <Suspense fallback={<aside className={styles.sidebarFallback} />}>
           <AdminSidebar onLogout={handleLogout} />

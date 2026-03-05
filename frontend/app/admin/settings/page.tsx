@@ -14,11 +14,10 @@ import {
   Loader2,
 } from 'lucide-react';
 import { fetchAuth, getUserData, isAdmin, hasRole } from '@/lib/auth';
+import { BBS_ADMIN_SETTINGS_KEY, notifySettingsUpdated } from '@/lib/adminSettings';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import Link from 'next/link';
 import styles from './settings.module.css';
-
-const STORAGE_KEY = 'bbs_admin_settings';
 
 type TabId = 'profile' | 'security' | 'notifications' | 'display' | 'business' | 'integrations' | 'data' | 'about';
 
@@ -73,7 +72,7 @@ const TABS: { id: TabId; label: string; Icon: typeof User; roles?: DashboardRole
 function loadStoredSettings(): StoredSettings {
   if (typeof window === 'undefined') return {};
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(BBS_ADMIN_SETTINGS_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -83,7 +82,7 @@ function loadStoredSettings(): StoredSettings {
 function saveStoredSettings(settings: StoredSettings) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    localStorage.setItem(BBS_ADMIN_SETTINGS_KEY, JSON.stringify(settings));
   } catch (e) {
     console.error('Failed to save settings', e);
   }
@@ -210,21 +209,22 @@ export default function AdminSettingsPage() {
     const stored = loadStoredSettings();
     saveStoredSettings({ ...stored, notifications });
     setSaveMessage({ type: 'success', text: 'Notification preferences saved.' });
-    setTimeout(() => setSaveMessage(null), 3000);
+    setTimeout(() => setSaveMessage(null), 3500);
   };
 
   const saveDisplay = () => {
     const stored = loadStoredSettings();
     saveStoredSettings({ ...stored, display });
-    setSaveMessage({ type: 'success', text: 'Display preferences saved.' });
-    setTimeout(() => setSaveMessage(null), 3000);
+    notifySettingsUpdated();
+    setSaveMessage({ type: 'success', text: 'Display preferences saved. Theme and density applied.' });
+    setTimeout(() => setSaveMessage(null), 3500);
   };
 
   const saveBusiness = () => {
     const stored = loadStoredSettings();
     saveStoredSettings({ ...stored, business });
     setSaveMessage({ type: 'success', text: 'Business settings saved.' });
-    setTimeout(() => setSaveMessage(null), 3000);
+    setTimeout(() => setSaveMessage(null), 3500);
   };
 
   const toggleNotification = (key: keyof NotificationsState, value: boolean) => {
@@ -257,15 +257,20 @@ export default function AdminSettingsPage() {
         </nav>
 
         {saveMessage && (
-          <div className={saveMessage.type === 'success' ? styles.messageSuccess : styles.messageError} style={{ marginBottom: 16 }} role="alert">
-            {saveMessage.text}
+          <div className={styles.toastWrap} role="alert" aria-live="polite">
+            <div className={saveMessage.type === 'success' ? styles.toastSuccess : styles.toastError}>
+              {saveMessage.text}
+            </div>
           </div>
         )}
 
         {/* Profile */}
         {activeTab === 'profile' && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Profile</h2>
+            <div className={styles.sectionHeader}>
+              <User size={22} className={styles.sectionIcon} aria-hidden />
+              <h2 className={styles.sectionTitle}>Profile</h2>
+            </div>
             <p className={styles.sectionDescription}>
               Your account information is used across the dashboard. Contact your administrator to change email or name.
             </p>
@@ -310,7 +315,10 @@ export default function AdminSettingsPage() {
         {/* Security */}
         {activeTab === 'security' && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Security</h2>
+            <div className={styles.sectionHeader}>
+              <Shield size={22} className={styles.sectionIcon} aria-hidden />
+              <h2 className={styles.sectionTitle}>Security</h2>
+            </div>
             <p className={styles.sectionDescription}>
               Change your password and manage sign-in security. Use a strong password with at least 8 characters.
             </p>
@@ -375,7 +383,10 @@ export default function AdminSettingsPage() {
         {/* Notifications */}
         {activeTab === 'notifications' && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Notifications</h2>
+            <div className={styles.sectionHeader}>
+              <Bell size={22} className={styles.sectionIcon} aria-hidden />
+              <h2 className={styles.sectionTitle}>Notifications</h2>
+            </div>
             <p className={styles.sectionDescription}>
               Choose how and when you receive alerts. Email notifications are sent to your account email.
             </p>
@@ -584,7 +595,10 @@ export default function AdminSettingsPage() {
         {/* Business settings (Admin only) */}
         {activeTab === 'business' && isAdminUser && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Business settings</h2>
+            <div className={styles.sectionHeader}>
+              <Building2 size={22} className={styles.sectionIcon} aria-hidden />
+              <h2 className={styles.sectionTitle}>Business settings</h2>
+            </div>
             <p className={styles.sectionDescription}>
               Company information used in emails, receipts, and customer-facing content. Stored locally on this device unless a server sync is configured.
             </p>
@@ -677,7 +691,10 @@ export default function AdminSettingsPage() {
         {/* Integrations (Admin only) */}
         {activeTab === 'integrations' && isAdminUser && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Integrations</h2>
+            <div className={styles.sectionHeader}>
+              <Plug size={22} className={styles.sectionIcon} aria-hidden />
+              <h2 className={styles.sectionTitle}>Integrations</h2>
+            </div>
             <p className={styles.sectionDescription}>
               Third-party services connected to your account. Configure API keys and webhooks from the links below.
             </p>
@@ -704,7 +721,10 @@ export default function AdminSettingsPage() {
         {/* Data & privacy (Admin only) */}
         {activeTab === 'data' && isAdminUser && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Data & privacy</h2>
+            <div className={styles.sectionHeader}>
+              <Database size={22} className={styles.sectionIcon} aria-hidden />
+              <h2 className={styles.sectionTitle}>Data & privacy</h2>
+            </div>
             <p className={styles.sectionDescription}>
               Data retention, export, and compliance. Customer data is stored according to your retention policy.
             </p>
@@ -732,7 +752,10 @@ export default function AdminSettingsPage() {
         {/* About */}
         {activeTab === 'about' && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>About</h2>
+            <div className={styles.sectionHeader}>
+              <Info size={22} className={styles.sectionIcon} aria-hidden />
+              <h2 className={styles.sectionTitle}>About</h2>
+            </div>
             <p className={styles.sectionDescription}>
               Application and account information.
             </p>
@@ -756,3 +779,4 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
+

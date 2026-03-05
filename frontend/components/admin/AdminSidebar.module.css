@@ -285,6 +285,43 @@
   transform: translateX(2px);
 }
 
+/* Dark theme (data-theme set on documentElement by SettingsApply) */
+[data-theme="dark"] .sidebar {
+  background: #1a1d1e;
+  border-right-color: #2d3234;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .brand,
+[data-theme="dark"] .navItem,
+[data-theme="dark"] .navItemParent,
+[data-theme="dark"] .subNavItem {
+  color: #e4e6e8;
+}
+
+[data-theme="dark"] .navItem:hover,
+[data-theme="dark"] .navItemParent:hover,
+[data-theme="dark"] .subNavItem:hover {
+  background: #2d3234;
+  color: #fff;
+}
+
+[data-theme="dark"] .navItemActive,
+[data-theme="dark"] .subNavItemActive {
+  background: #39413f;
+  color: #fff;
+}
+
+[data-theme="dark"] .logoutButton {
+  color: #e4e6e8;
+  background: transparent;
+}
+
+[data-theme="dark"] .logoutButton:hover {
+  background: #3d2626;
+  color: #e88;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .mobileToggle {

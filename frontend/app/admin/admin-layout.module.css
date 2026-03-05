@@ -6,6 +6,21 @@
   overflow-x: hidden;
 }
 
+/* Theme: dark mode (applied by SettingsApply via data-theme) */
+[data-theme="dark"] .adminContainer,
+[data-theme="dark"].adminContainer {
+  background: #1a1d1e;
+}
+
+[data-theme="dark"] .mainContent {
+  background: #1a1d1e;
+}
+
+/* Density: compact (applied via data-density on body) */
+[data-density="compact"] .mainContent {
+  padding-top: 4px;
+}
+
 .sidebarFallback {
   width: 280px;
   min-width: 280px;

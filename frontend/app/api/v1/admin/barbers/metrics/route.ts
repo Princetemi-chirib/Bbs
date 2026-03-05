@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdmin } from '@/app/api/v1/utils/auth';
+import { verifyAdminOrRep } from '@/app/api/v1/utils/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const admin = await verifyAdmin(request);
-    if (!admin) {
+    const user = await verifyAdminOrRep(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: { message: 'Unauthorized. Admin access required.' } },
+        { success: false, error: { message: 'Unauthorized. Admin or staff access required.' } },
         { status: 401 }
       );
     }
+    const isAdmin = user.role === 'ADMIN';
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
@@ -148,13 +149,16 @@ export async function GET(request: NextRequest) {
         status: barber.status,
         isOnline: barber.isOnline,
         location: barber.location || barber.city || null,
+        state: barber.state ?? null,
+        city: barber.city ?? null,
+        address: barber.address ?? null,
         specialties: barber.specialties,
         ratingAvg: Number(barber.ratingAvg),
         totalReviews: barber.totalReviews,
         totalBookings: barber.totalBookings,
         totalOrders: barberOrders.length,
-        revenue: barberRevenue,
-        revenuePerDay: revenuePerDay,
+        revenue: isAdmin ? barberRevenue : 0,
+        revenuePerDay: isAdmin ? revenuePerDay : 0,
         noShowRate: barberNoShowRate,
         lastActiveDate: lastActiveDate,
         createdAt: barber.createdAt,
@@ -175,7 +179,7 @@ export async function GET(request: NextRequest) {
           barbersOffline,
           barbersWorkingToday,
           averageRating: Number(averageRating.toFixed(2)),
-          totalRevenue: Number(totalRevenue.toFixed(2)),
+          totalRevenue: isAdmin ? Number(totalRevenue.toFixed(2)) : null,
           avgOrdersPerBarber: Number(avgOrdersPerBarber.toFixed(2)),
           noShowRate: Number(noShowRate.toFixed(2)),
         },

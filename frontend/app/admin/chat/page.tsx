@@ -12,7 +12,7 @@ export default function AdminChatPage() {
         <div>
           <h1 className={styles.pageTitle}>Chat Room</h1>
           <p className={styles.pageSubtitle}>
-            Customer and staff messaging. This feature is coming soon.
+            Message customers and coordinate with staff for family and enterprise orders.
           </p>
         </div>
       </header>
@@ -30,10 +30,11 @@ export default function AdminChatPage() {
           <MessageSquare size={64} style={{ color: '#39413f', marginBottom: 16 }} aria-hidden />
           <h2 style={{ fontSize: '1.25rem', color: '#39413f', marginBottom: 8 }}>Chat Room</h2>
           <p style={{ color: '#6c757d', maxWidth: 400, margin: '0 auto' }}>
-            Live chat with customers and staff will be available here. You will be able to see conversations, assign threads, and respond from the dashboard.
+            Coordinate family bookings (group discounts) and enterprise contract orders with customers and your team. View threads, assign conversations, and reply from the dashboard.
           </p>
         </section>
       </main>
     </div>
   );
 }
+

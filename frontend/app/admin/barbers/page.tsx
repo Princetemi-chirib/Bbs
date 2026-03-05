@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { fetchAuth, isAdmin } from '@/lib/auth';
+import Link from 'next/link';
+import { fetchAuth, isAdmin, hasRole } from '@/lib/auth';
 import Image from 'next/image';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './barbers.module.css';
@@ -110,11 +111,11 @@ export default function AdminBarbersPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      await Promise.all([
-        loadMetrics(),
-        loadApplications(),
-      ]);
-      if (isAdmin()) loadRecruitmentHistory();
+      await loadMetrics();
+      if (isAdmin()) {
+        await loadApplications();
+        loadRecruitmentHistory();
+      }
     } finally {
       setLoading(false);
     }
@@ -404,6 +405,20 @@ export default function AdminBarbersPage() {
   }
 
   const filteredBarbers = metrics?.barbers || [];
+  const isRepView = hasRole('REP') && !isAdmin();
+  const viewMode = searchParams?.get('view') || '';
+
+  // For REP: talent list = sorted by rating then bookings; location = group by city/state
+  const talentOrderedBarbers = [...filteredBarbers].sort((a, b) => {
+    if (b.ratingAvg !== a.ratingAvg) return b.ratingAvg - a.ratingAvg;
+    return (b.totalBookings || 0) - (a.totalBookings || 0);
+  });
+  const locationGroups = filteredBarbers.reduce<Record<string, Barber[]>>((acc, b) => {
+    const key = [b.state || '', b.city || 'Unknown'].filter(Boolean).join(', ') || 'Unknown';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(b);
+    return acc;
+  }, {});
 
   // New staff: added in the last 1 month. Old staff: more than 1 month ago.
   const oneMonthAgo = new Date();
@@ -417,9 +432,11 @@ export default function AdminBarbersPage() {
       <header className={styles.pageHeader}>
         <div className={styles.pageHeaderContent}>
           <div>
-            <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: 'Staff' }]} />
-            <h1 className={styles.pageTitle}>Staff</h1>
-            <p className={styles.pageSubtitle}>Manage staff, track performance, and review applications.</p>
+            <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: isRepView ? 'Staff Target Tracking' : 'Staff' }]} />
+            <h1 className={styles.pageTitle}>{isRepView ? 'Staff Target Tracking' : 'Staff'}</h1>
+            <p className={styles.pageSubtitle}>
+              {isRepView ? 'Track staff count, talent, ratings, and locations.' : 'Manage staff, track performance, and review applications.'}
+            </p>
           </div>
           {isAdmin() && (
             <button onClick={() => setShowAddForm(!showAddForm)} className={styles.addButton}>
@@ -427,6 +444,14 @@ export default function AdminBarbersPage() {
             </button>
           )}
         </div>
+        {isRepView && (
+          <nav className={styles.viewTabs} aria-label="Staff views">
+            <Link href="/admin/barbers" className={viewMode === '' ? styles.viewTabActive : styles.viewTab}>Total staff</Link>
+            <Link href="/admin/barbers?view=talent" className={viewMode === 'talent' ? styles.viewTabActive : styles.viewTab}>Staff talent list</Link>
+            <Link href="/admin/barbers?view=ratings" className={viewMode === 'ratings' ? styles.viewTabActive : styles.viewTab}>Average rating</Link>
+            <Link href="/admin/barbers?view=location" className={viewMode === 'location' ? styles.viewTabActive : styles.viewTab}>Location tracking</Link>
+          </nav>
+        )}
       </header>
 
       <main className={styles.main}>
@@ -506,11 +531,13 @@ export default function AdminBarbersPage() {
                 <div className={styles.metricValue}>{metrics.summary.averageRating.toFixed(1)}</div>
                 <div className={styles.metricSubtext}>Across all staff</div>
               </div>
-              <div className={styles.metricCard}>
-                <div className={styles.metricLabel}>Total Revenue</div>
-                <div className={styles.metricValue}>{formatCurrency(metrics.summary.totalRevenue)}</div>
-                <div className={styles.metricSubtext}>All time</div>
-              </div>
+              {metrics.summary.totalRevenue != null && (
+                <div className={styles.metricCard}>
+                  <div className={styles.metricLabel}>Total Revenue</div>
+                  <div className={styles.metricValue}>{formatCurrency(metrics.summary.totalRevenue)}</div>
+                  <div className={styles.metricSubtext}>All time</div>
+                </div>
+              )}
               <div className={styles.metricCard}>
                 <div className={styles.metricLabel}>Avg Orders/Staff</div>
                 <div className={styles.metricValue}>{metrics.summary.avgOrdersPerBarber.toFixed(1)}</div>
@@ -525,7 +552,143 @@ export default function AdminBarbersPage() {
           </section>
         )}
 
-        {/* Filters */}
+        {/* REP: Staff talent list view */}
+        {isRepView && viewMode === 'talent' && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Staff talent list</h2>
+            <p className={styles.sectionSubtitle}>Sorted by rating and then by number of bookings (top performers first).</p>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Rating</th>
+                    <th>Reviews</th>
+                    <th>Bookings</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {talentOrderedBarbers.map((barber) => (
+                    <tr key={barber.id}>
+                      <td className={styles.barberNameCell}>
+                        <div className={styles.barberInfo}>
+                          {barber.avatarUrl ? (
+                            <Image src={barber.avatarUrl} alt="" width={36} height={36} className={styles.barberAvatar} unoptimized />
+                          ) : (
+                            <div className={styles.barberAvatarPlaceholder}>{barber.name.charAt(0).toUpperCase()}</div>
+                          )}
+                          <span>{barber.name}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={styles.ratingValue}>{barber.ratingAvg.toFixed(1)}</span>
+                        <span className={styles.ratingStars}>
+                          {'★'.repeat(Math.floor(barber.ratingAvg))}{'☆'.repeat(5 - Math.floor(barber.ratingAvg))}
+                        </span>
+                      </td>
+                      <td>{barber.totalReviews}</td>
+                      <td>{barber.totalBookings ?? barber.totalOrders}</td>
+                      <td>
+                        <span className={`${styles.statusBadge} ${getStatusBadgeClass(barber.status)}`}>{barber.status.replace('_', ' ')}</span>
+                      </td>
+                      <td>
+                        <button type="button" onClick={() => router.push(`/admin/barbers/${barber.id}`)} className={styles.viewButton} title="View profile">View</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {talentOrderedBarbers.length === 0 && <p className={styles.emptyRecruitment}>No staff data.</p>}
+          </section>
+        )}
+
+        {/* REP: Average rating view */}
+        {isRepView && viewMode === 'ratings' && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Average rating</h2>
+            <p className={styles.sectionSubtitle}>Staff ranked by customer rating and review count.</p>
+            {metrics && (
+              <div className={styles.repRatingSummary}>
+                <div className={styles.metricCard}>
+                  <div className={styles.metricLabel}>Overall average</div>
+                  <div className={styles.metricValue}>{metrics.summary.averageRating.toFixed(1)}</div>
+                  <div className={styles.metricSubtext}>Out of 5.0</div>
+                </div>
+              </div>
+            )}
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Rating</th>
+                    <th>Review count</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...filteredBarbers].sort((a, b) => b.ratingAvg - a.ratingAvg).map((barber) => (
+                    <tr key={barber.id}>
+                      <td className={styles.barberNameCell}>
+                        <div className={styles.barberInfo}>
+                          {barber.avatarUrl ? (
+                            <Image src={barber.avatarUrl} alt="" width={36} height={36} className={styles.barberAvatar} unoptimized />
+                          ) : (
+                            <div className={styles.barberAvatarPlaceholder}>{barber.name.charAt(0).toUpperCase()}</div>
+                          )}
+                          <span>{barber.name}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={styles.ratingValue}>{barber.ratingAvg.toFixed(1)}</span>
+                        <span className={styles.ratingStars}>
+                          {'★'.repeat(Math.floor(barber.ratingAvg))}{'☆'.repeat(5 - Math.floor(barber.ratingAvg))}
+                        </span>
+                      </td>
+                      <td>{barber.totalReviews}</td>
+                      <td>
+                        <button type="button" onClick={() => router.push(`/admin/barbers/${barber.id}`)} className={styles.viewButton} title="View profile">View</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {filteredBarbers.length === 0 && <p className={styles.emptyRecruitment}>No staff data.</p>}
+          </section>
+        )}
+
+        {/* REP: Location tracking view */}
+        {isRepView && viewMode === 'location' && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Location tracking</h2>
+            <p className={styles.sectionSubtitle}>Staff grouped by location (state, city).</p>
+            <div className={styles.locationGroups}>
+              {Object.entries(locationGroups).sort(([a], [b]) => a.localeCompare(b)).map(([locationKey, barbers]) => (
+                <div key={locationKey} className={styles.locationGroup}>
+                  <h3 className={styles.locationGroupTitle}>{locationKey || 'Unknown'}</h3>
+                  <ul className={styles.locationGroupList}>
+                    {barbers.map((barber) => (
+                      <li key={barber.id}>
+                        <span>{barber.name}</span>
+                        <span className={styles.statusBadgeSmall}>{barber.status.replace('_', ' ')}</span>
+                        <button type="button" onClick={() => router.push(`/admin/barbers/${barber.id}`)} className={styles.viewButtonSmall}>View</button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            {Object.keys(locationGroups).length === 0 && <p className={styles.emptyRecruitment}>No staff data.</p>}
+          </section>
+        )}
+
+        {/* Filters, recruitment, and staff tables - hidden for REP when on talent/ratings/location view */}
+        {(!isRepView || viewMode === '') && (
+        <>
         <section className={styles.filtersSection}>
           <div className={styles.filters}>
             <div className={styles.filterGroup}>
@@ -728,7 +891,7 @@ export default function AdminBarbersPage() {
                   <th>Skills / Services</th>
                   <th>Rating</th>
                   <th>Total Orders</th>
-                  <th>Revenue/Day</th>
+                  {isAdmin() && <th>Revenue/Day</th>}
                   <th>No-Show Rate</th>
                   <th>Last Active</th>
                   <th>Actions</th>
@@ -788,7 +951,7 @@ export default function AdminBarbersPage() {
                       </div>
                     </td>
                     <td>{barber.totalOrders}</td>
-                    <td>{formatCurrency(barber.revenuePerDay)}</td>
+                    {isAdmin() && <td>{formatCurrency(barber.revenuePerDay)}</td>}
                     <td>
                       <span className={barber.noShowRate > 10 ? styles.highNoShow : styles.lowNoShow}>
                         {barber.noShowRate.toFixed(1)}%
@@ -867,7 +1030,7 @@ export default function AdminBarbersPage() {
                   <th>Skills / Services</th>
                   <th>Rating</th>
                   <th>Total Orders</th>
-                  <th>Revenue/Day</th>
+                  {isAdmin() && <th>Revenue/Day</th>}
                   <th>No-Show Rate</th>
                   <th>Last Active</th>
                   <th>Actions</th>
@@ -927,7 +1090,7 @@ export default function AdminBarbersPage() {
                       </div>
                     </td>
                     <td>{barber.totalOrders}</td>
-                    <td>{formatCurrency(barber.revenuePerDay)}</td>
+                    {isAdmin() && <td>{formatCurrency(barber.revenuePerDay)}</td>}
                     <td>
                       <span className={barber.noShowRate > 10 ? styles.highNoShow : styles.lowNoShow}>
                         {barber.noShowRate.toFixed(1)}%
@@ -991,6 +1154,8 @@ export default function AdminBarbersPage() {
             )}
           </div>
         </section>
+        </>
+        )}
       </main>
 
       {/* Review Application Modal - full details then Approve / Decline */}
