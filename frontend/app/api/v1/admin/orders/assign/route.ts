@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
         throw new Error('Order not found');
       }
 
-      // Issue 3: Check if order is already assigned or completed
-      if (order.assignedBarberId && order.assignedBarberId !== barberId) {
+      // Allow reassignment when order was declined; otherwise block if already assigned to another barber
+      if (order.assignedBarberId && order.assignedBarberId !== barberId && order.jobStatus !== 'DECLINED') {
         throw new Error('Order is already assigned to another barber');
       }
 
@@ -106,11 +106,12 @@ export async function POST(request: NextRequest) {
           id: orderId,
           status: { not: 'COMPLETED' },
           AND: [
-            // Only update if not already assigned to a different barber (prevents race condition)
+            // Allow: unassigned, same barber, or declined (reassign to new barber)
             {
               OR: [
                 { assignedBarberId: null },
-                { assignedBarberId: barberId }, // Allow reassignment to same barber
+                { assignedBarberId: barberId },
+                { jobStatus: 'DECLINED' },
               ],
             },
             // Don't assign if already completed (jobStatus is null for unassigned orders)

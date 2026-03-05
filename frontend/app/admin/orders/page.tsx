@@ -37,9 +37,14 @@ export default function AdminOrdersPage() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
   const [serviceTypeFilter, setServiceTypeFilter] = useState('');
-  // View mode: 'assignment' = New order (unassigned only); otherwise All orders (assigned only)
-  const viewAssignment = searchParams?.get('view') === 'assignment';
-  const unassignedOnly = viewAssignment; // for preset button highlight and backwards compat
+  // View mode for Customer Rep: overview | assignment | status | history | declined; else legacy (dashboard, all, etc.)
+  const viewMode = searchParams?.get('view') || '';
+  const viewAssignment = viewMode === 'assignment';
+  const viewOverview = viewMode === 'overview';
+  const viewStatus = viewMode === 'status';
+  const viewHistory = viewMode === 'history';
+  const viewDeclined = viewMode === 'declined';
+  const unassignedOnly = viewAssignment;
   
   // Order form state
   const [formData, setFormData] = useState({
@@ -60,6 +65,8 @@ export default function AdminOrdersPage() {
     ageGroup: 'fixed' as 'fixed' | 'adults' | 'kids',
     quantity: 1,
   });
+  type BookingType = 'individual' | 'family' | 'enterprise';
+  const [bookingType, setBookingType] = useState<BookingType>('individual');
 
   const createFormRef = useRef<HTMLDivElement>(null);
 
@@ -233,7 +240,10 @@ export default function AdminOrdersPage() {
       return;
     }
 
-    const totalAmount = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const totalAmount = bookingType === 'family' ? Math.round(subtotal * 0.8) : subtotal;
+    const bookingNote = bookingType === 'family' ? '[Family booking - 20% off] ' : bookingType === 'enterprise' ? '[Enterprise contract] ' : '';
+    const additionalNotesWithBooking = bookingNote + (formData.additionalNotes || '');
 
     setCreating(true);
     try {
@@ -244,7 +254,7 @@ export default function AdminOrdersPage() {
         city: formData.city,
         location: formData.location,
         address: formData.address || undefined,
-        additionalNotes: formData.additionalNotes || undefined,
+        additionalNotes: additionalNotesWithBooking.trim() || undefined,
         items: orderItems,
         totalAmount,
         paymentReference: formData.paymentReference || undefined,
@@ -267,6 +277,7 @@ export default function AdminOrdersPage() {
           paymentStatus: 'COMPLETED',
         });
         setOrderItems([]);
+        setBookingType('individual');
         setShowCreateForm(false);
         loadOrders();
       } else {
@@ -311,10 +322,11 @@ export default function AdminOrdersPage() {
       return true;
     })
     .filter((order) => {
-      // All orders (sidebar): show only assigned orders; unassigned are not listed here
-      if (!viewAssignment) return !!order.assignedBarberId;
-      // New order (sidebar): show only unassigned, paid orders ready for assignment
-      return (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && !order.assignedBarberId;
+      if (viewDeclined) return (order.jobStatus || '').toUpperCase() === 'DECLINED';
+      if (viewAssignment) return (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && !order.assignedBarberId;
+      if (viewOverview || viewStatus || viewHistory) return true; // show all for overview, status, history
+      // Default / dashboard: show only assigned orders
+      return !!order.assignedBarberId;
     });
 
   // Calculate metrics
@@ -342,7 +354,8 @@ export default function AdminOrdersPage() {
   // Assigned orders are those with a barber assigned
   const assignedOrders = filteredOrders.filter((order) => order.assignedBarberId);
 
-  const totalAmount = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const createOrderSubtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const createOrderTotal = bookingType === 'family' ? Math.round(createOrderSubtotal * 0.8) : createOrderSubtotal;
 
   if (loading) {
     return <div className={styles.loading}>Loading orders...</div>;
@@ -373,26 +386,75 @@ export default function AdminOrdersPage() {
     router.replace('/admin/orders');
   };
 
+  const exportOrderHistory = () => {
+    const headers = ['Order #', 'Customer', 'Email', 'Phone', 'City', 'Location', 'Payment Status', 'Order Status', 'Job Status', 'Barber', 'Total (₦)', 'Created'];
+    const rows = filteredOrders.map((o: any) => [
+      o.orderNumber,
+      o.customerName || '',
+      o.customerEmail || '',
+      o.customerPhone || '',
+      o.city || '',
+      o.location || '',
+      o.paymentStatus || '',
+      o.status || '',
+      o.jobStatus || '',
+      o.assignedBarber?.name || '',
+      Number(o.totalAmount || 0).toLocaleString(),
+      o.createdAt ? new Date(o.createdAt).toISOString() : '',
+    ]);
+    const csv = [headers.join(','), ...rows.map((r: any[]) => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `order-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <AdminBreadcrumbs items={[{ label: 'Dashboard', href: '/admin' }, { label: 'Orders' }]} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h1 className={styles.pageTitle}>Orders</h1>
+            <h1 className={styles.pageTitle}>
+              {viewOverview && '1. Overview'}
+              {viewAssignment && '2. Order Assignments'}
+              {viewStatus && '3. Order Management status'}
+              {viewHistory && '5. Order History'}
+              {viewDeclined && '6. Declined Orders'}
+              {!viewOverview && !viewAssignment && !viewStatus && !viewHistory && !viewDeclined && 'Orders'}
+            </h1>
             <p className={styles.pageSubtitle}>
-              View orders, assign barbers, and track status. Use filters or quick presets below.
+              {viewOverview && 'High-level statistics and recent activity of orders from the website.'}
+              {viewAssignment && 'Assign and reassign booking orders. Select an unassigned paid order and choose a barber.'}
+              {viewStatus && 'Filter by paid, unpaid, pending, complete, and other statuses.'}
+              {viewHistory && 'View complete service history with filters and export.'}
+              {viewDeclined && 'Declined orders show a reason. Reassign them to another barber using the Assign button.'}
+              {!viewOverview && !viewAssignment && !viewStatus && !viewHistory && !viewDeclined && 'View orders, assign barbers, and track status. Use filters or quick presets below.'}
             </p>
           </div>
-          {!isViewOnly() && (hasRole('REP') || hasRole('MANAGER')) && (
-            <button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-              className={styles.primaryBtn}
-              style={{ padding: '12px 24px' }}
-            >
-              {showCreateForm ? 'Cancel' : '+ Create order'}
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {viewHistory && (
+              <button
+                type="button"
+                onClick={exportOrderHistory}
+                className={styles.primaryBtn}
+                style={{ padding: '12px 24px' }}
+              >
+                Export to CSV
+              </button>
+            )}
+            {!isViewOnly() && (hasRole('REP') || hasRole('MANAGER')) && (
+              <button
+                onClick={() => setShowCreateForm(!showCreateForm)}
+                className={styles.primaryBtn}
+                style={{ padding: '12px 24px' }}
+              >
+                {showCreateForm ? 'Cancel' : '+ Create order'}
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -400,9 +462,21 @@ export default function AdminOrdersPage() {
         {/* Create New Order – at top when open so no scrolling needed (hidden for view-only) */}
         {showCreateForm && !isViewOnly() && (hasRole('REP') || hasRole('MANAGER')) && (
           <section ref={createFormRef} className={styles.section}>
-            <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Create New Order</h2>
-            
+            <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>4. Create new order manually</h2>
+            <p className={styles.sectionSubtext} style={{ marginBottom: 16 }}>Choose booking type: individual, family (20% off), or enterprise contract.</p>
             <div className={styles.formGrid}>
+              <div>
+                <label className={styles.label}>Booking type *</label>
+                <select
+                  className={styles.input}
+                  value={bookingType}
+                  onChange={(e) => setBookingType(e.target.value as BookingType)}
+                >
+                  <option value="individual">Individual booking</option>
+                  <option value="family">Family booking (20% off)</option>
+                  <option value="enterprise">Enterprise contract booking</option>
+                </select>
+              </div>
               <div>
                 <label className={styles.label}>Customer Name *</label>
                 <input
@@ -599,8 +673,13 @@ export default function AdminOrdersPage() {
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colSpan={4} style={{ textAlign: 'right', fontWeight: 700, paddingTop: '12px' }}>Total:</td>
-                        <td style={{ fontWeight: 700, paddingTop: '12px' }}>₦{totalAmount.toLocaleString()}</td>
+                        <td colSpan={4} style={{ textAlign: 'right', fontWeight: 700, paddingTop: '12px' }}>
+                          {bookingType === 'family' && (
+                            <>Subtotal: ₦{createOrderSubtotal.toLocaleString()} → 20% off → </>
+                          )}
+                          Total:
+                        </td>
+                        <td style={{ fontWeight: 700, paddingTop: '12px' }}>₦{createOrderTotal.toLocaleString()}</td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -612,7 +691,7 @@ export default function AdminOrdersPage() {
                 <button
                   onClick={handleCreateOrder}
                   className={styles.primaryBtn}
-                  disabled={creating || orderItems.length === 0}
+                  disabled={creating || orderItems.length === 0 || createOrderTotal <= 0}
                 >
                   {creating ? 'Creating...' : 'Create Order & Send Email'}
                 </button>
@@ -632,6 +711,7 @@ export default function AdminOrdersPage() {
                       paymentStatus: 'COMPLETED',
                     });
                     setOrderItems([]);
+                    setBookingType('individual');
                   }}
                   className={styles.ghostBtn}
                 >
@@ -642,9 +722,18 @@ export default function AdminOrdersPage() {
           </section>
         )}
 
+        {/* Declined Orders notice (Customer Rep) */}
+        {viewDeclined && (
+          <section className={styles.section} style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: 8, padding: 16 }}>
+            <p style={{ margin: 0, color: '#856404' }}>
+              <strong>Handling Declined Orders:</strong> Declined orders show a Declined status with a reason. Reassign them to another barber using the same assignment steps — click <strong>Assign</strong> and choose a different barber.
+            </p>
+          </section>
+        )}
+
         {/* Order Overview Metrics */}
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>Summary</h2>
+          <h2 className={styles.sectionTitle} style={{ marginBottom: '24px' }}>{viewOverview ? 'High-level statistics' : 'Summary'}</h2>
           <div className={styles.metricsGrid}>
             <div className={styles.metricCard}>
               <div className={styles.metricLabel}>Total Orders</div>
@@ -675,6 +764,41 @@ export default function AdminOrdersPage() {
               <div className={styles.metricValue}>{metrics.ordersInProgress}</div>
             </div>
           </div>
+          {viewOverview && (
+            <div style={{ marginTop: 24 }}>
+              <h3 className={styles.sectionTitle} style={{ fontSize: '1rem', marginBottom: 12 }}>Recent activity</h3>
+              <p className={styles.sectionSubtext} style={{ marginBottom: 12 }}>Latest orders from the website.</p>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Order</th>
+                      <th>Customer</th>
+                      <th>Payment</th>
+                      <th>Status</th>
+                      <th>Barber</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredOrders
+                      .slice(0, 10)
+                      .map((order: any) => (
+                        <tr key={order.id}>
+                          <td>{order.orderNumber}</td>
+                          <td>{order.customerName}</td>
+                          <td>{order.paymentStatus}</td>
+                          <td>{order.status} {order.jobStatus ? ` / ${order.jobStatus}` : ''}</td>
+                          <td>{order.assignedBarber?.name || '—'}</td>
+                          <td>{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '—'}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+              {filteredOrders.length === 0 && <p className={styles.sectionSubtext}>No orders in this view.</p>}
+            </div>
+          )}
         </section>
 
         {/* Filters Section */}
@@ -908,15 +1032,17 @@ export default function AdminOrdersPage() {
                             {markingPaidOrderId === order.id ? '...' : 'Mark as paid'}
                           </button>
                         )}
-                        {hasRole('REP') && !order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED') && (
+                        {hasRole('REP') && (
+                          ( (!order.assignedBarberId && (order.paymentStatus === 'PAID' || order.paymentStatus === 'COMPLETED')) ||
+                            (order.jobStatus === 'DECLINED') ) && (
                           <button
                             onClick={() => setSelectedOrder(order.id === selectedOrder ? null : order.id)}
                             className={styles.assignButton}
                             style={{ padding: '6px 12px', fontSize: '0.85rem' }}
                           >
-                            {selectedOrder === order.id ? 'Cancel' : 'Assign'}
+                            {selectedOrder === order.id ? 'Cancel' : order.jobStatus === 'DECLINED' ? 'Reassign' : 'Assign'}
                           </button>
-                        )}
+                        ) )}
                       </td>
                     </tr>
                   ))

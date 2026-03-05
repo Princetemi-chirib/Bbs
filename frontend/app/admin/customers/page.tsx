@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BarChart2, Users, Calendar, RefreshCw, Check, Pause, Wallet, RotateCcw, Star } from 'lucide-react';
-import { fetchAuth } from '@/lib/auth';
+import { fetchAuth, hasRole } from '@/lib/auth';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import styles from './customers.module.css';
 import Link from 'next/link';
@@ -207,7 +207,12 @@ export default function AdminCustomersPage() {
           <h1 className={styles.pageTitle}>Customers</h1>
           <p className={styles.pageSubtitle}>Manage and track all your customers.</p>
         </div>
-        <div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {hasRole('REP') && (
+            <Link href="/admin/orders?create=1" className={styles.primaryButton} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <Users size={18} aria-hidden /> Add customer manually
+            </Link>
+          )}
           <Link href="/admin/customers/analytics" className={styles.primaryButton} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <BarChart2 size={18} aria-hidden /> View Analytics
           </Link>

@@ -16,6 +16,9 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  MessageSquare,
+  Target,
+  Settings,
   type LucideIcon,
 } from 'lucide-react';
 import { getUserData } from '@/lib/auth';
@@ -48,16 +51,36 @@ const ALL_NAV_ITEMS: NavItem[] = [
   {
     type: 'parent',
     href: '/admin/orders',
-    label: 'Orders',
+    label: 'Order Management',
     Icon: Package,
     roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'],
     children: [
-      { href: '/admin/orders', label: 'All orders' },
-      { href: '/admin/orders?view=dashboard', label: 'Order dashboard' },
-      { href: '/admin/orders?view=history', label: 'Order history' },
+      /* Customer Rep: 6-item order management */
+      { href: '/admin/orders?view=overview', label: '1. Overview', roles: ['REP'] },
+      { href: '/admin/orders?view=assignment', label: '2. Order Assignments', roles: ['REP'] },
+      { href: '/admin/orders?view=status', label: '3. Order Management status', roles: ['REP'] },
+      { href: '/admin/orders?create=1', label: '4. Create new order', roles: ['REP', 'MANAGER'] },
+      { href: '/admin/orders?view=history', label: '5. Order History', roles: ['REP'] },
+      { href: '/admin/orders?view=declined', label: '6. Declined Orders', roles: ['REP'] },
+      /* Admin / Manager / Viewer */
+      { href: '/admin/orders', label: 'All orders', roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
+      { href: '/admin/orders?view=dashboard', label: 'Order dashboard', roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
+      { href: '/admin/orders?view=history', label: 'Order history', roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
       { href: '/admin/orders?view=assignment', label: 'New order', roles: ['MANAGER', 'VIEWER'] },
-      { href: '/admin/orders?view=assignment', label: 'Assign order', roles: ['REP'] },
-      { href: '/admin/orders?create=1', label: 'Create order', roles: ['REP', 'MANAGER'] },
+    ],
+  },
+  { type: 'link', href: '/admin/chat', label: 'Chat Room', Icon: MessageSquare, roles: ['REP'] },
+  {
+    type: 'parent',
+    href: '/admin/barbers',
+    label: 'Staff Target Tracking',
+    Icon: Target,
+    roles: ['REP'],
+    children: [
+      { href: '/admin/barbers', label: 'Total staff' },
+      { href: '/admin/barbers?view=talent', label: 'Staff talent list' },
+      { href: '/admin/barbers?view=ratings', label: 'Average rating' },
+      { href: '/admin/barbers?view=location', label: 'Location tracking' },
     ],
   },
   { type: 'link', href: '/admin/customers', label: 'Customers', Icon: Users, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
@@ -66,15 +89,17 @@ const ALL_NAV_ITEMS: NavItem[] = [
     href: '/admin/barbers',
     label: 'Staff',
     Icon: Scissors,
-    roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'],
+    roles: ['ADMIN', 'MANAGER', 'VIEWER'],
     children: [
       { href: '/admin/barbers', label: 'Staff overview' },
       { href: '/admin/barbers?add=recruitment', label: 'Add new recruitment' },
       { href: '/admin/barbers?section=recruitment', label: 'Recruitment list' },
     ],
   },
-  { type: 'link', href: '/admin/services', label: 'Services', Icon: Sparkles, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+  { type: 'link', href: '/admin/services', label: 'Services (view only)', Icon: Sparkles, roles: ['REP'] },
+  { type: 'link', href: '/admin/services', label: 'Services', Icon: Sparkles, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
   { type: 'link', href: '/admin/reviews', label: 'Reviews', Icon: Star, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
+  { type: 'link', href: '/admin/settings', label: 'Settings', Icon: Settings, roles: ['ADMIN', 'REP', 'MANAGER', 'VIEWER'] },
   {
     type: 'parent',
     label: 'Financials',
@@ -105,8 +130,13 @@ function isPathActive(pathname: string, href: string, searchParams?: string | nu
     if (href === '/admin/orders?view=assignment') return pathname === '/admin/orders' && (searchParams?.includes('view=assignment') ?? false);
     if (href === '/admin/orders?view=dashboard') return pathname === '/admin/orders' && (searchParams?.includes('view=dashboard') ?? false);
     if (href === '/admin/orders?view=history') return pathname === '/admin/orders' && (searchParams?.includes('view=history') ?? false);
+    if (href === '/admin/orders?view=overview') return pathname === '/admin/orders' && (searchParams?.includes('view=overview') ?? false);
+    if (href === '/admin/orders?view=status') return pathname === '/admin/orders' && (searchParams?.includes('view=status') ?? false);
+    if (href === '/admin/orders?view=declined') return pathname === '/admin/orders' && (searchParams?.includes('view=declined') ?? false);
     return baseMatch;
   }
+  if (href === '/admin/chat') return pathname === '/admin/chat';
+  if (href === '/admin/settings') return pathname === '/admin/settings';
   if (href.startsWith('/admin/financials')) {
     if (pathname !== '/admin/financials') return false;
     const tab = href.includes('tab=') ? href.split('tab=')[1]?.split('&')[0] : '';
@@ -117,6 +147,9 @@ function isPathActive(pathname: string, href: string, searchParams?: string | nu
     if (href === '/admin/barbers') return pathname === '/admin/barbers' && !searchParams;
     if (href === '/admin/barbers?add=recruitment') return pathname === '/admin/barbers' && (searchParams?.includes('add=recruitment') ?? false);
     if (href === '/admin/barbers?section=recruitment') return pathname === '/admin/barbers' && (searchParams?.includes('section=recruitment') ?? false);
+    if (href === '/admin/barbers?view=talent') return pathname === '/admin/barbers' && (searchParams?.includes('view=talent') ?? false);
+    if (href === '/admin/barbers?view=ratings') return pathname === '/admin/barbers' && (searchParams?.includes('view=ratings') ?? false);
+    if (href === '/admin/barbers?view=location') return pathname === '/admin/barbers' && (searchParams?.includes('view=location') ?? false);
     return pathname === '/admin/barbers' || pathname?.startsWith('/admin/barbers/');
   }
   return pathname === href || (href !== '/admin' && pathname?.startsWith(href));
