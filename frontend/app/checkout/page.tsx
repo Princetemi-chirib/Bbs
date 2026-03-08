@@ -660,7 +660,7 @@ export default function CheckoutPage() {
                   <div key={item.key} className={styles.summaryItem}>
                     <div className={styles.summaryItemInfo}>
                       <h4>{item.title}</h4>
-                      <span className={styles.slotsBadge} aria-label="Slots remaining today">{getSlotsLeftForToday(item.productId || item.key)} left for today</span>
+                      <span className={styles.slotsBadge} aria-label="Slots remaining today">{getSlotsLeftForToday(item.productId || item.key)} bookings left for today</span>
                       {item.displayAge !== 'Fixed' && (
                         <span className={styles.summaryItemAge}>{item.displayAge}</span>
                       )}

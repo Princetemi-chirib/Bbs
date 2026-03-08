@@ -331,7 +331,7 @@ export default function BookPage() {
                     <div className={styles.serviceContent}>
                       <div className={styles.serviceTitleRow}>
                         <h3 className={styles.serviceTitle}>{service.title}</h3>
-                        <span className={styles.slotsBadge} aria-label="Slots remaining today">{getSlotsLeftForToday(String(service.id))} left for today</span>
+                        <span className={styles.slotsBadge} aria-label="Slots remaining today">{getSlotsLeftForToday(String(service.id))} bookings left for today</span>
                       </div>
                       <p className={styles.serviceDescription}>{service.description}</p>
 
