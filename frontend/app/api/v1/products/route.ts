@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
       afterImage: product.afterImage,
       isActive: product.isActive,
       displayOrder: product.displayOrder,
+      callOnly: product.callOnly ?? false,
     }));
 
     return NextResponse.json({
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
       afterImage,
       isActive = true,
       displayOrder = 0,
+      callOnly = false,
     } = body;
 
     // Validate required fields
@@ -121,6 +123,7 @@ export async function POST(request: NextRequest) {
         afterImage,
         isActive,
         displayOrder,
+        callOnly,
       },
     });
 
@@ -137,6 +140,7 @@ export async function POST(request: NextRequest) {
         afterImage: product.afterImage,
         isActive: product.isActive,
         displayOrder: product.displayOrder,
+        callOnly: product.callOnly ?? false,
       },
     }, { status: 201 });
   } catch (error: any) {

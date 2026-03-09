@@ -17,6 +17,7 @@ type Service = {
   afterImage: string;
   isActive?: boolean;
   displayOrder?: number;
+  callOnly?: boolean;
 };
 
 type ServiceFormState = {
@@ -29,6 +30,8 @@ type ServiceFormState = {
   afterImage: string;
   isActive: boolean;
   displayOrder: string;
+   // When true, service is "Call only" on the public booking page (no online price/booking).
+  callOnly: boolean;
 };
 
 const emptyForm: ServiceFormState = {
@@ -41,6 +44,7 @@ const emptyForm: ServiceFormState = {
   afterImage: '',
   isActive: true,
   displayOrder: '0',
+  callOnly: false,
 };
 
 export default function AdminServicesPage() {
@@ -141,6 +145,7 @@ export default function AdminServicesPage() {
       afterImage: service.afterImage || '',
       isActive: service.isActive ?? true,
       displayOrder: String(service.displayOrder ?? 0),
+      callOnly: service.callOnly ?? false,
     });
     setShowForm(true);
   };
@@ -157,7 +162,7 @@ export default function AdminServicesPage() {
 
     try {
       if (!form.title.trim()) throw new Error('Title is required');
-      if (!form.adultPrice || isNaN(Number(form.adultPrice))) throw new Error('Adult price is required');
+      if (!form.adultPrice || isNaN(Number(form.adultPrice))) throw new Error('Adult price is required (stored internally even for call-only services)');
       if (!form.beforeImage.trim()) throw new Error('Before image URL is required');
       if (!form.afterImage.trim()) throw new Error('After image URL is required');
 
@@ -171,6 +176,7 @@ export default function AdminServicesPage() {
         afterImage: form.afterImage.trim(),
         isActive: form.isActive,
         displayOrder: form.displayOrder ? Number(form.displayOrder) : 0,
+        callOnly: form.callOnly,
       };
 
       const url = editingId ? `/api/v1/products/${editingId}` : '/api/v1/products';
@@ -366,6 +372,19 @@ export default function AdminServicesPage() {
                     />
                     Active (show on ordering page)
                   </label>
+                </div>
+                <div className={styles.formGroupInline}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={form.callOnly}
+                      onChange={(e) => setForm({ ...form, callOnly: e.target.checked })}
+                    />
+                    Call-only service (no online booking)
+                  </label>
+                  <p style={{ marginTop: 4, fontSize: '0.8rem', color: '#6c757d' }}>
+                    When enabled, customers will see a &quot;Call to order&quot; button instead of an online price and Add to Order on the website.
+                  </p>
                 </div>
                 <div className={styles.formGroup}>
                   <label>Display Order</label>

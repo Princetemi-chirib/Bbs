@@ -17,6 +17,8 @@ interface Service {
   category: 'general' | 'recovery';
   beforeImage: string;
   afterImage: string;
+  // When true, this service is "call only": no online booking, CTA is Call to order.
+  callOnly?: boolean;
 }
 
 function BeforeAfterSlider({ beforeImage, afterImage }: { beforeImage: string; afterImage: string }) {
@@ -316,6 +318,7 @@ export default function BookPage() {
             ) : (
             <div className={styles.servicesGrid}>
               {filteredServices.map(service => {
+                const isCallOnly = service.callOnly === true;
                 const hasDifferentPrices = service.kidsPrice !== null && service.adultPrice !== service.kidsPrice;
                 const selectedAge = selectedAges[service.id];
                 const canAddToOrder = !hasDifferentPrices || selectedAge;
@@ -335,7 +338,29 @@ export default function BookPage() {
                       </div>
                       <p className={styles.serviceDescription}>{service.description}</p>
 
-                      {hasDifferentPrices ? (
+                      {isCallOnly ? (
+                        <>
+                          <div className={styles.selectedPrice}>
+                            Call to order for pricing and availability.
+                          </div>
+                          <button
+                            className={styles.bookButton}
+                            onClick={() => {
+                              const envPhone =
+                                process.env.NEXT_PUBLIC_BUSINESS_PHONE ||
+                                process.env.NEXT_PUBLIC_SUPPORT_PHONE ||
+                                '';
+                              if (envPhone) {
+                                window.location.href = `tel:${envPhone}`;
+                              } else {
+                                alert('Please call the admin to order this service.');
+                              }
+                            }}
+                          >
+                            Call to order
+                          </button>
+                        </>
+                      ) : hasDifferentPrices ? (
                         <>
                           <div className={styles.servicePricing}>
                             <div className={styles.priceInfo}>

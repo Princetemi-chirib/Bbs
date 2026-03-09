@@ -490,6 +490,8 @@ model Product {
   beforeImage     String          @map("before_image")
   afterImage      String          @map("after_image")
   isActive        Boolean         @default(true) @map("is_active")
+  /// If true, service is "call only" on the public site: no online price/booking, CTA is Call to order.
+  callOnly        Boolean         @default(false) @map("call_only")
   displayOrder    Int             @default(0) @map("display_order")
   stockQuantity   Int?            @map("stock_quantity") // null = not tracked
   reorderPoint    Int?            @map("reorder_point")

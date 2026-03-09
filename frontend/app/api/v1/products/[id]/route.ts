@@ -39,6 +39,7 @@ export async function GET(
         afterImage: product.afterImage,
         isActive: product.isActive,
         displayOrder: product.displayOrder,
+        callOnly: product.callOnly ?? false,
       },
     });
   } catch (error: any) {
@@ -80,6 +81,7 @@ export async function PUT(
       afterImage,
       isActive,
       displayOrder,
+      callOnly,
     } = body;
 
     const updateData: any = {};
@@ -106,6 +108,7 @@ export async function PUT(
     if (afterImage !== undefined) updateData.afterImage = afterImage;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (displayOrder !== undefined) updateData.displayOrder = displayOrder;
+    if (callOnly !== undefined) updateData.callOnly = callOnly;
 
     const product = await prisma.product.update({
       where: { id: params.id },
@@ -125,6 +128,7 @@ export async function PUT(
         afterImage: product.afterImage,
         isActive: product.isActive,
         displayOrder: product.displayOrder,
+        callOnly: product.callOnly ?? false,
       },
     });
   } catch (error: any) {
