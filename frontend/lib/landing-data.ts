@@ -67,6 +67,12 @@ export const GALLERY_CAROUSEL = [
   '/images/WhatsApp%20Image%202026-02-19%20at%204.36.03%20AM%20(2).jpeg',
   '/images/WhatsApp%20Image%202026-02-19%20at%204.36.03%20AM.jpeg',
   '/images/WhatsApp%20Image%202026-02-19%20at%204.36.04%20AM.jpeg',
+  // Local gallery additions
+  '/images/photo_5870760088346234704_x.jpg',
+  '/images/photo_5870760088346234705_y.jpg',
+  '/images/photo_5870760088346234706_y.jpg',
+  '/images/photo_5870760088346234707_x.jpg',
+  '/images/photo_5870760088346234708_y.jpg',
 ];
 
 export const PARTNERS = [
